@@ -19,14 +19,25 @@
 | D9 | 2026-08-17 | Clave SSH RSA 4096 (`claude-ane-2026`) | hPanel rechaza ecdsa; la ed25519 anterior dejó de ser usable por el conector |
 | D10 | 2026-08-17 | El paso de descarga del pipeline se ejecuta **en el Mac**, no en el servidor | YouTube bloquea la IP del hosting (HTTP 429 en todos los player_client) |
 | D11 | 2026-08-17 | Índice de búsqueda en cliente (sin API) | Suficiente para el volumen actual; se revisará si el índice se dispara de tamaño |
+| D12 | 2026-08-17 | Los VTT se bajan **a mano desde YouTube Studio** y se versionan en bruto en `data/subtitulos_originales/<youtubeId>.es.vtt` | yt-dlp no puede con la descarga (ver D10 y §5 de CLAUDE.md). Guardarlos en bruto permite rehacer la segmentación sin volver a YouTube |
+| D13 | 2026-08-17 | Fecha, duración y timeline se sacan de la **página pública del vídeo con `curl`** desde el Mac, no con yt-dlp | El yt-dlp del Mac falla al extraer vídeo a vídeo («Es necesario volver a cargar la página»), pero el HTML público trae `uploadDate`, `lengthSeconds` y la descripción entera. El script está en el histórico de la sesión, no en el repo: es de un solo uso |
+| D14 | 2026-08-17 | El índice sigue **en un solo fichero**, sin trocear por año | Medido de verdad: 3,9 MB en disco pero **1,4 MB por la red** (mod_deflate ya comprime `application/json`) y solo se descarga al tocar el buscador. Buscar tarda 6-8 ms sobre 7.667 segmentos. Trocear por año no ahorraría nada: una búsqueda global necesita todos los trozos igualmente |
 
 ---
 
 ## ❓ PREGUNTAS ABIERTAS
 
-### P2 — Motor de búsqueda a futuro
-Con ~5 episodios el índice en cliente va sobrado. Revisar cuando haya 50+:
-si `indice_busqueda.json` pasa de ~2-3 MB, trocearlo por año o mover a API.
+### P2 — Motor de búsqueda a futuro · **cerrada de momento (ver D14)**
+Con 40 episodios: 3,9 MB en disco, 1,4 MB comprimido, 6-8 ms por búsqueda.
+Aguanta. Volver a mirarlo si el índice pasa de **~3 MB comprimidos** o si la
+búsqueda se nota lenta en un móvil viejo. La salida entonces no es trocear por
+año, es un índice invertido (término → posiciones) o una API.
+
+### P7 — Calidad de los subtítulos automáticos
+Los `.vtt` automáticos de YouTube destrozan la jerga: «tubeless» sale escrito
+**«tubles»**, así que buscar «tubeless» no encuentra el episodio que lo lleva
+en el título. Whisper en local lo arreglaría (D5 ya lo contemplaba) a cambio de
+10-20 min por episodio. Decidir si compensa.
 
 ### P5 — Formularios
 Bici o Cepo y marcas usan `mailto:`. Valorar Web3Forms/Formspree para que no
@@ -59,3 +70,4 @@ qué estructura.
 |---|---|
 | Previas | Web v1 diseñada, desplegada y subida a GitHub |
 | 2026-08-17 | memorybank + mega plan + esqueleto. Verificado el repo real y la CDN. Pipeline de transcripciones escrito y probado. Buscador ampliado a transcripciones. SSH restablecido (RSA). Detectado el bloqueo de YouTube a la IP del hosting |
+| 2026-08-17 | **Buscador alimentado.** Los 40 VTT de Studio cruzados con sus youtubeId, `data/episodios.js` reconstruido con los 40 episodios (fecha, duración y timeline reales) e índice generado: 40 episodios, 7.667 segmentos. Probado en local |

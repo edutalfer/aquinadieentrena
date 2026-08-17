@@ -13,7 +13,7 @@
   RewriteEngine On
 
   # ---------- Carpetas internas (no publicas) ----------
-  RewriteRule ^(memorybank|pipeline|data/transcripciones)(/|$) - [F,L]
+  RewriteRule ^(memorybank|pipeline|data/transcripciones|data/subtitulos_originales)(/|$) - [F,L]
 
   # ---------- Forzar HTTPS ----------
   RewriteCond %{HTTPS} off

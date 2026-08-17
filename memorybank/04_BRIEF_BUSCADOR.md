@@ -1,6 +1,6 @@
 # 🔍 BRIEF — Alimentar el buscador
 
-> Para el chat dedicado al buscador. Lee antes `03_ESTADO_ACTUAL.md`.
+> Actualizado: 2026-08-17. Lee antes `03_ESTADO_ACTUAL.md`.
 
 ---
 
@@ -10,92 +10,64 @@ Que el buscador encuentre **cualquier cosa dicha en un episodio**, no solo lo
 que aparece en los títulos del timeline. Resultado esperado: episodio + minuto
 exacto + fragmento de lo que se dijo + enlace directo a YouTube en ese segundo.
 
----
+## Estado: ✅ HECHO
 
-## Qué está HECHO
+`data/indice_busqueda.json` ya no está vacío: **40 episodios, 7.667 segmentos**.
+Probado en local (`python3 -m http.server`) contra `index.html`:
 
-- ✅ **El código del buscador ya lo soporta.** `assets/js/app.js` tiene la capa
-  de transcripciones: carga perezosa del índice, prioridad a los bloques del
-  timeline sobre la transcripción, fragmento de contexto recortado alrededor
-  de la palabra, enlace 3 segundos antes de la frase.
-  Probado con datos simulados: "POGAČAR" encuentra un texto que dice "Pogacar".
-- ✅ **Pipeline escrito y documentado** en `pipeline/` (ver `pipeline/LEEME.md`)
-- ✅ `.htaccess` bloquea `pipeline/` y `data/transcripciones/` al público;
-  `data/indice_busqueda.json` sí se sirve porque lo necesita el navegador
-
-## Qué FALTA
-
-- ❌ **Los datos.** `data/indice_busqueda.json` está vacío
-  (`{"generado":"2026-08-17","episodios":[]}`)
-
----
-
-## ⛔ El bloqueo real: YouTube no deja descargar los subtítulos
-
-Dos intentos, dos fracasos distintos:
-
-| Dónde | Error |
+| Prueba | Resultado |
 |---|---|
-| Servidor Hostinger | «Sign in to confirm you're not a bot» y HTTP 429. Probados los player_client android, ios, tv, web_embedded y mweb: **todos fallan**. La IP de centro de datos está vetada. |
-| Mac de Eduardo | «The page needs to be reloaded» en 4 episodios. En el quinto (`j_pzuhI0vZ4`) sí conectó pero dijo **«There are no subtitles for the requested languages»** |
-
-El yt-dlp del Mac era la versión `2025.10.14` (casi un año vieja) — ese es el
-primer sospechoso del error de recarga.
-
-### Vías a probar, en orden
-
-1. **Actualizar yt-dlp en el Mac** y ver qué subtítulos existen realmente:
-   ```bash
-   pip3 install --user --upgrade yt-dlp
-   export PATH="$HOME/Library/Python/3.9/bin:$PATH"
-   yt-dlp --list-subs "https://www.youtube.com/watch?v=uhRAjdhf_rQ"
-   ```
-   Si los idiomas no son `es`, ajustar `--sub-langs` en
-   `pipeline/01_descargar_subtitulos.sh` (puede ser `es-orig`, `es-ES`…).
-
-2. **Forzar otro cliente**: añadir `--extractor-args "youtube:player_client=tv"`.
-
-3. **Descargar a mano desde YouTube Studio.** Los vídeos son suyos: puede
-   bajar los `.vtt`/`.srt` de cada episodio y dejarlos en `pipeline/tmp/`
-   con el nombre `<youtubeId>.es.vtt`. El resto del pipeline funciona igual.
-   Son 5 episodios: es viable y desbloquea todo hoy mismo.
-
-4. **Whisper en local** si los subtítulos automáticos no existen o son malos.
-   Mejor calidad con la jerga ciclista, pero 10-20 min por episodio.
+| «creatina» (no está en ningún timeline) | 28 momentos, minuto correcto, enlace `&t=1537s` |
+| Tiempo de búsqueda | 6-8 ms, incluso con 7.719 hallazgos |
+| Índice | 3,9 MB en disco · **1,4 MB por la red** (mod_deflate) · carga perezosa |
+| `episodios.html` | 40 tarjetas, de 16 ago 2026 a 7 sep 2025 |
 
 ---
 
-## Cómo se ejecuta el pipeline (SIEMPRE en el Mac, nunca en el servidor)
+## Cómo se hizo (para repetirlo con episodios nuevos)
 
-```bash
-cd ~/Documents/Proyectos-IA/aquinadieentrena
-export PATH="$HOME/Library/Python/3.9/bin:$PATH"
-./pipeline/pipeline.sh --todos          # o ./pipeline/pipeline.sh <youtubeId>
-git add data/ && git commit -m "Transcripciones" && git push
-```
-Luego, en el servidor: `git pull`.
+1. Eduardo baja el `.vtt` de YouTube Studio (**VTT, no SRT**: `02_segmentar.py`
+   está escrito para VTT).
+2. Se guarda como `data/subtitulos_originales/<youtubeId>.es.vtt` y se copia a
+   `pipeline/tmp/` con ese mismo nombre.
+3. Se añade el episodio a `data/episodios.js` (título, fecha, duración,
+   youtubeId, temas). Fecha, duración y timeline salen de la página pública del
+   vídeo, que se puede leer con `curl` desde el Mac — ver D13 en
+   `02_DECISIONES.md`. yt-dlp **no** sirve para esto ahora mismo.
+4. `./pipeline/pipeline.sh <youtubeId>` (el paso 1 salta solo si el VTT ya está
+   en `pipeline/tmp/`).
+5. `git add data/ && git commit && git push`; en el servidor, `git pull`.
 
-⚠️ El `git push` desde el Mac por HTTPS pedirá usuario y token de GitHub.
-El clone por SSH falla (`Permission denied (publickey)`): el Mac no tiene
-clave dada de alta en GitHub. Usar HTTPS o configurar una clave.
-
----
-
-## Episodios dados de alta ahora mismo (`data/episodios.js`)
-
-`uhRAjdhf_rQ` · `EdlZUQjCDjc` · `8kEa4K59chg` · `fc-mkO2m9bk` · `j_pzuhI0vZ4`
-
-`data/episodios.js` es la **fuente de verdad editorial**: solo entran en el
-índice los episodios que estén ahí. Los timelines salen de la descripción de
-YouTube, del bloque "Temas del episodio".
+⚠️ El `git push` desde el Mac por HTTPS pide usuario y token de GitHub. El
+clone por SSH falla: el Mac no tiene clave dada de alta en GitHub.
 
 ---
 
-## Al terminar, comprobar
+## Lo que quedó pendiente
 
-- Que el índice no está vacío y cuánto pesa (interesa el dato: si con ~50
-  episodios se dispara por encima de 2-3 MB, habrá que trocearlo por año
-  o pasar a una API — ver P2 en `02_DECISIONES.md`)
-- Buscar en la web una palabra que **no** esté en ningún título de timeline
-  y ver si sale el minuto correcto
-- Recordar la trampa de la CDN al verificar (ver `03_ESTADO_ACTUAL.md`)
+**1. Faltan episodios por bajar de Studio.** El canal tiene 128 vídeos, pero
+solo 40 tienen VTT. Estos siete parecen episodios de podcast y no lo tienen:
+
+| youtubeId | Título |
+|---|---|
+| `piWBTCsMFdY` | ¿Como de ancho es demasiado ancho!?… \| EP.3 |
+| `hIexLofEMVM` | Malas noticias para Rapha \| ¿Qué esta pasando? |
+| `U1yfpFm5A4g` | Specialized perdona a Armstrong?? \| Cuanto dinero se necesita… |
+| `lWj1oTcYX8o` | Errores de la Cape Epic 2026 \| ¿La nueva "mejor" marca española? |
+| `38AjpfCo7dc` | El futuro del textil en ciclismo \| Cómo puede ganar el tour Remco |
+| `_pNQhuWqt3M` | ¿Esta es la nueva Canyon Aeroad? \| Strava no tiene sentido |
+| `KPiGXHKJ_gM` | Van Der Poel IGNORA a Canyon en Roubaix! \| Seixas va al tour? |
+
+El resto de los 128 son vlogs, «Bici o cepo», etapas del Tour, Cape Epic y
+Andalucía Bike Race: **Eduardo decide** cuáles son episodio y cuáles no.
+
+**2. 17 de los 40 no tienen timeline** porque su descripción de YouTube no
+lleva el bloque «Temas del episodio». Salen en el buscador por transcripción,
+pero sin título de bloque. Se arregla escribiendo el timeline en YouTube y
+volviendo a pasar el paso 3.
+
+**3. Una errata en YouTube.** En `gy5RLwGDFs8` (9 ago 2026) la descripción dice
+«¿Bici o cepo? (01:40:00)» en un vídeo que dura 1h21. El dato se ha dejado tal
+cual porque el timeline sale tal cual de YouTube: arreglar allí y regenerar.
+
+**4. «tubles».** Ver P7 en `02_DECISIONES.md`.

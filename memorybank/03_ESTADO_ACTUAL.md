@@ -14,8 +14,8 @@
   ⚠️ NO es `~/public_html`. Ese error ya costó una sesión.
 - Repo: `github.com/edutalfer/aquinadieentrena` (público)
 - El core del proyecto es un **buscador de temas** que encuentra el minuto
-  exacto de cada episodio. El código ya busca en transcripciones; faltan
-  los datos.
+  exacto de cada episodio. Ya funciona con datos reales: **40 episodios,
+  7.667 segmentos** de transcripción indexados (17/08/2026).
 - Copia local de Eduardo: `/Users/eduardotalavera/Documents/Proyectos-IA/aquinadieentrena`
 
 ---
@@ -74,6 +74,8 @@ Si algo se rompe: `git revert` y atrás en un segundo.
 ## Estado de las dos líneas de trabajo abiertas
 
 ### 🔍 Buscador (chat dedicado)
+✅ Alimentado y probado. Queda bajar de Studio los VTT de siete episodios que
+faltan y escribir en YouTube el timeline de 17 que no lo tienen.
 Ver `04_BRIEF_BUSCADOR.md`
 
 ### 🎨 Estética (chat dedicado)
