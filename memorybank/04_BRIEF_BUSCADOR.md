@@ -71,29 +71,47 @@ Cape Epic, Andalucía Bike Race y Taiwán.
 **1. 18 de los 46 no tienen timeline**, porque su descripción de YouTube no
 lleva el bloque «Temas del episodio». Salen en el buscador por transcripción,
 pero sin título de bloque y sin bloques en su tarjeta de `episodios.html`.
-Se arregla escribiendo el timeline **en la descripción de YouTube** y volviendo
-a generar `data/episodios.js` (paso 3 de arriba):
 
-| youtubeId | Fecha | Título |
-|---|---|---|
-| `gFu-15TP8uw` | 10 may 2026 | ¿Quién ganará en el mercado? \| Polémica en Traka |
-| `lWj1oTcYX8o` | 24 mar 2026 | Errores de la Cape Epic 2026 |
-| `tcVNXIfRcMw` | 02 mar 2026 | Episodio Especial: Sobremesa con los pros |
-| `gWswoVKJ2Lc` | 22 feb 2026 | Nueva Cannondale SUPERSIX! ¿Bici o Cepo? |
-| `B9y3ELUXPJk` | 15 feb 2026 | ¿Redbull te da alas? \| NOS PAGAN LA CAPE! |
-| `ev0tzxeAOLY` | 08 feb 2026 | ¿Qué esta pasando en CANYON? |
-| `Z0HybwI-yxk` | 01 feb 2026 | Flecha nos acusa de "CHARLATANES" |
-| `VEvA7w4EVOc` | 25 ene 2026 | TODAS las bicis del world tour 2026 analizadas! |
-| `5yoINT_hUiw` | 18 ene 2026 | ¿Por qué se retira un campeón tan pronto? |
-| `-TUEBDC4eqs` | 11 ene 2026 | Los beneficios de la creatina para ciclistas |
-| `IXwk61V6gWs` | 04 ene 2026 | Specialized lo vuelve a hacer! |
-| `l-OwmhoBQuY` | 28 dic 2025 | Nuevo Recorrido Vuelta 2026! |
-| `DyquvTvjJYE` | 21 dic 2025 | Nuevas Equipaciones 2026!! |
-| `sF7fe35IJi4` | 30 nov 2025 | Campagnolo está en peligro |
-| `tiRqcZ6vol8` | 16 nov 2025 | 5 marcas dicen que tienen la bici más rápida |
-| `umyb6Wroe84` | 02 nov 2025 | Top 10 Sueldos del Peloton |
-| `3_6ojm-SF7c` | 14 sep 2025 | ¿La mas rápida? ¡Una Decathlon! \| Ep.2 |
-| `qG4PMXC7wLM` | 07 sep 2025 | Los vatios inhumanos de Pogacar \| Ep.1 |
+### Los 18, numerados
+
+**Esta numeración es fija** y es la que se usa para mandar las capturas de los
+timelines: «captura 7» = el episodio 7 de esta tabla. No renumerar aunque se
+vayan completando; lo que se completa se tacha, pero el número se queda.
+
+| # | Fecha | Dur. | youtubeId | Título |
+|---|---|---|---|---|
+| **1** | 10 may 2026 | 71 min | `gFu-15TP8uw` | ¿Quién ganará en el mercado? \| Polémica en Traka |
+| **2** | 24 mar 2026 | 69 min | `lWj1oTcYX8o` | Errores de la Cape Epic 2026 |
+| **3** | 02 mar 2026 | 104 min | `tcVNXIfRcMw` | Episodio Especial: Sobremesa con los pros |
+| **4** | 22 feb 2026 | 113 min | `gWswoVKJ2Lc` | Nueva Cannondale SUPERSIX! ¿Bici o Cepo? |
+| **5** | 15 feb 2026 | 116 min | `B9y3ELUXPJk` | ¿Redbull te da alas? \| NOS PAGAN LA CAPE! |
+| **6** | 08 feb 2026 | 107 min | `ev0tzxeAOLY` | ¿Qué esta pasando en CANYON? |
+| **7** | 01 feb 2026 | 127 min | `Z0HybwI-yxk` | Flecha nos acusa de "CHARLATANES" |
+| **8** | 25 ene 2026 | 81 min | `VEvA7w4EVOc` | TODAS las bicis del world tour 2026 analizadas! |
+| **9** | 18 ene 2026 | 113 min | `5yoINT_hUiw` | ¿Por qué se retira un campeón tan pronto? |
+| **10** | 11 ene 2026 | 91 min | `-TUEBDC4eqs` | Los beneficios de la creatina para ciclistas |
+| **11** | 04 ene 2026 | 94 min | `IXwk61V6gWs` | Specialized lo vuelve a hacer! |
+| **12** | 28 dic 2025 | 96 min | `l-OwmhoBQuY` | Nuevo Recorrido Vuelta 2026! |
+| **13** | 21 dic 2025 | 118 min | `DyquvTvjJYE` | Nuevas Equipaciones 2026!! |
+| **14** | 30 nov 2025 | 76 min | `sF7fe35IJi4` | Campagnolo está en peligro |
+| **15** | 16 nov 2025 | 85 min | `tiRqcZ6vol8` | 5 marcas dicen que tienen la bici más rápida |
+| **16** | 02 nov 2025 | 102 min | `umyb6Wroe84` | Top 10 Sueldos del Peloton |
+| **17** | 14 sep 2025 | 53 min | `3_6ojm-SF7c` | ¿La mas rápida? ¡Una Decathlon! \| Ep.2 |
+| **18** | 07 sep 2025 | 39 min | `qG4PMXC7wLM` | Los vatios inhumanos de Pogacar \| Ep.1 |
+
+La columna **Dur.** está para validar: ningún minuto del timeline puede pasarse
+de ahí. Es el control que cazó la errata de `gy5RLwGDFs8` (pendiente 2).
+
+### Dos formas de arreglarlo
+
+- **La buena:** escribir el timeline en la **descripción de YouTube** y volver
+  a generar `data/episodios.js` (paso 3 de arriba). El dato queda en la fuente
+  y los espectadores ganan capítulos clicables en el reproductor.
+- **La de capturas:** Eduardo manda capturas numeradas según la tabla y se
+  transcriben a mano a `data/episodios.js`. Al transcribir hay que comprobar
+  siempre tres cosas: minutos crecientes, ninguno por encima de la duración, y
+  que el número de bloques cuadre con la captura. Ante la duda, preguntar en
+  vez de inventar un minuto.
 
 **2. Una errata en YouTube.** En `gy5RLwGDFs8` (9 ago 2026) la descripción dice
 «¿Bici o cepo? (01:40:00)» en un vídeo que dura 1h21. El dato se ha dejado tal
