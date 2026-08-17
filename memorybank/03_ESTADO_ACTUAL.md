@@ -74,9 +74,9 @@ Si algo se rompe: `git revert` y atrás en un segundo.
 ## Estado de las dos líneas de trabajo abiertas
 
 ### 🔍 Buscador (chat dedicado)
-✅ Alimentado, completo y probado: están los 46 episodios. Lo único que queda
-es escribir en YouTube el timeline de 18 que no lo llevan en la descripción.
-Ver `04_BRIEF_BUSCADOR.md`
+✅ Alimentado, completo y probado: los 46 episodios y 307 bloques de timeline.
+Solo quedan dos episodios sin timeline, porque no lo tienen en ningún sitio, y
+tres minutos sueltos que Eduardo tiene que confirmar. Ver `04_BRIEF_BUSCADOR.md`
 
 ### 🎨 Estética (chat dedicado)
 Ver `05_BRIEF_ESTETICA.md`

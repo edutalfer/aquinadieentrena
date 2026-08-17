@@ -129,9 +129,15 @@ Studio están renombrados a `<youtubeId>.es.vtt`, `data/episodios.js` tiene los
 46 episodios con fecha, duración y timeline reales, y el índice trae 8.675
 segmentos. Probado en local. Detalle: `04_BRIEF_BUSCADOR.md`.
 
-**Falta.** Solo una cosa: escribir en YouTube el timeline de 18 episodios que
-no lo llevan en la descripción (listados en `04_BRIEF_BUSCADOR.md`). No es
-código, es trabajo editorial en YouTube.
+**Timelines: 44 de 46, 307 bloques.** Los 16 que no llevaban «Temas del
+episodio» en YouTube se transcribieron de capturas que mandó Eduardo, con tres
+controles: minutos crecientes, ninguno por encima de la duración real y
+contraste con la transcripción. **Si vuelve a haber timelines en captura,
+repite esa validación.** Los dos que siguen sin timeline no lo tienen en
+ningún sitio.
+
+**Falta.** Tres minutos sueltos por confirmar con Eduardo, listados en
+`04_BRIEF_BUSCADOR.md`. Nada más.
 
 **Para un episodio nuevo:** VTT de Studio → `data/subtitulos_originales/` y
 `pipeline/tmp/` como `<youtubeId>.es.vtt` → alta en `data/episodios.js` →

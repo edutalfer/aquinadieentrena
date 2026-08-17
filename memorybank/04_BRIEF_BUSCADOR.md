@@ -68,53 +68,51 @@ Cape Epic, Andalucía Bike Race y Taiwán.
 
 ## Lo único que queda pendiente
 
-**1. 18 de los 46 no tienen timeline**, porque su descripción de YouTube no
-lleva el bloque «Temas del episodio». Salen en el buscador por transcripción,
-pero sin título de bloque y sin bloques en su tarjeta de `episodios.html`.
+**1. Timelines: 44 de 46 hechos.** De los 18 que no llevaban «Temas del
+episodio» en la descripción de YouTube, Eduardo mandó **16 capturas** de las
+diapositivas del vídeo y se transcribieron a `data/episodios.js`. Total en la
+web: **307 bloques**.
 
-### Los 18, numerados
+Los dos que siguen sin timeline, porque no existe:
 
-**Esta numeración es fija** y es la que se usa para mandar las capturas de los
-timelines: «captura 7» = el episodio 7 de esta tabla. No renumerar aunque se
-vayan completando; lo que se completa se tacha, pero el número se queda.
+| Fecha | youtubeId | Título |
+|---|---|---|
+| 02 mar 2026 | `tcVNXIfRcMw` | Episodio Especial: Sobremesa con los pros |
+| 28 dic 2025 | `l-OwmhoBQuY` | Nuevo Recorrido Vuelta 2026! |
 
-| # | Fecha | Dur. | youtubeId | Título |
-|---|---|---|---|---|
-| **1** | 10 may 2026 | 71 min | `gFu-15TP8uw` | ¿Quién ganará en el mercado? \| Polémica en Traka |
-| **2** | 24 mar 2026 | 69 min | `lWj1oTcYX8o` | Errores de la Cape Epic 2026 |
-| **3** | 02 mar 2026 | 104 min | `tcVNXIfRcMw` | Episodio Especial: Sobremesa con los pros |
-| **4** | 22 feb 2026 | 113 min | `gWswoVKJ2Lc` | Nueva Cannondale SUPERSIX! ¿Bici o Cepo? |
-| **5** | 15 feb 2026 | 116 min | `B9y3ELUXPJk` | ¿Redbull te da alas? \| NOS PAGAN LA CAPE! |
-| **6** | 08 feb 2026 | 107 min | `ev0tzxeAOLY` | ¿Qué esta pasando en CANYON? |
-| **7** | 01 feb 2026 | 127 min | `Z0HybwI-yxk` | Flecha nos acusa de "CHARLATANES" |
-| **8** | 25 ene 2026 | 81 min | `VEvA7w4EVOc` | TODAS las bicis del world tour 2026 analizadas! |
-| **9** | 18 ene 2026 | 113 min | `5yoINT_hUiw` | ¿Por qué se retira un campeón tan pronto? |
-| **10** | 11 ene 2026 | 91 min | `-TUEBDC4eqs` | Los beneficios de la creatina para ciclistas |
-| **11** | 04 ene 2026 | 94 min | `IXwk61V6gWs` | Specialized lo vuelve a hacer! |
-| **12** | 28 dic 2025 | 96 min | `l-OwmhoBQuY` | Nuevo Recorrido Vuelta 2026! |
-| **13** | 21 dic 2025 | 118 min | `DyquvTvjJYE` | Nuevas Equipaciones 2026!! |
-| **14** | 30 nov 2025 | 76 min | `sF7fe35IJi4` | Campagnolo está en peligro |
-| **15** | 16 nov 2025 | 85 min | `tiRqcZ6vol8` | 5 marcas dicen que tienen la bici más rápida |
-| **16** | 02 nov 2025 | 102 min | `umyb6Wroe84` | Top 10 Sueldos del Peloton |
-| **17** | 14 sep 2025 | 53 min | `3_6ojm-SF7c` | ¿La mas rápida? ¡Una Decathlon! \| Ep.2 |
-| **18** | 07 sep 2025 | 39 min | `qG4PMXC7wLM` | Los vatios inhumanos de Pogacar \| Ep.1 |
+### Cómo se validó lo transcrito de las capturas
 
-La columna **Dur.** está para validar: ningún minuto del timeline puede pasarse
-de ahí. Es el control que cazó la errata de `gy5RLwGDFs8` (pendiente 2).
+Leer minutos de una imagen es donde se cuela el error, así que cada bloque
+pasó tres controles antes de entrar:
 
-### Dos formas de arreglarlo
+1. **Minutos crecientes** dentro del episodio.
+2. **Ninguno por encima de la duración real** del vídeo. Este control cazó dos
+   erratas (ver más abajo).
+3. **Contraste con la transcripción**: para cada bloque se comprueba que en ese
+   minuto se esté hablando de eso. 87 de 104 bloques se confirmaron solos; los
+   17 restantes eran nombres propios que el subtitulado automático destroza
+   («Campagnolo» → «Campañolo», «Rapha» → «Rafa») y se revisaron a mano.
 
-- **La buena:** escribir el timeline en la **descripción de YouTube** y volver
-  a generar `data/episodios.js` (paso 3 de arriba). El dato queda en la fuente
-  y los espectadores ganan capítulos clicables en el reproductor.
-- **La de capturas:** Eduardo manda capturas numeradas según la tabla y se
-  transcriben a mano a `data/episodios.js`. Al transcribir hay que comprobar
-  siempre tres cosas: minutos crecientes, ninguno por encima de la duración, y
-  que el número de bloques cuadre con la captura. Ante la duda, preguntar en
-  vez de inventar un minuto.
+El script de validación no está en el repo (es de un solo uso), pero el
+procedimiento sí: **repetirlo con cualquier timeline que venga de una captura.**
 
-**2. Una errata en YouTube.** En `gy5RLwGDFs8` (9 ago 2026) la descripción dice
-«¿Bici o cepo? (01:40:00)» en un vídeo que dura 1h21. El dato se ha dejado tal
-cual porque el timeline sale tal cual de YouTube: arreglar allí y regenerar.
+### Si algún día se rehace
+
+La vía buena sigue siendo escribir el timeline **en la descripción de
+YouTube**: el dato queda en la fuente, se regenera solo, y los espectadores
+ganan capítulos clicables en el reproductor.
+
+**2. Tres minutos que Eduardo tiene que confirmar.** Salieron al validar y
+están marcados aquí para no perderlos de vista:
+
+| Episodio | Qué pasa | Qué dice la transcripción |
+|---|---|---|
+| `gy5RLwGDFs8` · 9 ago 2026 | La **descripción de YouTube** pone «¿Bici o cepo? (01:40:00)» en un vídeo de 1h21. Dato dejado tal cual: sale de YouTube | La sección arranca sobre **1:02** |
+| `-TUEBDC4eqs` · 11 ene 2026 | La **captura** pone «¿Bici o cepo? (01:45:20)» en un vídeo de 1h31 | El audio dice «bici o cepo presentado por el señor Eduardo Talavera» en **1:02:39**, que es lo que se ha puesto |
+| `DyquvTvjJYE` · 21 dic 2025 | En la captura, el bloque «¿Qué tiene que hacer una marca china para entrar al mercado español?» **no lleva minuto**. Se ha quedado fuera | El tema se anuncia en la intro, pero no se localiza con seguridad |
+
+Hay un cuarto caso más blando: en `tiRqcZ6vol8` (16 nov 2025) la captura sitúa
+«Hacemos el primer sorteo del canal» en 59:41, pero el sorteo se hace en
+**1:24:32** según el audio. Se ha respetado la captura, que manda.
 
 **3. «tubles».** Ver P7 en `02_DECISIONES.md`.
