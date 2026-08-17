@@ -132,12 +132,15 @@
         <p>Sin spam. Un correo por episodio.</p>
       </div>
       <div>
-        <!-- iframe directa en vez del loader v3: el loader deja el contenedor a
-             height:0 porque nunca llega su postMessage de altura. Ver 02_DECISIONES.md -->
-        <iframe src="https://subscribe-forms.beehiiv.com/2c6b1dc0-a3fc-4f18-961f-430e010e6b6a"
+        <!-- Formulario de beehiiv. Dos cosas importantes, ver 02_DECISIONES.md:
+             1) NO usar el loader v3 (script): inyecta la iframe en un contenedor
+                con height:0 y nunca llega su postMessage de altura, asi que no se ve nada.
+             2) La URL tiene que ser la del endpoint /v3/forms/: la URL corta antigua
+                sirve una version cacheada con el texto de consentimiento en ingles. -->
+        <iframe src="https://subscribe-forms.beehiiv.com/v3/forms/2c6b1dc0-a3fc-4f18-961f-430e010e6b6a?referrer=https%3A%2F%2Faquinadieentrena.cc%2F"
                 title="Suscríbete a la newsletter de Aquí Nadie Entrena"
                 loading="lazy" frameborder="0" scrolling="no"
-                style="width:100%;height:170px;margin:0;border:0;border-radius:0;background:transparent"></iframe>
+                style="width:100%;height:280px;margin:0;border:0;border-radius:0;background:transparent"></iframe>
       </div>
     </div>
   </section>
