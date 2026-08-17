@@ -423,7 +423,7 @@ window.ANE_EPISODIOS = [
       { t: 2710,  titulo: "Salen las últimas equipaciones, ¿cuál nos compraríamos?" },
       { t: 3070,  titulo: "La nueva ropa de Specialized ahorra 20W" },
       { t: 3410,  titulo: "Detalles aerodinámicos" },
-      { t: 3759,  titulo: "¿Bici o cepo?" }
+      { t: 3766,  titulo: "¿Bici o cepo?" }
     ]
   },
   {
@@ -454,6 +454,7 @@ window.ANE_EPISODIOS = [
     duracion: 7090,
     youtubeId: "DyquvTvjJYE",
     temas: [
+      { t: 0,     titulo: "Introducción" },
       { t: 200,   titulo: "¿Cuál es la mejor equipación 2026?" },
       { t: 2460,  titulo: "Nuevo caso de dopaje en el ciclismo" },
       { t: 3480,  titulo: "Cycling News vuelve a analizar las bicis más rápidas" },
@@ -535,8 +536,8 @@ window.ANE_EPISODIOS = [
       { t: 231,   titulo: "Qué esperamos de la industria en los próximos 2 años" },
       { t: 2446,  titulo: "5 marcas dicen que tienen la bici más rápida del pelotón" },
       { t: 3023,  titulo: "Quiénes deberían probar las nuevas bicis del mercado" },
-      { t: 3581,  titulo: "Hacemos el primer sorteo del canal" },
-      { t: 3623,  titulo: "¿Bici o cepo?" }
+      { t: 3623,  titulo: "¿Bici o cepo?" },
+      { t: 5072,  titulo: "Hacemos el primer sorteo del canal" }
     ]
   },
   {

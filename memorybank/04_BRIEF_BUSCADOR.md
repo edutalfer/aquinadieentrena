@@ -71,7 +71,7 @@ Cape Epic, Andalucía Bike Race y Taiwán.
 **1. Timelines: 44 de 46 hechos.** De los 18 que no llevaban «Temas del
 episodio» en la descripción de YouTube, Eduardo mandó **16 capturas** de las
 diapositivas del vídeo y se transcribieron a `data/episodios.js`. Total en la
-web: **307 bloques**.
+web: **308 bloques**.
 
 Los dos que siguen sin timeline, porque no existe:
 
@@ -102,17 +102,18 @@ La vía buena sigue siendo escribir el timeline **en la descripción de
 YouTube**: el dato queda en la fuente, se regenera solo, y los espectadores
 ganan capítulos clicables en el reproductor.
 
-**2. Tres minutos que Eduardo tiene que confirmar.** Salieron al validar y
-están marcados aquí para no perderlos de vista:
+**2. Una errata, en YouTube.** En `gy5RLwGDFs8` (9 ago 2026) la descripción
+pone «¿Bici o cepo? (01:40:00)» en un vídeo que dura 1h21. Se ha dejado tal
+cual porque ese timeline sale de YouTube: **hay que arreglarlo allí** y volver
+a generar `data/episodios.js`. Según el audio, la sección arranca sobre 1:02.
 
-| Episodio | Qué pasa | Qué dice la transcripción |
+Los otros tres desajustes que salieron al validar ya están resueltos por
+Eduardo (17/08/2026), y son un buen ejemplo de que el control sirve:
+
+| Episodio | Qué pasaba | Cómo quedó |
 |---|---|---|
-| `gy5RLwGDFs8` · 9 ago 2026 | La **descripción de YouTube** pone «¿Bici o cepo? (01:40:00)» en un vídeo de 1h21. Dato dejado tal cual: sale de YouTube | La sección arranca sobre **1:02** |
-| `-TUEBDC4eqs` · 11 ene 2026 | La **captura** pone «¿Bici o cepo? (01:45:20)» en un vídeo de 1h31 | El audio dice «bici o cepo presentado por el señor Eduardo Talavera» en **1:02:39**, que es lo que se ha puesto |
-| `DyquvTvjJYE` · 21 dic 2025 | En la captura, el bloque «¿Qué tiene que hacer una marca china para entrar al mercado español?» **no lleva minuto**. Se ha quedado fuera | El tema se anuncia en la intro, pero no se localiza con seguridad |
-
-Hay un cuarto caso más blando: en `tiRqcZ6vol8` (16 nov 2025) la captura sitúa
-«Hacemos el primer sorteo del canal» en 59:41, pero el sorteo se hace en
-**1:24:32** según el audio. Se ha respetado la captura, que manda.
+| `-TUEBDC4eqs` · 11 ene | La captura ponía «¿Bici o cepo? (01:45:20)» en un vídeo de 1h31 | **1:02:46**, confirmado por Eduardo |
+| `DyquvTvjJYE` · 21 dic | Un bloque sin minuto («marca china») | Captura nueva: ese bloque no va, y entra «Introducción (00:00)» |
+| `tiRqcZ6vol8` · 16 nov | La captura situaba el sorteo en 59:41; el audio lo pone en 1:24:32 | **1:24:32**, confirmado por Eduardo. Va después del «bici o cepo» |
 
 **3. «tubles».** Ver P7 en `02_DECISIONES.md`.
