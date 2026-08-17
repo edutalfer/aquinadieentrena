@@ -62,11 +62,11 @@ del domingo**. Con ese criterio faltan estos seis, y solo estos:
 Es el hueco de marzo-abril de 2026 (Cape Epic) más el `EP.3` de septiembre.
 `lWj1oTcYX8o` salió en martes, seguramente desplazado por la Cape Epic.
 
-**Decisión editorial pendiente: el Tour.** En julio de 2026 no hubo episodio
-dominical; hubo **22 vídeos diarios de etapa** (33-57 min, 16 h en total) más
-el especial de presentación. Ninguno tiene VTT ni timeline. Si entran, el
-índice pasaría de 40 a 62 episodios y crecería en torno a un 40%. **Eduardo
-decide** si son episodio o no.
+**El Tour NO entra — decidido (D15).** En julio de 2026 no hubo episodio
+dominical; hubo 22 vídeos diarios de etapa (33-57 min, 16 h en total) más el
+especial de presentación. Eduardo ha decidido que **de momento no van al
+buscador**: no hay que bajar sus VTT ni darlos de alta. El hueco de julio en
+`episodios.html` es intencionado, no es un fallo.
 
 El resto de los 128 son vlogs, «Bici o cepo» y vídeos cortos de noticias
 («Malas noticias para Rapha» son 10 min, no es episodio), más los diarios de

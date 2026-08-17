@@ -22,6 +22,7 @@
 | D12 | 2026-08-17 | Los VTT se bajan **a mano desde YouTube Studio** y se versionan en bruto en `data/subtitulos_originales/<youtubeId>.es.vtt` | yt-dlp no puede con la descarga (ver D10 y §5 de CLAUDE.md). Guardarlos en bruto permite rehacer la segmentación sin volver a YouTube |
 | D13 | 2026-08-17 | Fecha, duración y timeline se sacan de la **página pública del vídeo con `curl`** desde el Mac, no con yt-dlp | El yt-dlp del Mac falla al extraer vídeo a vídeo («Es necesario volver a cargar la página»), pero el HTML público trae `uploadDate`, `lengthSeconds` y la descripción entera. El script está en el histórico de la sesión, no en el repo: es de un solo uso |
 | D14 | 2026-08-17 | El índice sigue **en un solo fichero**, sin trocear por año | Medido de verdad: 3,9 MB en disco pero **1,4 MB por la red** (mod_deflate ya comprime `application/json`) y solo se descarga al tocar el buscador. Buscar tarda 6-8 ms sobre 7.667 segmentos. Trocear por año no ahorraría nada: una búsqueda global necesita todos los trozos igualmente |
+| D15 | 2026-08-17 | Los **22 vídeos de etapa del Tour 2026** (julio, 33-57 min) **no entran en el buscador de momento** | Lo decide Eduardo. No hay que bajar sus VTT ni darlos de alta en `data/episodios.js`. Si algún día cambia de idea, el procedimiento es el mismo que para cualquier episodio |
 
 ---
 
