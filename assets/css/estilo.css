@@ -1,0 +1,506 @@
+/* ============================================================
+   AQUÍ NADIE ENTRENA — hoja de estilos
+   Alineada con ANE Brand Guidelines v1.0 (2026)
+
+   Paleta primaria:  Azul ANE #3F77DA · Negro Pelotón #191919
+                     Blanco Salida #FFFFFF
+   Tipografías:      Archivo Black Italic (titulares, SIEMPRE en caja alta)
+                     Inter (todo lo que hay que leer)
+   ============================================================ */
+
+/* ---------- Tipografías propias ---------- */
+
+@font-face {
+  font-family: "Archivo";
+  src: url("../fonts/archivo-black-italic.woff2") format("woff2");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* primarios */
+  --azul: #3F77DA;
+  --negro: #191919;
+  --blanco: #FFFFFF;
+
+  /* apoyo */
+  --azul-profundo: #264783;
+  --azul-enlace: #2A5CB8;
+  --azul-destello: #B2C8F0;
+  --gris-carbon: #33363D;
+  --gris-medio: #6E747F;
+  --gris-humo: #F2F3F5;
+
+  --display: "Archivo", "Arial Narrow", sans-serif;
+  --texto: "Inter", system-ui, -apple-system, sans-serif;
+
+  --ancho: 1180px;
+}
+
+/* Titulares de marca: Archivo Black Italic, caja alta, tracking cerrado,
+   interlineado 0,9. Es la regla del manual y no se toca. */
+.display {
+  font-family: var(--display);
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+body {
+  margin: 0;
+  background: var(--blanco);
+  color: var(--negro);
+  font-family: var(--texto);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+::selection { background: var(--azul); color: var(--blanco); }
+:focus-visible { outline: 3px solid var(--azul); outline-offset: 3px; }
+
+.envoltorio {
+  width: 100%;
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ---------- Cabecera ---------- */
+
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--negro);
+  color: var(--blanco);
+}
+
+.cabecera__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 68px;
+  padding: 10px 0;
+}
+
+/* El logotipo se usa siempre como archivo, nunca recompuesto con la
+   tipografía. Mínimo 160 px de ancho según el manual. */
+.logo img {
+  display: block;
+  width: 168px;
+  height: auto;
+}
+
+.menu {
+  display: flex;
+  gap: 26px;
+  font-family: var(--texto);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.menu a {
+  text-decoration: none;
+  padding-bottom: 3px;
+  border-bottom: 2px solid transparent;
+  transition: border-color .15s, color .15s;
+}
+.menu a:hover { border-color: var(--azul); color: var(--azul-destello); }
+
+@media (max-width: 800px) {
+  .menu { display: none; }
+  .logo img { width: 148px; }
+}
+
+/* ---------- Portada / buscador ---------- */
+
+.portada {
+  background: var(--negro);
+  color: var(--blanco);
+  padding: 62px 0 74px;
+  position: relative;
+}
+
+.portada__eyebrow {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--azul-destello);
+  margin: 0 0 18px;
+}
+
+.portada h1 {
+  font-size: clamp(44px, 8.5vw, 96px);
+  margin: 0 0 20px;
+  max-width: 15ch;
+}
+/* Azul sobre negro solo en titulares grandes: 4,1:1, cumple para 24 px+ */
+.portada h1 em { font-style: italic; color: var(--azul); }
+
+.portada__sub {
+  max-width: 50ch;
+  color: #C7CAD1;
+  margin: 0 0 34px;
+  font-size: 18px;
+}
+.portada__sub b { color: var(--blanco); font-weight: 600; }
+
+/* caja de búsqueda */
+.buscador { max-width: 700px; }
+.buscador__campo {
+  display: flex;
+  align-items: stretch;
+  background: var(--blanco);
+  border: 3px solid var(--azul);
+}
+.buscador input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 17px 18px;
+  font-family: var(--texto);
+  font-size: 18px;
+  color: var(--negro);
+}
+.buscador input::placeholder { color: var(--gris-medio); }
+.buscador input:focus { outline: none; }
+.buscador__campo:focus-within { box-shadow: 0 0 0 4px rgba(63,119,218,.35); }
+
+.buscador__icono {
+  display: grid;
+  place-items: center;
+  padding: 0 22px;
+  background: var(--azul);
+  color: var(--blanco);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .12em;
+}
+
+.sugerencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.chip {
+  font-family: var(--texto);
+  font-weight: 500;
+  font-size: 13px;
+  padding: 7px 13px;
+  border: 1px solid var(--gris-carbon);
+  background: transparent;
+  color: #C7CAD1;
+  cursor: pointer;
+  transition: .15s;
+}
+.chip:hover { border-color: var(--azul); color: var(--azul-destello); }
+
+/* ---------- Resultados ---------- */
+
+.resultados {
+  background: var(--gris-humo);
+  border-bottom: 1px solid #E1E3E7;
+}
+.resultados[hidden] { display: none; }
+.resultados__caja { padding: 38px 0 52px; }
+
+.resultados__estado {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gris-medio);
+  margin: 0 0 20px;
+}
+
+.hallazgo {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 16px 0;
+  border-top: 1px solid #DFE1E5;
+  text-decoration: none;
+}
+.hallazgo:hover .hallazgo__min { background: var(--azul); color: var(--blanco); }
+.hallazgo:hover .hallazgo__tema { color: var(--azul-enlace); }
+
+.hallazgo__min {
+  font-family: var(--texto);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 7px 0;
+  text-align: center;
+  background: var(--negro);
+  color: var(--blanco);
+  transition: .15s;
+  height: fit-content;
+}
+
+.hallazgo__tema {
+  font-size: 23px;
+  margin: 0 0 5px;
+  transition: color .15s;
+}
+.hallazgo__ep {
+  font-size: 14px;
+  color: var(--gris-medio);
+  margin: 0;
+}
+
+mark { background: var(--azul-destello); color: var(--negro); padding: 0 2px; }
+
+.vacio { padding: 24px 0 10px; border-top: 1px solid #DFE1E5; }
+.vacio p { margin: 0 0 6px; }
+.vacio a { color: var(--azul-enlace); }
+
+/* ---------- Secciones ---------- */
+
+.seccion { padding: 76px 0; }
+.seccion--humo { background: var(--gris-humo); }
+.seccion--oscura { background: var(--negro); color: var(--blanco); }
+
+.rotulo {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0 0 34px;
+}
+.rotulo h2 {
+  font-size: clamp(32px, 5vw, 52px);
+  margin: 0;
+}
+.rotulo__num {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--gris-medio);
+}
+
+/* ---------- Episodios + perfil de etapa ---------- */
+
+.episodio {
+  border-top: 2px solid var(--negro);
+  padding: 24px 0 30px;
+}
+.episodio:last-child { border-bottom: 2px solid var(--negro); }
+
+.episodio__fecha {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gris-medio);
+  display: block;
+  margin-bottom: 6px;
+}
+.episodio__titulo {
+  font-size: clamp(23px, 3.2vw, 36px);
+  margin: 0;
+}
+
+.perfil { margin-top: 18px; }
+.perfil svg { display: block; width: 100%; height: auto; }
+.perfil__marca { cursor: pointer; }
+.perfil__marca circle { transition: r .12s, fill .12s; }
+.perfil__marca:hover circle, .perfil__marca:focus circle { fill: var(--azul); r: 7; }
+
+.perfil__pie {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--gris-medio);
+  margin-top: 4px;
+}
+
+.temas {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 0 28px;
+}
+.temas li { border-top: 1px solid #E1E3E7; }
+.temas a {
+  display: flex;
+  gap: 14px;
+  padding: 9px 0;
+  text-decoration: none;
+  font-size: 15px;
+  align-items: baseline;
+}
+.temas a:hover { color: var(--azul-enlace); }
+.temas time {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--gris-medio);
+  flex: 0 0 60px;
+}
+.temas a:hover time { color: var(--azul-enlace); }
+
+/* ---------- Hosts ---------- */
+
+.hosts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.host {
+  background: var(--blanco);
+  border: 2px solid var(--negro);
+  padding: 30px 28px 32px;
+}
+.host h3 { font-size: 34px; margin: 0 0 6px; }
+.host__rol {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--azul-enlace);
+  margin: 0 0 14px;
+}
+.host p { margin: 0 0 18px; font-size: 16px; }
+.host a.enlace {
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--azul-enlace);
+  border-bottom: 2px solid var(--azul);
+  padding-bottom: 2px;
+}
+.host a.enlace:hover { background: var(--azul); color: var(--blanco); }
+
+@media (max-width: 720px) { .hosts { grid-template-columns: 1fr; } }
+
+/* ---------- Newsletter ---------- */
+
+.boletin {
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 48px;
+  align-items: center;
+}
+.boletin h2 { font-size: clamp(34px, 5.5vw, 62px); margin: 0 0 18px; }
+.boletin h2 em { font-style: italic; color: var(--azul); }
+.boletin p { color: #C7CAD1; margin: 0 0 10px; max-width: 44ch; }
+.boletin iframe { width: 100%; border: 0; min-height: 240px; background: transparent; }
+
+@media (max-width: 860px) { .boletin { grid-template-columns: 1fr; gap: 26px; } }
+
+/* ---------- Bici o cepo · código de color del manual ----------
+   BICI  = fondo Azul ANE, tipografía blanca
+   CEPO  = fondo Negro Pelotón, tipografía blanca            */
+
+.acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+.accion { padding: 32px 28px 34px; display: flex; flex-direction: column; }
+.accion--bici { background: var(--azul); color: var(--blanco); }
+.accion--marcas { background: var(--blanco); color: var(--negro); border: 2px solid var(--negro); }
+
+.accion__etiqueta {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+.accion--bici .accion__etiqueta { color: rgba(255,255,255,.75); }
+.accion--marcas .accion__etiqueta { color: var(--gris-medio); }
+
+.accion h3 { font-size: clamp(28px, 4vw, 40px); margin: 0 0 12px; }
+.accion p { margin: 0 0 24px; font-size: 16px; }
+.accion--bici p { color: rgba(255,255,255,.92); }
+
+.boton {
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: auto;
+  font-family: var(--texto);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 14px 24px;
+  border: 2px solid currentColor;
+  transition: .15s;
+}
+.accion--bici .boton { background: var(--blanco); color: var(--azul); border-color: var(--blanco); }
+.accion--bici .boton:hover { background: transparent; color: var(--blanco); }
+.accion--marcas .boton { background: var(--negro); color: var(--blanco); border-color: var(--negro); }
+.accion--marcas .boton:hover { background: transparent; color: var(--negro); }
+
+.boton--solo { background: var(--negro); color: var(--blanco); border-color: var(--negro); margin-top: 0; }
+.boton--solo:hover { background: transparent; color: var(--negro); }
+
+@media (max-width: 720px) { .acciones { grid-template-columns: 1fr; } }
+
+/* ---------- Pie ---------- */
+
+.pie {
+  background: var(--negro);
+  color: var(--gris-medio);
+  padding: 52px 0 42px;
+  font-size: 14px;
+}
+.pie__fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.pie__claim {
+  font-size: clamp(30px, 4.6vw, 48px);
+  color: var(--blanco);
+  margin: 0 0 12px;
+  max-width: 12ch;
+}
+.pie__claim em { font-style: italic; color: var(--azul); }
+.pie h4 {
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--azul-destello);
+  margin: 0 0 12px;
+}
+.pie ul { list-style: none; margin: 0; padding: 0; }
+.pie li { margin-bottom: 7px; }
+.pie a { text-decoration: none; color: #C7CAD1; }
+.pie a:hover { color: var(--azul-destello); }
+.pie__logo img { width: 150px; height: auto; display: block; margin-bottom: 18px; }
+.pie__legal {
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px solid var(--gris-carbon);
+  font-size: 12px;
+  color: var(--gris-medio);
+}

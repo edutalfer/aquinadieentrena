@@ -1,0 +1,15 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Nada de dependencias ni temporales
+node_modules/
+*.log
+*.tmp
+*.b64
+
+# Copias de trabajo
+*.bak
+_borrador*

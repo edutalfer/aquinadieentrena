@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Todos los episodios — Aquí Nadie Entrena</title>
+<meta name="description" content="Archivo completo de episodios de Aquí Nadie Entrena, con todos los temas y el minuto en que empieza cada uno.">
+<meta name="theme-color" content="#191919">
+<link rel="icon" href="assets/img/icono-512.png">
+<link rel="apple-touch-icon" href="assets/img/icono-180.png">
+<link rel="preload" href="assets/fonts/archivo-black-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="envoltorio cabecera__fila">
+    <a class="logo" href="index.html"><img src="assets/img/logo-negativo.png" alt="Aquí Nadie Entrena"></a>
+    <nav class="menu">
+      <a href="episodios.html">Episodios</a>
+      <a href="index.html#hosts">Quiénes somos</a>
+      <a href="index.html#newsletter">Newsletter</a>
+      <a href="index.html#cepo">Bici o cepo</a>
+      <a href="index.html#marcas">Marcas</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="portada" style="padding:50px 0 56px">
+    <div class="envoltorio">
+      <p class="portada__eyebrow">Archivo</p>
+      <h1 class="display" style="font-size:clamp(38px,7vw,72px)">Todos los <em>episodios</em></h1>
+      <p class="portada__sub">Cada episodio con su perfil y sus bloques. Pincha en cualquier tema y vas directo a ese minuto.</p>
+
+      <div class="buscador">
+        <label class="buscador__campo">
+          <span style="position:absolute;left:-9999px">Buscar un tema</span>
+          <input id="busqueda" type="search" autocomplete="off" spellcheck="false"
+                 placeholder="Filtrar por tema, marca o corredor…">
+          <span class="buscador__icono" aria-hidden="true">BUSCAR</span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="resultados" id="resultados" hidden aria-live="polite">
+    <div class="envoltorio resultados__caja">
+      <p class="resultados__estado" id="estadoResultados"></p>
+      <div id="listaResultados"></div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="envoltorio"><div id="todos"></div></div>
+  </section>
+</main>
+
+<footer class="pie">
+  <div class="envoltorio">
+    <div class="pie__fila">
+      <div class="pie__logo">
+        <img src="assets/img/logo-negativo.png" alt="Aquí Nadie Entrena">
+        <p class="display pie__claim">Hablamos de <em>todo</em>.</p>
+      </div>
+      <div>
+        <h4>Escuchar</h4>
+        <ul>
+          <li><a href="https://www.youtube.com/@aqui.nadie.entrena" target="_blank" rel="noopener">YouTube</a></li>
+          <li><a href="https://open.spotify.com/show/7EUC3MLxf5Zmfw8eUroFXx" target="_blank" rel="noopener">Spotify</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Redes</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/aquinadieentrena.podcast/" target="_blank" rel="noopener">Instagram</a></li>
+          <li><a href="https://www.tiktok.com/@aquinadieentrena" target="_blank" rel="noopener">TikTok</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Más</h4>
+        <ul>
+          <li><a href="https://aquinadieentrena.beehiiv.com/" target="_blank" rel="noopener">Newsletter</a></li>
+          <li><a href="mailto:entrenaaquinadie@gmail.com">Contacto</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="pie__legal">© 2026 Aquí Nadie Entrena · Eduardo Talavera y Cristóbal Meseguer</p>
+  </div>
+</footer>
+
+<script src="data/episodios.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

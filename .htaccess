@@ -1,0 +1,60 @@
+# ============================================================
+# Aquí Nadie Entrena — configuración del servidor
+# ============================================================
+
+# ---------- Bloquear el rastro de git ----------
+# El fichero .git de public_html solo apunta a ~/ane.git, pero
+# no hay motivo para que sea legible desde fuera.
+<FilesMatch "^\.(git|gitignore|gitattributes)">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # ---------- Forzar HTTPS ----------
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # ---------- URLs sin .html ----------
+  # /episodios funciona igual que /episodios.html
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}\.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+</IfModule>
+
+# ---------- Caché ----------
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # Las fuentes y el logo no cambian nunca
+  ExpiresByType font/woff2        "access plus 1 year"
+  ExpiresByType image/png         "access plus 1 year"
+  ExpiresByType image/svg+xml     "access plus 1 year"
+
+  # CSS y JS cambian de vez en cuando
+  ExpiresByType text/css          "access plus 1 week"
+  ExpiresByType application/javascript "access plus 1 week"
+  ExpiresByType text/javascript   "access plus 1 week"
+
+  # El HTML y los datos de episodios cambian cada semana
+  ExpiresByType text/html         "access plus 1 hour"
+</IfModule>
+
+# ---------- Compresión ----------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain
+  AddOutputFilterByType DEFLATE application/javascript text/javascript
+  AddOutputFilterByType DEFLATE image/svg+xml application/json
+</IfModule>
+
+# ---------- Tipos MIME ----------
+<IfModule mod_mime.c>
+  AddType font/woff2 .woff2
+</IfModule>
+
+# ---------- Seguridad básica ----------
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
