@@ -45,21 +45,32 @@ clone por SSH falla: el Mac no tiene clave dada de alta en GitHub.
 
 ## Lo que quedó pendiente
 
-**1. Faltan episodios por bajar de Studio.** El canal tiene 128 vídeos, pero
-solo 40 tienen VTT. Estos siete parecen episodios de podcast y no lo tienen:
+**1. Faltan seis episodios por bajar de Studio.** El canal tiene 128 vídeos,
+40 con VTT. Se cruzaron fecha, día de la semana y duración de los 128: los 40
+indexados son 39 domingos + 1 lunes, así que el episodio es **el vídeo largo
+del domingo**. Con ese criterio faltan estos seis, y solo estos:
 
-| youtubeId | Título |
-|---|---|
-| `piWBTCsMFdY` | ¿Como de ancho es demasiado ancho!?… \| EP.3 |
-| `hIexLofEMVM` | Malas noticias para Rapha \| ¿Qué esta pasando? |
-| `U1yfpFm5A4g` | Specialized perdona a Armstrong?? \| Cuanto dinero se necesita… |
-| `lWj1oTcYX8o` | Errores de la Cape Epic 2026 \| ¿La nueva "mejor" marca española? |
-| `38AjpfCo7dc` | El futuro del textil en ciclismo \| Cómo puede ganar el tour Remco |
-| `_pNQhuWqt3M` | ¿Esta es la nueva Canyon Aeroad? \| Strava no tiene sentido |
-| `KPiGXHKJ_gM` | Van Der Poel IGNORA a Canyon en Roubaix! \| Seixas va al tour? |
+| youtubeId | Fecha | Dur. | Timeline | Título |
+|---|---|---|---|---|
+| `KPiGXHKJ_gM` | dom 12 abr 2026 | 114 min | 9 temas | Van Der Poel IGNORA a Canyon en Roubaix! |
+| `_pNQhuWqt3M` | dom 5 abr 2026 | 94 min | 6 temas | ¿Esta es la nueva Canyon Aeroad? \| Strava no tiene sentido |
+| `38AjpfCo7dc` | dom 29 mar 2026 | 81 min | 9 temas | El futuro del textil en ciclismo |
+| `lWj1oTcYX8o` | mar 24 mar 2026 | 69 min | — | Errores de la Cape Epic 2026 |
+| `U1yfpFm5A4g` | dom 15 mar 2026 | 69 min | 7 temas | Specialized perdona a Armstrong?? |
+| `piWBTCsMFdY` | dom 21 sep 2025 | 67 min | 7 temas | ¿Como de ancho es demasiado ancho!? \| EP.3 |
 
-El resto de los 128 son vlogs, «Bici o cepo», etapas del Tour, Cape Epic y
-Andalucía Bike Race: **Eduardo decide** cuáles son episodio y cuáles no.
+Es el hueco de marzo-abril de 2026 (Cape Epic) más el `EP.3` de septiembre.
+`lWj1oTcYX8o` salió en martes, seguramente desplazado por la Cape Epic.
+
+**Decisión editorial pendiente: el Tour.** En julio de 2026 no hubo episodio
+dominical; hubo **22 vídeos diarios de etapa** (33-57 min, 16 h en total) más
+el especial de presentación. Ninguno tiene VTT ni timeline. Si entran, el
+índice pasaría de 40 a 62 episodios y crecería en torno a un 40%. **Eduardo
+decide** si son episodio o no.
+
+El resto de los 128 son vlogs, «Bici o cepo» y vídeos cortos de noticias
+(«Malas noticias para Rapha» son 10 min, no es episodio), más los diarios de
+Cape Epic, Andalucía Bike Race y Taiwán.
 
 **2. 17 de los 40 no tienen timeline** porque su descripción de YouTube no
 lleva el bloque «Temas del episodio». Salen en el buscador por transcripción,

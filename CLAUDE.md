@@ -129,7 +129,7 @@ Studio están renombrados a `<youtubeId>.es.vtt`, `data/episodios.js` tiene los
 40 episodios con fecha, duración y timeline reales, y el índice trae 7.667
 segmentos. Probado en local. Detalle y pendientes: `04_BRIEF_BUSCADOR.md`.
 
-**Falta.** Bajar de Studio los VTT de siete episodios que no lo tienen y
+**Falta.** Bajar de Studio los VTT de seis episodios que no lo tienen y
 escribir en YouTube el timeline de 17 episodios que no lo llevan. Los dos
 listados están en `04_BRIEF_BUSCADOR.md`.
 

@@ -74,7 +74,7 @@ Si algo se rompe: `git revert` y atrás en un segundo.
 ## Estado de las dos líneas de trabajo abiertas
 
 ### 🔍 Buscador (chat dedicado)
-✅ Alimentado y probado. Queda bajar de Studio los VTT de siete episodios que
+✅ Alimentado y probado. Queda bajar de Studio los VTT de seis episodios que
 faltan y escribir en YouTube el timeline de 17 que no lo tienen.
 Ver `04_BRIEF_BUSCADOR.md`
 
