@@ -504,3 +504,13 @@ mark { background: var(--azul-destello); color: var(--negro); padding: 0 2px; }
   font-size: 12px;
   color: var(--gris-medio);
 }
+
+/* ---------- hallazgos de transcripción (voz) ---------- */
+.hallazgo__voz {
+  margin: 0 0 4px;
+  font-style: italic;
+  font-size: 16px;
+  color: #33363D;
+  line-height: 1.5;
+}
+.hallazgo--voz:hover .hallazgo__voz { color: var(--azul-enlace); }

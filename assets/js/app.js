@@ -151,6 +151,63 @@
     caja.innerHTML = lista.map(tarjeta).join("");
   }
 
+  /* ---------- indice de transcripciones (carga perezosa) ---------- */
+
+  var VOZ = null;
+  var vozCargando = false;
+
+  function cargaVoz() {
+    if (VOZ !== null || vozCargando) return;
+    vozCargando = true;
+    fetch("data/indice_busqueda.json")
+      .then(function (r) { return r.ok ? r.json() : { episodios: [] }; })
+      .then(function (datos) {
+        var porId = {};
+        EPISODIOS.forEach(function (ep) { porId[ep.youtubeId] = ep; });
+        VOZ = [];
+        (datos.episodios || []).forEach(function (e) {
+          var ep = porId[e.youtubeId];
+          if (!ep) return;
+          VOZ.push({
+            ep: ep,
+            segmentos: e.segmentos.map(function (s) { return [s[0], s[1], limpia(s[1])]; })
+          });
+        });
+        if (campo && campo.value.trim().length >= 2) muestra(campo.value);
+      })
+      .catch(function () { VOZ = []; });
+  }
+
+  /* Recorta un fragmento alrededor de la primera palabra encontrada */
+  function fragmento(texto, plano, palabras) {
+    var pos = -1;
+    for (var i = 0; i < palabras.length; i++) {
+      var p = plano.indexOf(palabras[i]);
+      if (p !== -1 && (pos === -1 || p < pos)) pos = p;
+    }
+    if (pos === -1) pos = 0;
+    var desde = Math.max(0, pos - 60);
+    var hasta = Math.min(texto.length, pos + 120);
+    return (desde > 0 ? "\u2026" : "") + texto.slice(desde, hasta).trim() +
+           (hasta < texto.length ? "\u2026" : "");
+  }
+
+  function buscaVoz(palabras) {
+    if (!VOZ) return [];
+    var hallazgos = [];
+    VOZ.forEach(function (entrada) {
+      entrada.segmentos.forEach(function (s) {
+        var todas = palabras.every(function (p) { return s[2].indexOf(p) !== -1; });
+        if (!todas) return;
+        hallazgos.push({
+          ep: entrada.ep, origen: "voz", t: Math.max(0, s[0] - 3),
+          texto: s[1], plano: s[2], peso: palabras.length
+        });
+      });
+    });
+    return hallazgos;
+  }
+
   /* ---------- buscador ---------- */
 
   var campo = document.getElementById("busqueda");
@@ -172,11 +229,14 @@
         if (!todas) return;
         // los aciertos en el título del bloque valen más que en el del episodio
         var peso = palabras.filter(function (p) { return temaPlano.indexOf(p) !== -1; }).length;
-        hallazgos.push({ ep: ep, tema: tema, peso: peso });
+        hallazgos.push({ ep: ep, tema: tema, origen: "tema", peso: peso });
       });
     });
 
+    hallazgos = hallazgos.concat(buscaVoz(palabras));
+
     hallazgos.sort(function (a, b) {
+      if (a.origen !== b.origen) return a.origen === "tema" ? -1 : 1;
       if (b.peso !== a.peso) return b.peso - a.peso;
       return a.ep.fecha < b.ep.fecha ? 1 : -1;
     });
@@ -212,6 +272,16 @@
       : hallazgos.length + " momentos encontrados";
 
     lista.innerHTML = hallazgos.slice(0, 40).map(function (h) {
+      if (h.origen === "voz") {
+        return '<a class="hallazgo hallazgo--voz" href="' + enlace(h.ep, h.t) + '" target="_blank" rel="noopener">' +
+                 '<span class="hallazgo__min">' + reloj(h.t) + '</span>' +
+                 '<span>' +
+                   '<p class="hallazgo__voz">\u00ab' + resalta(fragmento(h.texto, h.plano, palabras), palabras) + '\u00bb</p>' +
+                   '<p class="hallazgo__ep">' + escapa(h.ep.titulo) +
+                     ' <span style="color:#6E747F">\u00b7 ' + fechaCorta(h.ep.fecha) + '</span></p>' +
+                 '</span>' +
+               '</a>';
+      }
       return '<a class="hallazgo" href="' + enlace(h.ep, h.tema.t) + '" target="_blank" rel="noopener">' +
                '<span class="hallazgo__min">' + reloj(h.tema.t) + '</span>' +
                '<span>' +
@@ -224,7 +294,8 @@
   }
 
   if (campo) {
-    campo.addEventListener("input", function () { muestra(campo.value); });
+    campo.addEventListener("focus", cargaVoz, { once: true });
+    campo.addEventListener("input", function () { cargaVoz(); muestra(campo.value); });
     document.querySelectorAll(".chip").forEach(function (chip) {
       chip.addEventListener("click", function () {
         campo.value = chip.dataset.tema || chip.textContent;

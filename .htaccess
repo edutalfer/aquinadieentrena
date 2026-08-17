@@ -12,6 +12,9 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # ---------- Carpetas internas (no publicas) ----------
+  RewriteRule ^(memorybank|pipeline|data/transcripciones)(/|$) - [F,L]
+
   # ---------- Forzar HTTPS ----------
   RewriteCond %{HTTPS} off
   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
