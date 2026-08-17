@@ -136,8 +136,11 @@ contraste con la transcripción. **Si vuelve a haber timelines en captura,
 repite esa validación.** Los dos que siguen sin timeline no lo tienen en
 ningún sitio.
 
-**Falta.** Una errata de minutaje que hay que corregir en YouTube, anotada en
-`04_BRIEF_BUSCADOR.md`. Nada más.
+**Falta: nada.** Los 46 episodios tienen sus datos y no queda ningún bloque
+fuera de rango. Un aviso: el timeline del episodio del 9 ago 2026
+(`gy5RLwGDFs8`) lleva **una corrección a mano** que no está en YouTube — si se
+regenera desde la página del vídeo, hay que volver a ponerla. Ver
+`04_BRIEF_BUSCADOR.md`.
 
 **Para un episodio nuevo:** VTT de Studio → `data/subtitulos_originales/` y
 `pipeline/tmp/` como `<youtubeId>.es.vtt` → alta en `data/episodios.js` →

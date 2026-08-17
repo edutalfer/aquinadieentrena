@@ -102,18 +102,28 @@ La vía buena sigue siendo escribir el timeline **en la descripción de
 YouTube**: el dato queda en la fuente, se regenera solo, y los espectadores
 ganan capítulos clicables en el reproductor.
 
-**2. Una errata, en YouTube.** En `gy5RLwGDFs8` (9 ago 2026) la descripción
-pone «¿Bici o cepo? (01:40:00)» en un vídeo que dura 1h21. Se ha dejado tal
-cual porque ese timeline sale de YouTube: **hay que arreglarlo allí** y volver
-a generar `data/episodios.js`. Según el audio, la sección arranca sobre 1:02.
+### ⚠️ Una corrección a mano que NO está en YouTube
 
-Los otros tres desajustes que salieron al validar ya están resueltos por
-Eduardo (17/08/2026), y son un buen ejemplo de que el control sirve:
+En `gy5RLwGDFs8` (9 ago 2026) la **descripción de YouTube sigue diciendo**
+«¿Bici o cepo? (01:40:00)» en un vídeo que dura 1h21. En `data/episodios.js`
+está corregido a mano a **1:00:40**, que es el minuto bueno según Eduardo.
+
+**Si algún día se regenera ese episodio desde la página de YouTube, volverá el
+error.** Las salidas son dos: arreglar la descripción en YouTube (lo suyo), o
+volver a poner 1:00:40 a mano después de regenerar.
+
+### Los cuatro desajustes que cazó la validación
+
+Todos resueltos por Eduardo el 17/08/2026. Sirven de ejemplo de que el control
+merece la pena:
 
 | Episodio | Qué pasaba | Cómo quedó |
 |---|---|---|
-| `-TUEBDC4eqs` · 11 ene | La captura ponía «¿Bici o cepo? (01:45:20)» en un vídeo de 1h31 | **1:02:46**, confirmado por Eduardo |
+| `gy5RLwGDFs8` · 9 ago | La descripción de YouTube ponía el cepo en 1:40:00, en un vídeo de 1h21 | **1:00:40**, a mano (ver aviso de arriba) |
+| `-TUEBDC4eqs` · 11 ene | La captura ponía «¿Bici o cepo? (01:45:20)» en un vídeo de 1h31 | **1:02:46** |
 | `DyquvTvjJYE` · 21 dic | Un bloque sin minuto («marca china») | Captura nueva: ese bloque no va, y entra «Introducción (00:00)» |
-| `tiRqcZ6vol8` · 16 nov | La captura situaba el sorteo en 59:41; el audio lo pone en 1:24:32 | **1:24:32**, confirmado por Eduardo. Va después del «bici o cepo» |
+| `tiRqcZ6vol8` · 16 nov | La captura situaba el sorteo en 59:41; el audio lo pone en 1:24:32 | **1:24:32**. Va después del «bici o cepo» |
+
+**Resultado: 0 bloques fuera de rango o desordenados en los 46 episodios.**
 
 **3. «tubles».** Ver P7 en `02_DECISIONES.md`.

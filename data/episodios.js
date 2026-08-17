@@ -41,7 +41,7 @@ window.ANE_EPISODIOS = [
       { t: 1830,  titulo: "Charlamos sobre la venta de Klassmark a una multinacional" },
       { t: 2320,  titulo: "¡Pogacar irá a La Vuelta!" },
       { t: 3295,  titulo: "Los comisarios de UCI revisan los sujetadores de las corredoras" },
-      { t: 6000,  titulo: "¿Bici o cepo?" }
+      { t: 3640,  titulo: "¿Bici o cepo?" }
     ]
   },
   {

@@ -75,8 +75,8 @@ Si algo se rompe: `git revert` y atrás en un segundo.
 
 ### 🔍 Buscador (chat dedicado)
 ✅ Alimentado, completo y probado: los 46 episodios y 308 bloques de timeline.
-Solo quedan dos episodios sin timeline, porque no lo tienen en ningún sitio, y
-una errata que hay que arreglar en YouTube. Ver `04_BRIEF_BUSCADOR.md`
+Solo quedan dos episodios sin timeline, porque no lo tienen en ningún sitio.
+Ver `04_BRIEF_BUSCADOR.md`
 
 ### 🎨 Estética (chat dedicado)
 Ver `05_BRIEF_ESTETICA.md`
