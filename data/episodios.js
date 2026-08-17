@@ -216,6 +216,76 @@ window.ANE_EPISODIOS = [
     ]
   },
   {
+    titulo: "Van Der Poel IGNORA a Canyon en Roubaix! | Seixas va al tour? | Presentamos nuestras bicis de gravel",
+    fecha: "2026-04-12",
+    duracion: 6858,
+    youtubeId: "KPiGXHKJ_gM",
+    temas: [
+      { t: 0,     titulo: "Intro" },
+      { t: 220,   titulo: "Cristóbal en el Tour de Flandes" },
+      { t: 510,   titulo: "Por fin conocemos la nueva Canyon Endurance" },
+      { t: 1535,  titulo: "¿Qué va a pasar en Paris Roubaix?" },
+      { t: 2640,  titulo: "¿Paul Seixas debería ir al Tour de Francia y además fichar por el UAE?" },
+      { t: 3420,  titulo: "Tenemos problemas de motivación" },
+      { t: 4380,  titulo: "Descubrimos una app que le da sentido a tener Strava" },
+      { t: 4935,  titulo: "La nueva bici de Cristóbal" },
+      { t: 5550,  titulo: "¡Bici o Cepo!" }
+    ]
+  },
+  {
+    titulo: "¿Esta es la nueva Canyon Aeroad? | Strava no tiene sentido | La liamos para el tour…",
+    fecha: "2026-04-05",
+    duracion: 5667,
+    youtubeId: "_pNQhuWqt3M",
+    temas: [
+      { t: 50,    titulo: "Los comentaristas de Eurosport nos atacan" },
+      { t: 385,   titulo: "Look saca unos pedales nuevos" },
+      { t: 970,   titulo: "¿Merece la pena Strava?" },
+      { t: 1665,  titulo: "Analizamos los datos de los 90’ de Van Der Poel" },
+      { t: 2790,  titulo: "Parece que Canyon tiene una nueva bici ¿AEROAD O ENDURANCE? (37:35)  - Tenemos un problema gordo" },
+      { t: 4050,  titulo: "Bici o Cepo" }
+    ]
+  },
+  {
+    titulo: "El futuro del textil en ciclismo | Cómo puede ganar el tour Remco  | Carreras por parejas",
+    fecha: "2026-03-29",
+    duracion: 4889,
+    youtubeId: "38AjpfCo7dc",
+    temas: [
+      { t: 0,     titulo: "Intro + Igraal" },
+      { t: 505,   titulo: "La caída de Remco" },
+      { t: 935,   titulo: "Nuestro proyecto para el Tour" },
+      { t: 1085,  titulo: "Mejor comentario de la semana" },
+      { t: 1460,  titulo: "Continental lanza las GP 5000 en 35mm" },
+      { t: 1780,  titulo: "Hablamos de Lukas Baum y el Speed Company" },
+      { t: 2260,  titulo: "Tendencias en textil para verano" },
+      { t: 3175,  titulo: "El cuadro roto de Pogacar" },
+      { t: 3385,  titulo: "¡Bici o Cepo!" }
+    ]
+  },
+  {
+    titulo: "Errores de la Cape Epic 2026 | ¿La nueva “mejor” marca española?",
+    fecha: "2026-03-24",
+    duracion: 4149,
+    youtubeId: "lWj1oTcYX8o",
+    temas: []
+  },
+  {
+    titulo: "Specialized perdona a Armstrong?? | Cuanto dinero se necesita para competir en el world tour?",
+    fecha: "2026-03-15",
+    duracion: 4153,
+    youtubeId: "U1yfpFm5A4g",
+    temas: [
+      { t: 5,     titulo: "Maillots nuevos" },
+      { t: 330,   titulo: "Igraal" },
+      { t: 520,   titulo: "¿Cuánto dinero se necesita para competir en el World Tour?" },
+      { t: 1430,  titulo: "¿Specialized perdona a Lance Armstrong?" },
+      { t: 2000,  titulo: "Cannondale lanza una nueva bici de aluminio" },
+      { t: 2520,  titulo: "Cyclingnews prueba la Enve Meele en el túnel del viento" },
+      { t: 2800,  titulo: "¡Bici o Cepo!" }
+    ]
+  },
+  {
     titulo: "¿Qué pasa con estas ruedas? | LANZAMIENTO: Merida vs Giant! | Nos vamos a Sudáfrica!",
     fecha: "2026-03-08",
     duracion: 6200,
@@ -467,6 +537,21 @@ window.ANE_EPISODIOS = [
       { t: 1980,  titulo: "Cambio Fisico de REMCO" },
       { t: 2173,  titulo: "Zapato Specialized FAIL" },
       { t: 2420,  titulo: "BICI O CEPO" }
+    ]
+  },
+  {
+    titulo: "¿Como de ancho es demasiado ancho!?,  Las bicis mas aero de 2025 y Van Der Poel fracasa? |  EP.3",
+    fecha: "2025-09-21",
+    duracion: 4059,
+    youtubeId: "piWBTCsMFdY",
+    temas: [
+      { t: 0,     titulo: "Las bicis más rápidas del mercado" },
+      { t: 960,   titulo: "Pedimos perdón a Orbea" },
+      { t: 1220,  titulo: "Experiencia en el mundial de Ironman Niza" },
+      { t: 1760,  titulo: "Analizamos el mejor ancho de cubierta para tu bici" },
+      { t: 2280,  titulo: "El comentario elegido!" },
+      { t: 2400,  titulo: "Van Der Poel hace un seto en el mundia de XC" },
+      { t: 2520,  titulo: "Bici o CEPO!" }
     ]
   },
   {

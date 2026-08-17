@@ -124,14 +124,14 @@ exacto + fragmento + enlace directo a YouTube en ese segundo.
 
 **Hecho (17/08/2026).** El código ya lo soportaba (`assets/js/app.js`: carga
 perezosa del índice, prioridad del timeline sobre la transcripción, fragmento
-de contexto, enlace 3 s antes de la frase) y **ya tiene datos**: los 40 VTT de
+de contexto, enlace 3 s antes de la frase) y **ya tiene datos**: los 46 VTT de
 Studio están renombrados a `<youtubeId>.es.vtt`, `data/episodios.js` tiene los
-40 episodios con fecha, duración y timeline reales, y el índice trae 7.667
-segmentos. Probado en local. Detalle y pendientes: `04_BRIEF_BUSCADOR.md`.
+46 episodios con fecha, duración y timeline reales, y el índice trae 8.675
+segmentos. Probado en local. Detalle: `04_BRIEF_BUSCADOR.md`.
 
-**Falta.** Bajar de Studio los VTT de seis episodios que no lo tienen y
-escribir en YouTube el timeline de 17 episodios que no lo llevan. Los dos
-listados están en `04_BRIEF_BUSCADOR.md`.
+**Falta.** Solo una cosa: escribir en YouTube el timeline de 18 episodios que
+no lo llevan en la descripción (listados en `04_BRIEF_BUSCADOR.md`). No es
+código, es trabajo editorial en YouTube.
 
 **Para un episodio nuevo:** VTT de Studio → `data/subtitulos_originales/` y
 `pipeline/tmp/` como `<youtubeId>.es.vtt` → alta en `data/episodios.js` →
@@ -146,9 +146,9 @@ que duela perder.
 índice lo que esté en esa lista. Los timelines salen del bloque «Temas del
 episodio» de la descripción de YouTube.
 
-**Tamaño del índice: medido y cerrado.** 3,9 MB en disco pero **1,4 MB por la
+**Tamaño del índice: medido y cerrado.** 4,4 MB en disco pero **1,6 MB por la
 red** (el `.htaccess` ya comprime `application/json`) y solo se descarga al
-tocar el buscador; buscar tarda 6-8 ms. No se trocea por año: para una búsqueda
+tocar el buscador; buscar tarda decenas de milisegundos. No se trocea por año: para una búsqueda
 global habría que descargar todos los trozos igual. Ver D14 en
 `02_DECISIONES.md`.
 
