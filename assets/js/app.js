@@ -219,24 +219,31 @@
     var palabras = limpia(consulta).split(" ").filter(Boolean);
     if (!palabras.length) return [];
 
+    // Tres capas, de más a menos relevante:
+    //   1. episodio  → el término está en el TÍTULO del episodio (un solo
+    //                  resultado por episodio, no uno por cada bloque)
+    //   2. tema      → el término está en el título de un bloque del timeline
+    //   3. voz       → el término se dijo en algún momento (transcripción)
     var hallazgos = [];
     EPISODIOS.forEach(function (ep) {
       var epPlano = limpia(ep.titulo);
+      if (palabras.every(function (p) { return epPlano.indexOf(p) !== -1; })) {
+        hallazgos.push({ ep: ep, origen: "episodio", peso: palabras.length });
+      }
       ep.temas.forEach(function (tema) {
         var temaPlano = limpia(tema.titulo);
-        var texto = temaPlano + " " + epPlano;
-        var todas = palabras.every(function (p) { return texto.indexOf(p) !== -1; });
-        if (!todas) return;
-        // los aciertos en el título del bloque valen más que en el del episodio
-        var peso = palabras.filter(function (p) { return temaPlano.indexOf(p) !== -1; }).length;
-        hallazgos.push({ ep: ep, tema: tema, origen: "tema", peso: peso });
+        // solo el título del bloque: si buscamos en el del episodio, un acierto
+        // en el título arrastra TODOS sus bloques aunque no traten el tema
+        if (!palabras.every(function (p) { return temaPlano.indexOf(p) !== -1; })) return;
+        hallazgos.push({ ep: ep, tema: tema, origen: "tema", peso: palabras.length });
       });
     });
 
     hallazgos = hallazgos.concat(buscaVoz(palabras));
 
+    var ORDEN = { episodio: 0, tema: 1, voz: 2 };
     hallazgos.sort(function (a, b) {
-      if (a.origen !== b.origen) return a.origen === "tema" ? -1 : 1;
+      if (ORDEN[a.origen] !== ORDEN[b.origen]) return ORDEN[a.origen] - ORDEN[b.origen];
       if (b.peso !== a.peso) return b.peso - a.peso;
       return a.ep.fecha < b.ep.fecha ? 1 : -1;
     });
@@ -272,6 +279,16 @@
       : hallazgos.length + " momentos encontrados";
 
     lista.innerHTML = hallazgos.slice(0, 40).map(function (h) {
+      if (h.origen === "episodio") {
+        return '<a class="hallazgo hallazgo--episodio" href="' + enlace(h.ep, 0) + '" target="_blank" rel="noopener">' +
+                 '<span class="hallazgo__min hallazgo__min--ep">EP</span>' +
+                 '<span>' +
+                   '<h3 class="hallazgo__tema display">' + resalta(h.ep.titulo, palabras) + '</h3>' +
+                   '<p class="hallazgo__ep">Episodio completo' +
+                     ' <span style="color:#6E747F">\u00b7 ' + fechaCorta(h.ep.fecha) + '</span></p>' +
+                 '</span>' +
+               '</a>';
+      }
       if (h.origen === "voz") {
         return '<a class="hallazgo hallazgo--voz" href="' + enlace(h.ep, h.t) + '" target="_blank" rel="noopener">' +
                  '<span class="hallazgo__min">' + reloj(h.t) + '</span>' +
@@ -286,7 +303,7 @@
                '<span class="hallazgo__min">' + reloj(h.tema.t) + '</span>' +
                '<span>' +
                  '<h3 class="hallazgo__tema display">' + resalta(h.tema.titulo, palabras) + '</h3>' +
-                 '<p class="hallazgo__ep">' + resalta(h.ep.titulo, palabras) +
+                 '<p class="hallazgo__ep">' + escapa(h.ep.titulo) +
                    ' <span style="color:#6E747F">· ' + fechaCorta(h.ep.fecha) + '</span></p>' +
                '</span>' +
              '</a>';

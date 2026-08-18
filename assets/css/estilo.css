@@ -514,3 +514,9 @@ mark { background: var(--azul-destello); color: var(--negro); padding: 0 2px; }
   line-height: 1.5;
 }
 .hallazgo--voz:hover .hallazgo__voz { color: var(--azul-enlace); }
+
+/* ---------- resultado de episodio completo ---------- */
+.hallazgo__min--ep {
+  background: var(--azul) !important;
+  letter-spacing: .08em;
+}
