@@ -50,16 +50,47 @@
   }
 
   /* Resalta las palabras buscadas sin romper los acentos del original */
+  /* Normaliza igual que limpia(), pero devuelve además el mapa exacto
+     de cada posición del texto normalizado a su posición en el original.
+     Sin esto el resaltado se desplaza: quitar acentos, convertir la
+     puntuación en espacios y colapsar espacios cambia las longitudes. */
+  function limpiaConMapa(s) {
+    s = s || "";
+    var plano = "", mapa = [], ultimoEsEspacio = true; // true = ignora espacios iniciales
+    for (var i = 0; i < s.length; i++) {
+      var c = s[i]
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+      if (/^[¿?¡!"'.,;:()]$/.test(c) || /^\s$/.test(c) || c === "") {
+        if (!ultimoEsEspacio) { plano += " "; mapa.push(i); ultimoEsEspacio = true; }
+        continue;
+      }
+      for (var k = 0; k < c.length; k++) { plano += c[k]; mapa.push(i); }
+      ultimoEsEspacio = false;
+    }
+    // trim final
+    while (plano.length && plano[plano.length - 1] === " ") {
+      plano = plano.slice(0, -1);
+      mapa.pop();
+    }
+    return { plano: plano, mapa: mapa };
+  }
+
   function resalta(texto, palabras) {
-    var plano = limpia(texto);
+    var norm = limpiaConMapa(texto);
+    var plano = norm.plano, mapa = norm.mapa;
     var marcas = new Array(texto.length).fill(false);
 
-    // mapa: posición en "plano" → posición aproximada en "texto"
     palabras.forEach(function (p) {
       if (!p) return;
       var desde = 0, i;
       while ((i = plano.indexOf(p, desde)) !== -1) {
-        for (var k = i; k < i + p.length && k < marcas.length; k++) marcas[k] = true;
+        // marca en el ORIGINAL el tramo que corresponde a este acierto
+        var ini = mapa[i], fin = mapa[i + p.length - 1];
+        if (ini !== undefined && fin !== undefined) {
+          for (var k = ini; k <= fin && k < marcas.length; k++) marcas[k] = true;
+        }
         desde = i + p.length;
       }
     });
