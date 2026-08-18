@@ -325,10 +325,21 @@ mark { background: var(--azul-destello); color: var(--negro); padding: 0 2px; }
 }
 
 .perfil { margin-top: 18px; }
-.perfil svg { display: block; width: 100%; height: auto; }
-.perfil__marca { cursor: pointer; }
-.perfil__marca circle { transition: r .12s, fill .12s; }
-.perfil__marca:hover circle, .perfil__marca:focus circle { fill: var(--azul); r: 7; }
+.perfil__barra { display: flex; gap: 3px; height: 14px; }
+.perfil__capitulo {
+  display: block;
+  min-width: 4px;
+  background: var(--azul-destello);
+  transition: background .12s;
+  position: relative;
+}
+.perfil__capitulo:hover, .perfil__capitulo:focus { background: var(--azul); }
+/* zona de clic mas alta que la barra, para el dedo en movil */
+.perfil__capitulo::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: -11px; bottom: -11px;
+}
 
 .perfil__pie {
   display: flex;

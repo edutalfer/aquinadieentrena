@@ -105,55 +105,37 @@
     return salida;
   }
 
-  /* ---------- perfil de etapa ---------- */
-  /* Cada tema es un "repecho": la altura es proporcional a lo que dura
-     el bloque, y el punto en la base marca el minuto en que empieza.   */
+  /* ---------- linea de tiempo del episodio ---------- */
+  /* Barra de capitulos al estilo de un reproductor: cada tema es un
+     segmento cuyo ancho es proporcional a lo que dura, y cada segmento
+     enlaza al minuto exacto en YouTube. Antes era un perfil de montana
+     que codificaba la duracion como altura, y eso sugeria intensidad. */
+
+  function escapaAtr(s) {
+    return escapa(s).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
 
   function perfil(ep) {
-    var W = 1000, H = 120, BASE = 100, MIN_H = 16, MAX_H = 76;
     var total = ep.duracion || (ep.temas[ep.temas.length - 1].t + 300);
 
     var bloques = ep.temas.map(function (tema, i) {
       var fin = i + 1 < ep.temas.length ? ep.temas[i + 1].t : total;
-      return { tema: tema, ini: tema.t, fin: fin, dur: Math.max(fin - tema.t, 1) };
+      return { tema: tema, ini: tema.t, dur: Math.max(fin - tema.t, 1) };
     });
 
-    var maxDur = Math.max.apply(null, bloques.map(function (b) { return b.dur; }));
-
-    var puntos = ["0," + BASE];
-    bloques.forEach(function (b) {
-      var x1 = (b.ini / total) * W;
-      var x2 = (b.fin / total) * W;
-      var h = MIN_H + (b.dur / maxDur) * (MAX_H - MIN_H);
-      puntos.push(x1 + "," + BASE);
-      puntos.push(((x1 + x2) / 2) + "," + (BASE - h));
-      puntos.push(x2 + "," + BASE);
-    });
-    puntos.push(W + "," + BASE);
-
-    var linea = puntos.join(" ");
-    var area = "0," + H + " " + linea + " " + W + "," + H;
-
-    var marcas = bloques.map(function (b) {
-      var x = (b.ini / total) * W;
-      return '<a class="perfil__marca" href="' + enlace(ep, b.ini) + '" target="_blank" rel="noopener">' +
-             '<title>' + escapa(b.tema.titulo) + ' — ' + reloj(b.ini) + '</title>' +
-             '<circle cx="' + x + '" cy="' + BASE + '" r="5" fill="#191919"></circle>' +
-             '<rect x="' + (x - 14) + '" y="' + (BASE - 14) + '" width="28" height="28" fill="transparent"></rect>' +
-             '</a>';
+    var capitulos = bloques.map(function (b) {
+      var rotulo = escapaAtr(b.tema.titulo) + " \u2014 " + reloj(b.ini);
+      return '<a class="perfil__capitulo" style="flex:' + b.dur + '" ' +
+             'href="' + enlace(ep, b.ini) + '" target="_blank" rel="noopener" ' +
+             'title="' + rotulo + '" aria-label="' + rotulo + '"></a>';
     }).join("");
 
     return '' +
       '<div class="perfil">' +
-        '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" ' +
-             'aria-label="Perfil del episodio: ' + ep.temas.length + ' bloques">' +
-          '<polygon points="' + area + '" fill="#3F77DA" opacity="0.32"></polygon>' +
-          '<polyline points="' + linea + '" fill="none" stroke="#191919" stroke-width="2.5" ' +
-                    'stroke-linejoin="round" vector-effect="non-scaling-stroke"></polyline>' +
-          '<line x1="0" y1="' + BASE + '" x2="' + W + '" y2="' + BASE + '" ' +
-                'stroke="#191919" stroke-width="2" vector-effect="non-scaling-stroke"></line>' +
-          marcas +
-        '</svg>' +
+        '<div class="perfil__barra" role="list" ' +
+             'aria-label="Bloques del episodio: ' + ep.temas.length + '">' +
+          capitulos +
+        '</div>' +
         '<div class="perfil__pie"><span>0:00</span><span>' + reloj(total) + '</span></div>' +
       '</div>';
   }
