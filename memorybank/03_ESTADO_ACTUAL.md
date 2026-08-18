@@ -1,90 +1,88 @@
 # 📍 ESTADO ACTUAL — Léeme primero
 
-> **Actualizado:** 2026-08-17
-> Si empiezas un chat nuevo sobre la web de ANE, **este es el punto de partida**.
-> Después lee `00_MEGAPLAN_WEB_ANE.md` (objetivo), `01_ESQUELETO_WEB.md`
-> (arquitectura) y `02_DECISIONES.md` (por qué está hecho así).
+> **Actualizado:** 2026-08-18
+> Punto de partida para cualquier chat nuevo sobre la web de ANE.
 
 ---
 
-## Lo esencial en diez líneas
+## ⚠️ Antes que nada: lee `CLAUDE.md` (raíz del repo)
 
-- La web **está publicada y funcionando** en https://aquinadieentrena.cc
-- El repo **es** el docroot: `~/domains/aquinadieentrena.cc/public_html`
-  ⚠️ NO es `~/public_html`. Ese error ya costó una sesión.
-- Repo: `github.com/edutalfer/aquinadieentrena` (público)
-- El core del proyecto es un **buscador de temas** que encuentra el minuto
-  exacto de cada episodio. Ya funciona con datos reales: **los 46 episodios,
-  8.675 segmentos** de transcripción indexados (17/08/2026).
-- Copia local de Eduardo: `/Users/eduardotalavera/Documents/Proyectos-IA/aquinadieentrena`
+Ahí están las **reglas duras** (entorno, trampas, verificación, seguridad).
+Este documento cuenta *en qué punto está el proyecto*; `CLAUDE.md` cuenta
+*cómo trabajar sin romper nada*. Los dos, y `CLAUDE.md` primero.
 
----
-
-## Cómo conectarse al servidor
-
-```
-host 46.202.172.3 · puerto 65002 · usuario u527801093
-```
-
-Autenticación por clave. **hPanel rechaza claves ecdsa y el conector MCP no
-puede usar ed25519**: hay que generar RSA 4096 y pegar la pública en
-hPanel → plan de hosting → Avanzado → Acceso SSH.
-⚠️ Al pegarla, los espacios se pierden con facilidad: debe quedar
-`ssh-rsa` + espacio + clave + espacio + comentario.
-
-Python y Node existen pero **fuera del PATH**. Siempre:
-```bash
-source pipeline/entorno.sh   # /opt/alt/python311/bin y /opt/alt/alt-nodejs22/...
-```
+Después, según la tarea:
+- `00_MEGAPLAN_WEB_ANE.md` — objetivo y roadmap
+- `01_ESQUELETO_WEB.md` — arquitectura
+- `02_DECISIONES.md` — qué se decidió y por qué (D1–D15)
+- `04_BRIEF_BUSCADOR.md` — buscador (ya operativo; queda mantenimiento)
+- `05_BRIEF_ESTETICA.md` — rediseño visual (en curso)
 
 ---
 
-## ⚠️ Trampa de la CDN — leer antes de "verificar" nada
+## 🏆 El objetivo core está CUMPLIDO
 
-**`curl` desde el propio servidor NO sirve para comprobar qué ve el público.**
-El servidor se responde a sí mismo y salta la CDN. Esto ya provocó un
-diagnóstico equivocado: se dio por bueno un arreglo que no lo era.
+El buscador de temas funciona en producción desde el 2026-08-18.
 
-Para comprobar de verdad qué se sirve:
-```bash
-IP=$(dig +short aquinadieentrena.cc @8.8.8.8 | head -1)
-curl -s https://aquinadieentrena.cc/ --resolve "aquinadieentrena.cc:443:$IP" | grep "loQueSea"
-```
+| Dato | Valor |
+|---|---|
+| Episodios indexados | **46** |
+| Segmentos de transcripción | **8.675** |
+| Bloques de timeline | **308** |
+| Peso del índice | **4,44 MB en disco · 2,07 MB por la red** (gzip de la CDN) |
 
-⚠️ **Segunda trampa, encontrada el 18/08/2026: la CDN tiene anti-bot.** Tras
-unas pocas peticiones seguidas con `curl`, deja de servir los ficheros y
-devuelve **403 con un JS challenge** («Checking your browser before
-accessing»), sea cual sea la ruta. Parecía que el buscador estaba roto en
-producción y lo que estaba bloqueado era el `curl`. **La verificación que vale
-es con un navegador real**, que pasa el challenge y es lo que usa el público.
+Verificado con navegador real: buscar «creatina» devuelve el bloque
+«¿La creatina tiene beneficios en el ciclismo?» en el 2:01 con su `&t=121s`.
 
-Estado actual de la caché:
-- El `.htaccess` ya **no** cachea HTML (`no-cache, must-revalidate`)
-- CSS y JS se referencian con `?v=AAAAMMDD` — **al cambiarlos hay que subir
-  ese número en `index.html` y `episodios.html`**, si no, nadie ve el cambio
-- La CDN está en **Modo de desarrollo** (hPanel → Rendimiento → CDN).
-  Se activó para trabajar el diseño. Desactivarlo cuando se cierre el rediseño.
+Carga perezosa: el índice solo se descarga cuando alguien toca el buscador,
+así que los 2 MB no penalizan a quien entra y no busca.
 
 ---
 
-## Flujo de trabajo
+## Dónde está cada cosa
 
-```
-Claude edita en el servidor → git commit → git push  (ya desplegado: el repo es el docroot)
-Eduardo edita en su Mac     → git push → Claude hace git pull en el servidor
-```
-
-Si algo se rompe: `git revert` y atrás en un segundo.
+- **Web pública:** https://aquinadieentrena.cc
+- **Repo = docroot:** `~/domains/aquinadieentrena.cc/public_html`
+  ⚠️ NO es `~/public_html`
+- **GitHub:** `github.com/edutalfer/aquinadieentrena` (público)
+- **Copia local de Eduardo:** `/Users/eduardotalavera/Documents/Proyectos-IA/aquinadieentrena`
+- **Servidor:** `46.202.172.3` · puerto `65002` · usuario `u527801093`
+- **Clave SSH:** `~/.ssh/claude-ane-2026` en el servidor (600, fuera del repo),
+  dada de alta en hPanel como `claude-ane-3`
 
 ---
 
-## Estado de las dos líneas de trabajo abiertas
+## 🔴 Pendientes que NO son código
 
-### 🔍 Buscador (chat dedicado)
-✅ **Terminado y en producción** (18/08/2026): los 46 episodios, 8.675
-segmentos y 308 bloques de timeline, verificados en https://aquinadieentrena.cc
-con un navegador. Solo quedan dos episodios sin timeline, porque no lo tienen
-en ningún sitio. Ver `04_BRIEF_BUSCADOR.md`
+| Qué | Quién | Nota |
+|---|---|---|
+| **Desactivar el Modo desarrollo de la CDN** | Eduardo | Se activó como medida temporal para trabajar el diseño (hPanel → Rendimiento → CDN). Sigue puesto. Desactivar al cerrar el rediseño |
+| Dos episodios sin timeline | — | `tcVNXIfRcMw` y `l-OwmhoBQuY`: no existe timeline en ningún sitio. Solo se buscan por transcripción |
+| Jerga mal transcrita («tubles» por «tubeless») | — | Ver P7 en `02_DECISIONES.md` |
 
-### 🎨 Estética (chat dedicado)
-Ver `05_BRIEF_ESTETICA.md`
+---
+
+## ⚠️ Dos chats trabajando en paralelo
+
+Hay un chat de **estética** y hubo uno de **buscador**, ambos empujando al
+mismo repo. Ya hubo que rebasar 6 commits del chat de estética sobre los del
+buscador; salió limpio porque tocaban ficheros distintos, pero:
+
+**Regla: `git pull --rebase` ANTES de empezar a trabajar, siempre.**
+
+Riesgo real si ambos tocan `index.html` a la vez.
+
+---
+
+## Historial de trampas ya pisadas (no repetirlas)
+
+1. **`curl` desde el servidor no sirve para verificar.** Se responde a sí mismo
+   y salta la CDN. Provocó dar por bueno un arreglo que no lo era.
+2. **La CDN tiene anti-bot.** Tras una ráfaga de `curl` devuelve 403 y un JS
+   challenge en *cualquier* ruta, incluido `index.html`. Parece el sitio roto
+   y no lo está. Lo que zanja la duda es **un navegador de verdad**.
+3. **hPanel rechaza claves ecdsa** y el conector MCP no puede usar ed25519 →
+   generar RSA 4096. Al pegarla, cuidado con los espacios.
+4. **Python y Node están fuera del PATH** → `source pipeline/entorno.sh`.
+5. **Assets versionados con `?v=`**: al tocar CSS o JS hay que subir el número
+   en `index.html` Y en `episodios.html`, o nadie ve el cambio.

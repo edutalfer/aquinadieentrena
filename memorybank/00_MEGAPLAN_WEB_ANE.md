@@ -1,7 +1,7 @@
 # 🎯 MEGA PLAN — WEB AQUÍ NADIE ENTRENA
 
-> **Última actualización:** 2026-08-17
-> **Estado global:** Fase 3 — Buscador (a falta de datos)
+> **Última actualización:** 2026-08-18
+> **Estado global:** Fases 2 y 3 CUMPLIDAS. En curso: Fase 1 pendientes + rediseño estetico
 > Fuente de verdad del proyecto. Se actualiza en cada sesión.
 
 ---
@@ -48,19 +48,27 @@ newsletter y, en el futuro, tienda de merch.
 - [ ] Sección Proyectos (no existe aún)
 - [ ] Valorar formularios reales en vez de `mailto:`
 
-### 🔄 Fase 2 — Pipeline de transcripciones
+### ✅ Fase 2 — Pipeline de transcripciones — CUMPLIDA
 - [x] Scripts escritos, probados y documentados (`pipeline/`)
-- [x] yt-dlp instalado en el servidor
-- [ ] ⚠️ **Descargar los subtítulos DESDE EL MAC** — el servidor está vetado por YouTube (D10)
-- [ ] Commit de `data/transcripciones/` + `data/indice_busqueda.json`
+- [x] Subtítulos descargados desde el Mac (el servidor está vetado por YouTube, D10)
+- [x] 46 episodios transcritos y commiteados
+- [x] Timelines completados a partir de capturas de Eduardo (308 bloques)
 
-### 🔄 Fase 3 — Buscador (el core)
+### ✅ Fase 3 — Buscador (el core) — CUMPLIDA 🏆
 - [x] Capa de búsqueda en transcripciones integrada en `app.js`
 - [x] Carga perezosa del índice, prioridad al timeline, fragmento con contexto
-- [ ] Verificar en producción con datos reales
+- [x] **Verificado en producción con navegador real** (2026-08-18)
+- [x] 46 episodios · 8.675 segmentos · índice de 2,07 MB por la red
 
-### Fase 4 — Buscador v2
-- [ ] Búsqueda semántica (encontrar "ruedas rápidas" cuando se dijo "material aero")
+**🏆 OBJETIVO CORE DEL PROYECTO CUMPLIDO.**
+
+### Fase 4 — Buscador v2 (cuando duela, no antes)
+- [ ] **Vigilar el peso del índice.** Con 46 episodios: 2,07 MB por la red.
+      A ~100 episodios rondaría 4-5 MB. Solución prevista: trocear por año
+      o pasar a API. No urgente, pero que no pille por sorpresa.
+- [ ] Jerga mal transcrita: Whisper si las analíticas muestran que la gente
+      busca términos técnicos y no encuentra (ver P7)
+- [ ] Búsqueda semántica ("ruedas rápidas" → "material aero")
 - [ ] Analytics de búsquedas = ideas para episodios
 
 ### Fase 5 — Tienda merch (sin fecha)
@@ -83,7 +91,6 @@ Y en el servidor: `git pull`. Publicado.
 
 ## BLOQUEANTES
 
-| Bloqueante | Afecta a | Acción |
-|---|---|---|
-| YouTube bloquea la IP del servidor | Fase 2 | Descargar desde el Mac (ver `pipeline/LEEME.md`) |
-| CDN de Hostinger sirviendo versión antigua | Todo lo publicado | hPanel → Rendimiento → CDN → Purge cache |
+Ninguno bloquea el core. Pendientes menores en `03_ESTADO_ACTUAL.md`:
+desactivar el Modo desarrollo de la CDN al cerrar el rediseño, dos episodios
+sin timeline y la jerga mal transcrita.
