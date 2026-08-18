@@ -52,18 +52,33 @@ Luego, en el servidor: `git pull`. Ya está publicado.
 `tcVNXIfRcMw` y `l-OwmhoBQuY` — no existe timeline en ningún sitio, así que
 solo se encuentran por transcripción. Si algún día se escriben, entran solos.
 
-### La jerga ciclista sale fonética (P7)
-Los subtítulos automáticos escriben «tubles» por «tubeless», así que buscar el
-término correcto no encuentra episodios que lo tratan.
+### ✅ La jerga ciclista: RESUELTO con un diccionario (2026-08-18)
 
-Fue una decisión consciente (D5): cobertura total hoy a cambio de calidad
-regular. Dos salidas, de menor a mayor esfuerzo:
+`pipeline/correcciones.json` corrige las erratas de los subtítulos automáticos
+**al construir el índice**, no sobre `data/transcripciones/`. Así el dato en
+bruto queda intacto y reversible, y los episodios nuevos se corrigen solos.
 
-1. **Apaño barato:** los timelines pesan más que la transcripción en el
-   ranking, así que escribir bien los términos clave en los bloques de
-   `episodios.js` tapa buena parte del agujero sin retranscribir nada.
-2. **Whisper en local:** mejor calidad con la jerga, 10-20 min por episodio.
-   Merece la pena si las analíticas muestran búsquedas técnicas sin resultado.
+20 reglas, **984 correcciones aplicadas**: corredores (Pogačar, Vingegaard,
+Pidcock, Almeida, Evenepoel, Roglič), marcas (Canyon, Dura-Ace, Pinarello,
+Cannondale, Specialized) y jerga (tubeless, gravel).
+El usuario ve el texto ya corregido en el fragmento (decisión de Eduardo).
+
+⚠️ **Las reglas se curan a mano, nunca automáticamente.** La detección por
+parecido fonético da falsos positivos masivos: marcaba «para» como error de
+«pájara» (5.189 veces), «cepo» como «EPO» (1.000), «opinión» como «piñón» y
+«misma» como «Visma». Aplicarlo a ciegas habría destrozado las transcripciones.
+Los intocables están documentados en el propio `correcciones.json`.
+
+Tampoco se tocan variantes válidas del español: «casete» y «culote» son
+correctas según la RAE.
+
+**Para añadir una regla nueva:** editarla en `pipeline/correcciones.json`,
+verificar antes el contexto real de la palabra, y reconstruir con
+`python3 pipeline/03_construir_indice.py`.
+
+Queda pendiente (P7) Whisper solo si algún día se quiere calidad de
+transcripción real; con el diccionario, el buscador ya encuentra los términos
+técnicos.
 
 ### El peso del índice hay que vigilarlo
 2,07 MB por la red con 46 episodios. A ~100 rondaría 4-5 MB. La carga perezosa
