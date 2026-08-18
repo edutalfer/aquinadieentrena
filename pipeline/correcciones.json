@@ -1,0 +1,29 @@
+{
+  "_leeme": "Correcciones aplicadas al CONSTRUIR EL INDICE, no a las transcripciones originales: el dato en bruto queda intacto y reversible, y los episodios futuros se corrigen solos. Clave = como lo escriben los subtitulos automaticos (no distingue mayusculas); valor = como debe quedar. Se aplica solo a palabras completas.",
+  "_no_tocar": "NO se corrigen variantes validas del espanol (casete, culote) ni parecidos casuales que el detector marco por error: para/pajara, cepo/EPO, cada/cadena, misma/visma, opinion/pinon. Corregir esas destrozaria el texto.",
+
+  "correcciones": {
+    "pogachar": "Pogačar",
+    "pogachal": "Pogačar",
+    "bingegard": "Vingegaard",
+    "bingegar": "Vingegaard",
+    "vingegard": "Vingegaard",
+    "evenepol": "Evenepoel",
+    "evenepole": "Evenepoel",
+    "roglich": "Roglič",
+    "pitcock": "Pidcock",
+    "almeeda": "Almeida",
+
+    "canion": "Canyon",
+    "durace": "Dura-Ace",
+    "pinarelo": "Pinarello",
+    "canondale": "Cannondale",
+    "specializ": "Specialized",
+    "specializch": "Specialized",
+
+    "tubeles": "tubeless",
+    "túbeles": "tubeless",
+    "tubles": "tubeless",
+    "grabel": "gravel"
+  }
+}
