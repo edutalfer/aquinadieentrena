@@ -35,12 +35,21 @@ punto. El resto de pasos da igual dónde corran.
 
 **`curl` desde el servidor NO sirve para comprobar qué ve el público.**
 El servidor se responde a sí mismo y salta la CDN. Esto ya provocó un
-diagnóstico falso: se dio por bueno un arreglo que no lo era. La forma correcta:
+diagnóstico falso: se dio por bueno un arreglo que no lo era. Desde el Mac:
 
 ```bash
 IP=$(dig +short aquinadieentrena.cc @8.8.8.8 | head -1)
 curl -s https://aquinadieentrena.cc/ --resolve "aquinadieentrena.cc:443:$IP" | grep "loQueSea"
 ```
+
+⚠️ **Y `curl` solo aguanta unas pocas peticiones.** La CDN de Hostinger tiene
+protección anti-bot: a la ráfaga número N te devuelve **403 con un JS challenge**
+(«Checking your browser before accessing») en vez del fichero. Da igual la ruta.
+Eso ya provocó un segundo diagnóstico falso: parecía que el índice estaba roto
+en producción y lo que estaba bloqueado era el `curl`. **Si empiezas a ver 403
+donde antes había 200, mira el cuerpo de la respuesta antes de opinar**, y
+verifica con un navegador de verdad, que pasa el challenge y es además lo que
+usa el público.
 
 **El repo ES el docroot**: `~/domains/aquinadieentrena.cc/public_html`.
 No es `~/public_html`. Un `git push` ya despliega.
@@ -155,9 +164,10 @@ que duela perder.
 índice lo que esté en esa lista. Los timelines salen del bloque «Temas del
 episodio» de la descripción de YouTube.
 
-**Tamaño del índice: medido y cerrado.** 4,4 MB en disco pero **1,6 MB por la
-red** (el `.htaccess` ya comprime `application/json`) y solo se descarga al
-tocar el buscador; buscar tarda decenas de milisegundos. No se trocea por año: para una búsqueda
+**Tamaño del índice: medido y cerrado.** 4,4 MB en disco pero **2,07 MB por la
+red**, medido en producción con el navegador (el `gzip -9` local decía 1,6 MB:
+la CDN comprime menos). Se descarga en ~1,7 s y solo al tocar el buscador;
+buscar tarda decenas de milisegundos. No se trocea por año: para una búsqueda
 global habría que descargar todos los trozos igual. Ver D14 en
 `02_DECISIONES.md`.
 
@@ -170,7 +180,8 @@ global habría que descargar todos los trozos igual. Ver D14 en
 - Buscar en la web una palabra que **no** esté en ningún título de timeline y
   ver si devuelve el minuto correcto («creatina» va bien para esto).
 - Verificar contra producción con `curl --resolve` (sección 2), nunca con
-  `curl` desde el servidor.
+  `curl` desde el servidor — y **rematar con un navegador real**: es lo único
+  que pasa el anti-bot de la CDN y lo que de verdad ve el público.
 
 ---
 

@@ -1,6 +1,6 @@
 # 🧭 DECISIONES — Registro y preguntas abiertas
 
-> **Última actualización:** 2026-08-17
+> **Última actualización:** 2026-08-18
 
 ---
 
@@ -21,7 +21,7 @@
 | D11 | 2026-08-17 | Índice de búsqueda en cliente (sin API) | Suficiente para el volumen actual; se revisará si el índice se dispara de tamaño |
 | D12 | 2026-08-17 | Los VTT se bajan **a mano desde YouTube Studio** y se versionan en bruto en `data/subtitulos_originales/<youtubeId>.es.vtt` | yt-dlp no puede con la descarga (ver D10 y §5 de CLAUDE.md). Guardarlos en bruto permite rehacer la segmentación sin volver a YouTube |
 | D13 | 2026-08-17 | Fecha, duración y timeline se sacan de la **página pública del vídeo con `curl`** desde el Mac, no con yt-dlp | El yt-dlp del Mac falla al extraer vídeo a vídeo («Es necesario volver a cargar la página»), pero el HTML público trae `uploadDate`, `lengthSeconds` y la descripción entera. El script está en el histórico de la sesión, no en el repo: es de un solo uso |
-| D14 | 2026-08-17 | El índice sigue **en un solo fichero**, sin trocear por año | Medido de verdad con los 46 episodios: 4,4 MB en disco pero **1,6 MB por la red** (mod_deflate ya comprime `application/json`) y solo se descarga al tocar el buscador. Buscar tarda decenas de ms sobre 8.675 segmentos. Trocear por año no ahorraría nada: una búsqueda global necesita todos los trozos igualmente |
+| D14 | 2026-08-17 | El índice sigue **en un solo fichero**, sin trocear por año | Medido en producción con el navegador: 4,4 MB en disco pero **2,07 MB por la red** y ~1,7 s de descarga, solo al tocar el buscador. (Ojo: `gzip -9` en local decía 1,6 MB; la CDN comprime menos, y el bueno es el dato de producción.) Buscar tarda decenas de ms sobre 8.675 segmentos. Trocear por año no ahorraría nada: una búsqueda global necesita todos los trozos igualmente |
 | D15 | 2026-08-17 | Los **22 vídeos de etapa del Tour 2026** (julio, 33-57 min) **no entran en el buscador de momento** | Lo decide Eduardo. No hay que bajar sus VTT ni darlos de alta en `data/episodios.js`. Si algún día cambia de idea, el procedimiento es el mismo que para cualquier episodio |
 
 ---
@@ -29,8 +29,8 @@
 ## ❓ PREGUNTAS ABIERTAS
 
 ### P2 — Motor de búsqueda a futuro · **cerrada de momento (ver D14)**
-Con 46 episodios: 4,4 MB en disco, 1,6 MB comprimido, decenas de ms por
-búsqueda. Aguanta. Volver a mirarlo si el índice pasa de **~3 MB comprimidos** o si la
+Con 46 episodios: 4,4 MB en disco, **2,07 MB por la red**, decenas de ms por
+búsqueda. Aguanta. Volver a mirarlo si el índice pasa de **~3 MB por la red** o si la
 búsqueda se nota lenta en un móvil viejo. La salida entonces no es trocear por
 año, es un índice invertido (término → posiciones) o una API.
 
@@ -60,7 +60,7 @@ qué estructura.
 | Docroot (= repo) | `~/domains/aquinadieentrena.cc/public_html` ⚠️ **no** `~/public_html` |
 | Repo bare auxiliar | `~/ane.git` |
 | Python / Node en el servidor | Fuera del PATH: `/opt/alt/python311/bin` y `/opt/alt/alt-nodejs22/root/usr/bin` (ver `pipeline/entorno.sh`) |
-| Autenticación SSH | Clave RSA `claude-ane-2026` en hPanel → Avanzado → Acceso SSH |
+| Autenticación SSH | Clave RSA 4096 en el Mac: `~/.ssh/claude-ane-2026` (privada, 600). Dada de alta en hPanel → Avanzado → Acceso SSH con el nombre **`claude-ane-3`**. Probada el 18/08/2026 |
 | Flujo de deploy | Editar → commit → push a GitHub; en el servidor `git pull` |
 
 ---
@@ -71,4 +71,5 @@ qué estructura.
 |---|---|
 | Previas | Web v1 diseñada, desplegada y subida a GitHub |
 | 2026-08-17 | memorybank + mega plan + esqueleto. Verificado el repo real y la CDN. Pipeline de transcripciones escrito y probado. Buscador ampliado a transcripciones. SSH restablecido (RSA). Detectado el bloqueo de YouTube a la IP del hosting |
+| 2026-08-18 | **Buscador desplegado y verificado en producción.** Timelines de 16 episodios transcritos de capturas (308 bloques), `git pull` en el servidor y comprobación con navegador real. Encontrada la segunda trampa de la CDN: el anti-bot devuelve 403 a `curl` en ráfaga |
 | 2026-08-17 | **Buscador alimentado.** Los VTT de Studio cruzados con sus youtubeId, `data/episodios.js` reconstruido y el índice generado. Primero 40 episodios; Eduardo bajó los 6 que faltaban en la misma sesión y quedó **completo: 46 episodios, 8.675 segmentos**. Probado en local |

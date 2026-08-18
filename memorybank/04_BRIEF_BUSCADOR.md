@@ -1,6 +1,6 @@
 # 🔍 BRIEF — Alimentar el buscador
 
-> Actualizado: 2026-08-17. Lee antes `03_ESTADO_ACTUAL.md`.
+> Actualizado: 2026-08-18. Lee antes `03_ESTADO_ACTUAL.md`.
 
 ---
 
@@ -10,21 +10,25 @@ Que el buscador encuentre **cualquier cosa dicha en un episodio**, no solo lo
 que aparece en los títulos del timeline. Resultado esperado: episodio + minuto
 exacto + fragmento de lo que se dijo + enlace directo a YouTube en ese segundo.
 
-## Estado: ✅ HECHO Y COMPLETO
+## Estado: ✅ HECHO, DESPLEGADO Y VERIFICADO EN PRODUCCIÓN
 
 **Los 46 episodios están indexados: 8.675 segmentos.** No falta ninguno: la
 serie de domingos va seguida del 7 sep 2025 al 16 ago 2026, y el único hueco
 —julio de 2026— es intencionado (D15: el Tour se queda fuera).
 
-Probado en local (`python3 -m http.server`) contra `index.html`:
+Verificado el 18/08/2026 en **https://aquinadieentrena.cc con un navegador
+real** (no con `curl`: ver la trampa del anti-bot en `03_ESTADO_ACTUAL.md`):
 
-| Prueba | Resultado |
+| Prueba en producción | Resultado |
 |---|---|
-| «creatina» (no está en ningún timeline) | 28 momentos, minuto correcto, enlace `&t=1537s` |
-| «aeroad», «armstrong» | caen en los episodios de abril y marzo, los últimos en entrar |
-| Tiempo de búsqueda | 6-30 ms, incluso con miles de hallazgos |
-| Índice | 4,4 MB en disco · **1,6 MB por la red** (mod_deflate) · carga perezosa |
-| `episodios.html` | 46 tarjetas, de 16 ago 2026 a 7 sep 2025 |
+| Índice | 4,4 MB en disco · **2,07 MB por la red** · ~1,7 s · solo al tocar el buscador |
+| Contenido | 46 episodios, 8.675 segmentos |
+| «creatina» | 6 momentos; el primero es el bloque «¿La creatina tiene beneficios en el ciclismo?» → `&t=121s` |
+| «badlands» | 1 momento, `qG4PMXC7wLM&t=1295s` (bloque de captura, funcionando) |
+| «iniesta» | 8 momentos, `sF7fe35IJi4&t=147s` |
+| Portada | 46 episodios cargados, 3 tarjetas en «últimos» |
+| `memorybank/`, `pipeline/`, `data/transcripciones/`, `data/subtitulos_originales/` | **403**, bloqueados |
+| `data/episodios.js`, `data/indice_busqueda.json` | 200, se sirven |
 
 ---
 
@@ -66,9 +70,9 @@ Cape Epic, Andalucía Bike Race y Taiwán.
 
 ---
 
-## Lo único que queda pendiente
+## Timelines: 44 de 46
 
-**1. Timelines: 44 de 46 hechos.** De los 18 que no llevaban «Temas del
+**Hechos.** De los 18 que no llevaban «Temas del
 episodio» en la descripción de YouTube, Eduardo mandó **16 capturas** de las
 diapositivas del vídeo y se transcribieron a `data/episodios.js`. Total en la
 web: **308 bloques**.
@@ -126,4 +130,11 @@ merece la pena:
 
 **Resultado: 0 bloques fuera de rango o desordenados en los 46 episodios.**
 
-**3. «tubles».** Ver P7 en `02_DECISIONES.md`.
+---
+
+## Lo único que queda pendiente
+
+- **Dos timelines que no existen** (la tabla de arriba). Si algún día se
+  escriben en YouTube, se regenera y entran solos.
+- **«tubles».** Los subtítulos automáticos destrozan la jerga y eso limita el
+  buscador. Ver P7 en `02_DECISIONES.md`.

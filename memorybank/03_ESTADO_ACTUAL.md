@@ -51,6 +51,13 @@ IP=$(dig +short aquinadieentrena.cc @8.8.8.8 | head -1)
 curl -s https://aquinadieentrena.cc/ --resolve "aquinadieentrena.cc:443:$IP" | grep "loQueSea"
 ```
 
+⚠️ **Segunda trampa, encontrada el 18/08/2026: la CDN tiene anti-bot.** Tras
+unas pocas peticiones seguidas con `curl`, deja de servir los ficheros y
+devuelve **403 con un JS challenge** («Checking your browser before
+accessing»), sea cual sea la ruta. Parecía que el buscador estaba roto en
+producción y lo que estaba bloqueado era el `curl`. **La verificación que vale
+es con un navegador real**, que pasa el challenge y es lo que usa el público.
+
 Estado actual de la caché:
 - El `.htaccess` ya **no** cachea HTML (`no-cache, must-revalidate`)
 - CSS y JS se referencian con `?v=AAAAMMDD` — **al cambiarlos hay que subir
@@ -74,9 +81,10 @@ Si algo se rompe: `git revert` y atrás en un segundo.
 ## Estado de las dos líneas de trabajo abiertas
 
 ### 🔍 Buscador (chat dedicado)
-✅ Alimentado, completo y probado: los 46 episodios y 308 bloques de timeline.
-Solo quedan dos episodios sin timeline, porque no lo tienen en ningún sitio.
-Ver `04_BRIEF_BUSCADOR.md`
+✅ **Terminado y en producción** (18/08/2026): los 46 episodios, 8.675
+segmentos y 308 bloques de timeline, verificados en https://aquinadieentrena.cc
+con un navegador. Solo quedan dos episodios sin timeline, porque no lo tienen
+en ningún sitio. Ver `04_BRIEF_BUSCADOR.md`
 
 ### 🎨 Estética (chat dedicado)
 Ver `05_BRIEF_ESTETICA.md`
