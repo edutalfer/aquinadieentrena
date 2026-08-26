@@ -16,6 +16,22 @@
 
 window.ANE_EPISODIOS = [
   {
+    titulo: "¿Mercado de la bicicleta estancado? | Nuestra propuesta para la Cape Epic | Nueva Trek Domane",
+    fecha: "2026-08-23",
+    duracion: 6142,
+    youtubeId: "nrPtfqLO4J4",
+    temas: [
+      { t: 0,     titulo: "Intro" },
+      { t: 90,    titulo: "Nuestra propuesta para la Cape Epic" },
+      { t: 795,   titulo: "¡Os enseñamos nuestra nueva página web!" },
+      { t: 1160,  titulo: "Analizamos la nueva Trek Domane" },
+      { t: 2635,  titulo: "La evolución de las bicis del World Tour desde 2020 a 2026" },
+      { t: 4080,  titulo: "A Quinn Simmons le dan pa'l pelo en Leadville" },
+      { t: 5040,  titulo: "Muchas marcas de coche han intentado hacer bicicletas" },
+      { t: 5510,  titulo: "¿Bici o cepo?" }
+    ]
+  },
+  {
     titulo: "¿El ciclismo en su peor momento? | Lapierre quiebra | Decathlon bate récords",
     fecha: "2026-08-16",
     duracion: 5030,
