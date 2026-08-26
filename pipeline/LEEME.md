@@ -1,25 +1,39 @@
 # Pipeline de transcripciones — ANE
 
-Genera el índice que permite buscar **dentro de lo hablado** en los episodios,
-no solo en los títulos del timeline.
+## 🟢 Añadir un episodio nuevo (lo normal, cada domingo)
 
-## ⚠️ Importante: la descarga se hace EN LOCAL
-
-YouTube bloquea las IPs de centros de datos (error «Sign in to confirm you're
-not a bot» / HTTP 429). Desde el servidor de Hostinger **no se pueden descargar
-subtítulos**. El paso 1 se ejecuta en el Mac; el resto da igual dónde.
-
-## Uso semanal (en el Mac, dentro del repo clonado)
+**En el Mac** (nunca en el servidor: YouTube veta las IPs del hosting):
 
 ```bash
-# 1. Añade el episodio nuevo a data/episodios.js (título, fecha, youtubeId, temas)
-# 2. Lanza el pipeline
-./pipeline/pipeline.sh <youtubeId>
-# 3. Sube los datos
-git add data/ && git commit -m "Transcripción del episodio X" && git push
+cd ~/Documents/Proyectos-IA/aquinadieentrena
+git pull
+export PATH="$HOME/Library/Python/3.9/bin:$PATH"
+
+python3 pipeline/nuevo_episodio.py "https://www.youtube.com/watch?v=XXXXXXXXXXX"
+
+git add data/ && git commit -m "Episodio nuevo" && git push
 ```
 
-Luego, en el servidor: `git pull` y queda publicado.
+Ese único comando saca de YouTube el título, la fecha, la duración y **los
+capítulos** (que se convierten en el timeline), lo escribe todo en
+`data/episodios.js`, descarga los subtítulos, los segmenta y reconstruye el
+índice. No hay que copiar minutos a mano.
+
+Luego, para publicarlo, en el servidor: `git pull`.
+
+### Requisitos
+- **El vídeo debe tener capítulos en YouTube.** De ahí sale el timeline. Si no
+  los tiene, el episodio se añade igual pero solo se encontrará por
+  transcripción, y el script avisa.
+- Si el episodio ya está en `episodios.js`, el script se planta y no duplica.
+
+---
+
+## Reprocesar todo (raro)
+
+```bash
+./pipeline/pipeline.sh --todos
+```
 
 ## Primera vez (todos los episodios de golpe)
 
@@ -45,6 +59,8 @@ Si en el Mac `python3` y `node` están en el PATH normal, puedes vaciar
 | `02_segmentar.py` | Limpia el VTT (quita el "rodillo" de líneas repetidas) y lo agrupa en segmentos de ~35 s → `data/transcripciones/<id>.json` |
 | `03_construir_indice.py` | Junta todo en `data/indice_busqueda.json`, que es lo que lee el buscador |
 | `pipeline.sh` | Encadena los tres |
+| `nuevo_episodio.py` | **El que se usa normalmente**: de la URL de YouTube a la web, capítulos incluidos |
+| `correcciones.json` | Erratas de los subtítulos automáticos, aplicadas al construir el índice |
 
 Solo entran en el índice los episodios dados de alta en `data/episodios.js`:
 esa lista manda.
