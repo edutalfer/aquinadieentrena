@@ -82,8 +82,10 @@ El `python3` del sistema es 3.9 (Command Line Tools) — ver sección 5.
 dar de alta un episodio. Ya pasó (31/08/2026): el episodio entró en el fichero
 y en el índice, pero el público siguió viendo la lista anterior porque la URL
 `?v=` no cambió. `pipeline/nuevo_episodio.py` ahora lo sube solo; si das de
-alta un episodio a mano, súbelo tú. La CDN está en Modo de desarrollo
-(hPanel → Rendimiento → CDN); hay que desactivarlo cuando se cierre el rediseño.
+alta un episodio a mano, súbelo tú.
+
+La CDN está en Modo de desarrollo (hPanel → Rendimiento → CDN); hay que
+desactivarlo cuando se cierre el rediseño.
 
 **Protegido por `.htaccess`:** `memorybank/`, `pipeline/` y
 `data/transcripciones/`. `data/indice_busqueda.json` **sí** se sirve porque lo
@@ -137,12 +139,11 @@ YouTube Studio** (los vídeos son de Eduardo). Formato **`.vtt`**, no `.srt`:
 no solo lo que está en los títulos del timeline. Resultado: episodio + minuto
 exacto + fragmento + enlace directo a YouTube en ese segundo.
 
-**Hecho (17/08/2026).** El código ya lo soportaba (`assets/js/app.js`: carga
-perezosa del índice, prioridad del timeline sobre la transcripción, fragmento
-de contexto, enlace 3 s antes de la frase) y **ya tiene datos**: los 46 VTT de
-Studio están renombrados a `<youtubeId>.es.vtt`, `data/episodios.js` tiene los
-46 episodios con fecha, duración y timeline reales, y el índice trae 8.675
-segmentos. Probado en local. Detalle: `04_BRIEF_BUSCADOR.md`.
+**Hecho y en producción.** `assets/js/app.js` ya traía la carga perezosa del
+índice, la prioridad del timeline sobre la transcripción, el fragmento de
+contexto y el enlace 3 s antes de la frase. Los datos entraron el 17/08/2026 y
+desde entonces crece cada domingo: **48 episodios, 9.098 segmentos** y 324
+bloques de línea de tiempo (31/08/2026). Detalle: `04_BRIEF_BUSCADOR.md`.
 
 **Timelines: 44 de 46, 308 bloques.** Los 16 que no llevaban «Temas del
 episodio» en YouTube se transcribieron de capturas que mandó Eduardo, con tres
@@ -157,9 +158,16 @@ fuera de rango. Un aviso: el timeline del episodio del 9 ago 2026
 regenera desde la página del vídeo, hay que volver a ponerla. Ver
 `04_BRIEF_BUSCADOR.md`.
 
-**Para un episodio nuevo:** VTT de Studio → `data/subtitulos_originales/` y
-`pipeline/tmp/` como `<youtubeId>.es.vtt` → alta en `data/episodios.js` →
-`./pipeline/pipeline.sh <youtubeId>` → commit y push.
+**Para un episodio nuevo** (detalle en `pipeline/LEEME.md`): dejar el VTT de
+Studio en `data/subtitulos_originales/` y `pipeline/tmp/` como
+`<youtubeId>.es.vtt`, y lanzar:
+
+```bash
+python3 pipeline/nuevo_episodio.py "https://youtu.be/<youtubeId>"
+```
+
+Eso da de alta el episodio, sube el `?v=`, segmenta y reconstruye el índice.
+Luego commit, push y `git pull` en el servidor.
 
 `data/subtitulos_originales/` es la **fuente de verdad en bruto** y se versiona:
 si algún día cambia la segmentación, se reconstruye el índice sin volver a
