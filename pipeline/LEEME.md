@@ -35,8 +35,13 @@ git add data/ && git commit -m "Episodio nuevo" && git push
 ```
 
 Eso saca de la página del vídeo el título, la fecha, la duración y la línea de
-tiempo, lo escribe en `data/episodios.js`, segmenta el VTT y reconstruye el
-índice. No hay que copiar minutos a mano.
+tiempo, lo escribe en `data/episodios.js`, **sube el `?v=` de `episodios.js` en
+los HTML**, segmenta el VTT y reconstruye el índice. No hay que copiar minutos
+a mano.
+
+Lo del `?v=` no es un capricho: `episodios.js` se sirve con caché de 7 días, así
+que sin subirlo el episodio entra en el fichero pero **el público sigue viendo
+la lista vieja**. Pasó con el episodio del 30 de agosto.
 
 Para publicarlo, en el servidor: `git pull` (el repo es el docroot).
 

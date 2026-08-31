@@ -76,7 +76,13 @@ El `python3` del sistema es 3.9 (Command Line Tools) — ver sección 5.
 
 **Caché.** El `.htaccess` ya no cachea HTML. Pero CSS y JS se referencian con
 `?v=AAAAMMDD`: **si tocas un CSS o un JS, sube ese número en `index.html` y
-`episodios.html`** o nadie verá el cambio. La CDN está en Modo de desarrollo
+`episodios.html`** o nadie verá el cambio. Se sirven con `max-age` de 7 días.
+
+⚠️ **`data/episodios.js` también cuenta**, y es el que se toca cada semana al
+dar de alta un episodio. Ya pasó (31/08/2026): el episodio entró en el fichero
+y en el índice, pero el público siguió viendo la lista anterior porque la URL
+`?v=` no cambió. `pipeline/nuevo_episodio.py` ahora lo sube solo; si das de
+alta un episodio a mano, súbelo tú. La CDN está en Modo de desarrollo
 (hPanel → Rendimiento → CDN); hay que desactivarlo cuando se cierre el rediseño.
 
 **Protegido por `.htaccess`:** `memorybank/`, `pipeline/` y

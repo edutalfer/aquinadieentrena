@@ -179,6 +179,38 @@ def insertar(d):
     print("✔ Insertado en data/episodios.js")
 
 
+def refrescar_version():
+    """Sube el ?v= de episodios.js en los HTML.
+
+    Sin esto, el episodio entra en el fichero pero NADIE lo ve: la CDN sirve
+    la copia cacheada durante una semana. Ya pasó con el episodio 48.
+    """
+    from datetime import date
+    hoy = date.today().strftime("%Y%m%d")
+    patron = re.compile(r"(data/episodios\.js\?v=)([0-9a-z]+)")
+    tocados = []
+    for nombre in ("index.html", "episodios.html"):
+        ruta = RAIZ / nombre
+        if not ruta.exists():
+            continue
+        html = ruta.read_text(encoding="utf-8")
+        m = patron.search(html)
+        if not m:
+            continue
+        actual = m.group(2)
+        if actual == hoy:                      # ya se subió hoy: 20260831 → 20260831b
+            nueva = hoy + "b"
+        elif actual.startswith(hoy):           # 20260831b → 20260831c
+            nueva = hoy + chr(ord(actual[len(hoy):]) + 1)
+        else:
+            nueva = hoy
+        ruta.write_text(patron.sub(r"\g<1>" + nueva, html), encoding="utf-8")
+        tocados.append(nombre)
+    if tocados:
+        print("✔ Versión de episodios.js subida a ?v=%s en %s"
+              % (nueva, " y ".join(tocados)))
+
+
 def hay_subtitulo(yid):
     """El VTT tiene que estar puesto a mano antes de llamar a esto."""
     return (RAIZ / "pipeline" / "tmp" / (yid + ".es.vtt")).exists() or \
@@ -211,6 +243,7 @@ def main():
                  "descripción de YouTube y vuelve a lanzarlo.")
 
     insertar(d)
+    refrescar_version()
 
     if not hay_subtitulo(yid):
         print("\n⚠ Falta el subtítulo. Bájalo de YouTube Studio (VTT, no SRT) y déjalo en:")
