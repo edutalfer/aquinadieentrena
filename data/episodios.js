@@ -16,6 +16,22 @@
 
 window.ANE_EPISODIOS = [
   {
+    titulo: "¿Para quién es la nueva SEKA Exaero? | Polémica en La Vuelta y MVDP en el mundial!",
+    fecha: "2026-08-30",
+    duracion: 6305,
+    youtubeId: "gvgt-rp0yuI",
+    temas: [
+      { t: 0,     titulo: "Intro" },
+      { t: 120,   titulo: "Cristóbal pone a prueba el Oura más caro" },
+      { t: 1080,  titulo: "Seka presenta su nueva bici aero" },
+      { t: 3100,  titulo: "Van Rysel la caga con la bici de gravel" },
+      { t: 3870,  titulo: "¡Polémica en La Vuelta a España!" },
+      { t: 4770,  titulo: "Silca se mete en el mercado de las cubiertas" },
+      { t: 5560,  titulo: "¿Van der Poel será campeón del mundo de MTB?" },
+      { t: 5786,  titulo: "Bici o Cepo" }
+    ]
+  },
+  {
     titulo: "¿Mercado de la bicicleta estancado? | Nuestra propuesta para la Cape Epic | Nueva Trek Domane",
     fecha: "2026-08-23",
     duracion: 6142,
