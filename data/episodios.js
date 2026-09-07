@@ -16,6 +16,22 @@
 
 window.ANE_EPISODIOS = [
   {
+    titulo: "España vuelve a soñar gracias a Enric Más! | ¿Cuales son las ruedas más rápidas del mercado?",
+    fecha: "2026-09-06",
+    duracion: 5834,
+    youtubeId: "40NF8VZmZaY",
+    temas: [
+      { t: 0,     titulo: "Intro" },
+      { t: 267,   titulo: "¡Llegan las Arden azules a Madeinn!" },
+      { t: 1945,  titulo: "¿Cuál será nuestra próxima carrera?" },
+      { t: 2530,  titulo: "Nuestros números del año del podcast" },
+      { t: 2960,  titulo: "Enric Mas se la saca en La Vuelta" },
+      { t: 3510,  titulo: "¿Tenemos un problema con el timing?" },
+      { t: 3740,  titulo: "Analizamos las ruedas más rápidas del mercado" },
+      { t: 4910,  titulo: "¡Bici o cepo!" }
+    ]
+  },
+  {
     titulo: "¿Para quién es la nueva SEKA Exaero? | Polémica en La Vuelta y MVDP en el mundial!",
     fecha: "2026-08-30",
     duracion: 6305,
