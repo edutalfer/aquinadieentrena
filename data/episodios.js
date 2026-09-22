@@ -16,6 +16,22 @@
 
 window.ANE_EPISODIOS = [
   {
+    titulo: "EPISODIO ESPECIAL | Charla con expertos, el futuro de la industria desde Sea Otter 2026",
+    fecha: "2026-09-20",
+    duracion: 6802,
+    youtubeId: "n2mOK0NPuuQ",
+    temas: [
+      { t: 0,     titulo: "Intro" },
+      { t: 110,   titulo: "Un poco sobre el final de La Vuelta" },
+      { t: 345,   titulo: "Estamos en Sea Otter" },
+      { t: 495,   titulo: "Charlamos con Adrià sobre los neumáticos Vittoria" },
+      { t: 3740,  titulo: "Cómo ve David el mercado" },
+      { t: 4450,  titulo: "El aumento de mujeres en el ciclismo" },
+      { t: 5470,  titulo: "¿Es Sea Otter muy relevante?" },
+      { t: 5715,  titulo: "Preguntas del público" }
+    ]
+  },
+  {
     titulo: "¿Genios del Marketing? | Nos vamos a LA VUELTA con Red Bull | Podcast en directo!",
     fecha: "2026-09-13",
     duracion: 6960,
