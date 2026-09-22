@@ -16,6 +16,24 @@
 
 window.ANE_EPISODIOS = [
   {
+    titulo: "¿Genios del Marketing? | Nos vamos a LA VUELTA con Red Bull | Podcast en directo!",
+    fecha: "2026-09-13",
+    duracion: 6960,
+    youtubeId: "LBYm9n9pxaw",
+    temas: [
+      { t: 0,     titulo: "Intro" },
+      { t: 75,    titulo: "¡Nos vamos a la Vuelta con Red Bull!" },
+      { t: 780,   titulo: "Primer podcast en directo" },
+      { t: 1045,  titulo: "Nuevas reglas para ciclistas" },
+      { t: 2790,  titulo: "¿Vale la pena la SL9 S-Level?" },
+      { t: 3840,  titulo: "El verdadero efecto de los descuentos en tiendas" },
+      { t: 4080,  titulo: "Comentamos el nuevo iPhone Duo" },
+      { t: 4500,  titulo: "¿Zapatillas blancas o negras?" },
+      { t: 5270,  titulo: "Selección española al mundial de ciclismo" },
+      { t: 5710,  titulo: "¿Bici o cepo?" }
+    ]
+  },
+  {
     titulo: "España vuelve a soñar gracias a Enric Más! | ¿Cuales son las ruedas más rápidas del mercado?",
     fecha: "2026-09-06",
     duracion: 5834,
