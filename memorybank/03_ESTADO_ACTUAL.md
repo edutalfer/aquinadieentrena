@@ -72,7 +72,10 @@ cargado** (si no, contarían como «sin resultado» búsquedas que sí lo tienen
 - **Copia local de Eduardo:** `/Users/eduardotalavera/Documents/Proyectos-IA/aquinadieentrena`
 - **Servidor:** `46.202.172.3` · puerto `65002` · usuario `u527801093`
 - **Clave SSH:** `~/.ssh/claude-ane-2026` en el servidor (600, fuera del repo),
-  dada de alta en hPanel como `claude-ane-3`
+  dada de alta en hPanel como `claude-ane-3`. Los chats de claude.ai no
+  conservan la privada entre conversaciones: generan su propia RSA 4096 y
+  Eduardo la da de alta (la del 23/09/2026 es `claude-ane-5`). Las antiguas
+  que ya no use nadie se pueden borrar en hPanel.
 
 ---
 
