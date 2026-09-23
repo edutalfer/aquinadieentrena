@@ -188,7 +188,7 @@ $ultimas = filas($bd, 'SELECT * FROM busquedas ORDER BY id DESC LIMIT 40');
   nav a { color: #C7CAD1; text-decoration: none; font-weight: 700; font-size: 12px; letter-spacing: .1em;
           text-transform: uppercase; padding: 7px 11px; border: 1px solid #33363D; margin-left: 4px; }
   nav a.si { background: var(--azul); border-color: var(--azul); color: #fff; }
-  main { padding: 26px 0 60px; }
+  main.caja { padding: 32px 20px 60px; }   /* más específico que .caja, que ponía el margen de arriba a 0 */
   .cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 22px; }
   .cifra { background: #fff; border: 2px solid var(--negro); padding: 16px 18px; }
   .cifra b { display: block; font: 900 italic 40px/1 "Archivo", sans-serif; }
