@@ -41,6 +41,9 @@ así que los 2 MB no penalizan a quien entra y no busca.
 
 ## 📊 Estadísticas privadas del buscador (2026-09-23)
 
+✅ **Verificado en producción con navegador real** (23/09/2026): búsqueda,
+clic y panel funcionan a través de la CDN.
+
 Panel en **https://aquinadieentrena.cc/admin** — usuario y contraseña del
 navegador. Qué se busca, qué no encuentra nada, qué solo aparece en lo hablado,
 qué minuto se abre y búsquedas por día. Exporta CSV. Ver D16 y D17.
