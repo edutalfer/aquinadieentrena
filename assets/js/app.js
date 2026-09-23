@@ -274,6 +274,14 @@
 
     var palabras = limpia(q).split(" ").filter(Boolean);
     var hallazgos = busca(q);
+
+    /* Estadísticas: solo con el índice de transcripciones ya cargado; si no,
+       contaría como «sin resultados» búsquedas que sí los tienen. muestra()
+       se vuelve a llamar al terminar la carga, así que no se pierde nada. */
+    if (window.ANEStats && VOZ !== null) {
+      window.ANEStats.busqueda(q, hallazgos.length,
+        hallazgos.filter(function (h) { return h.origen === "voz"; }).length);
+    }
     panel.hidden = false;
 
     if (!hallazgos.length) {

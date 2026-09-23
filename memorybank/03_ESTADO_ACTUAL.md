@@ -1,6 +1,6 @@
 # 📍 ESTADO ACTUAL — Léeme primero
 
-> **Actualizado:** 2026-08-18
+> **Actualizado:** 2026-09-23
 > Punto de partida para cualquier chat nuevo sobre la web de ANE.
 
 ---
@@ -36,6 +36,30 @@ Verificado con navegador real: buscar «creatina» devuelve el bloque
 
 Carga perezosa: el índice solo se descarga cuando alguien toca el buscador,
 así que los 2 MB no penalizan a quien entra y no busca.
+
+---
+
+## 📊 Estadísticas privadas del buscador (2026-09-23)
+
+Panel en **https://aquinadieentrena.cc/admin** — usuario y contraseña del
+navegador. Qué se busca, qué no encuentra nada, qué solo aparece en lo hablado,
+qué minuto se abre y búsquedas por día. Exporta CSV. Ver D16 y D17.
+
+| Pieza | Dónde |
+|---|---|
+| Registro en el navegador | `assets/js/stats.js` (lo llama `app.js` tras pintar resultados) |
+| Endpoint | `api/stats.php` (POST, responde 204) |
+| Librería común | `api/_bd.php` — bloqueada por `.htaccess` |
+| Panel | `admin/index.php` |
+| **Base de datos** | `~/datos/ane.db` (SQLite, se crea sola) — **fuera del repo** |
+| **Credenciales del panel** | `~/datos/admin.php` (usuario + hash bcrypt) — **fuera del repo** |
+
+Backup: copiar `~/datos/ane.db`. Cambiar la contraseña: regenerar el hash con
+`php -r 'echo password_hash("NUEVA", PASSWORD_DEFAULT);'` y pegarlo en
+`~/datos/admin.php`. Si falta ese fichero, el panel no deja entrar a nadie.
+
+Las búsquedas **solo se registran con el índice de transcripciones ya
+cargado** (si no, contarían como «sin resultado» búsquedas que sí lo tienen).
 
 ---
 
@@ -86,3 +110,7 @@ Riesgo real si ambos tocan `index.html` a la vez.
 4. **Python y Node están fuera del PATH** → `source pipeline/entorno.sh`.
 5. **Assets versionados con `?v=`**: al tocar CSS o JS hay que subir el número
    en `index.html` Y en `episodios.html`, o nadie ve el cambio.
+6. **Altas de episodio sin subir el `?v=`**: las del 6, 13 y 20/09/2026 solo
+   tocaron `data/episodios.js` y el HTML siguió en `?v=20260831`. Arreglado el
+   23/09. Tras cada alta, `git diff --stat` tiene que mostrar también
+   `index.html` y `episodios.html`; si no, súbelo a mano.

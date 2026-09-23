@@ -69,7 +69,7 @@ newsletter y, en el futuro, tienda de merch.
 - [ ] Jerga mal transcrita: Whisper si las analíticas muestran que la gente
       busca términos técnicos y no encuentra (ver P7)
 - [ ] Búsqueda semántica ("ruedas rápidas" → "material aero")
-- [ ] Analytics de búsquedas = ideas para episodios
+- [x] Analytics de búsquedas = ideas para episodios → panel privado `/admin` (D16, D17, 2026-09-23)
 
 ### Fase 5 — Tienda merch (sin fecha)
 

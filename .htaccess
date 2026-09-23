@@ -9,6 +9,20 @@
   Require all denied
 </FilesMatch>
 
+# ---------- Backend: ficheros internos ----------
+# api/_bd.php y cualquier PHP que empiece por «_» son librerías, no
+# endpoints: nunca se sirven. (Solo .php: hay IDs de YouTube con «_».)
+<FilesMatch "^_.*\.php$">
+  Require all denied
+</FilesMatch>
+
+# ---------- Panel /admin: que la contraseña llegue a PHP ----------
+# En algunos servidores la cabecera Authorization no pasa a PHP y el
+# panel pediría la clave una y otra vez. admin/index.php la lee de aquí.
+<IfModule mod_setenvif.c>
+  SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
 

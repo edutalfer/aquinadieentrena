@@ -75,8 +75,8 @@ source pipeline/entorno.sh
 El `python3` del sistema es 3.9 (Command Line Tools) — ver sección 5.
 
 **Caché.** El `.htaccess` ya no cachea HTML. Pero CSS y JS se referencian con
-`?v=AAAAMMDD`: **si tocas un CSS o un JS, sube ese número en `index.html` y
-`episodios.html`** o nadie verá el cambio. Se sirven con `max-age` de 7 días.
+`?v=AAAAMMDD`: **si tocas un CSS o un JS (también `stats.js`), sube ese número
+en `index.html` y `episodios.html`** o nadie verá el cambio. Se sirven con `max-age` de 7 días.
 
 ⚠️ **`data/episodios.js` también cuenta**, y es el que se toca cada semana al
 dar de alta un episodio. Ya pasó (31/08/2026): el episodio entró en el fichero
@@ -87,10 +87,14 @@ alta un episodio a mano, súbelo tú.
 La CDN está en Modo de desarrollo (hPanel → Rendimiento → CDN); hay que
 desactivarlo cuando se cierre el rediseño.
 
-**Protegido por `.htaccess`:** `memorybank/`, `pipeline/` y
-`data/transcripciones/`. `data/indice_busqueda.json` **sí** se sirve porque lo
-necesita el navegador. Si creas carpetas nuevas con material en bruto,
-bloquéalas también.
+**Protegido por `.htaccess`:** `memorybank/`, `pipeline/`,
+`data/transcripciones/`, `data/subtitulos_originales/` y cualquier
+`_*.php` (librerías del backend). `/admin` pide usuario y contraseña.
+`data/indice_busqueda.json` **sí** se sirve porque lo necesita el navegador.
+Si creas carpetas nuevas con material en bruto, bloquéalas también.
+
+**Fuera del repo, en `~/datos/`:** la base de estadísticas (`ane.db`) y las
+credenciales del panel (`admin.php`). El repo es público: ahí no entra nunca.
 
 ---
 
