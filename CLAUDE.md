@@ -84,8 +84,9 @@ y en el índice, pero el público siguió viendo la lista anterior porque la URL
 `?v=` no cambió. `pipeline/nuevo_episodio.py` ahora lo sube solo; si das de
 alta un episodio a mano, súbelo tú.
 
-La CDN está en Modo de desarrollo (hPanel → Rendimiento → CDN); hay que
-desactivarlo cuando se cierre el rediseño.
+La CDN **ya no está en Modo de desarrollo** (desactivado el 23/09/2026): ahora
+cachea de verdad. Si tras un despliegue el público no ve un cambio y el `?v=`
+está bien, purgar en hPanel → Rendimiento → CDN → Purge cache.
 
 **Protegido por `.htaccess`:** `memorybank/`, `pipeline/`,
 `data/transcripciones/`, `data/subtitulos_originales/` y cualquier

@@ -77,8 +77,8 @@ cargado** (si no, contarían como «sin resultado» búsquedas que sí lo tienen
 - **Clave SSH:** `~/.ssh/claude-ane-2026` en el servidor (600, fuera del repo),
   dada de alta en hPanel como `claude-ane-3`. Los chats de claude.ai no
   conservan la privada entre conversaciones: generan su propia RSA 4096 y
-  Eduardo la da de alta (la del 23/09/2026 es `claude-ane-5`). Las antiguas
-  que ya no use nadie se pueden borrar en hPanel.
+  Eduardo la da de alta (la del 23/09/2026 es `claude-ane-5`). El 23/09
+  Eduardo borró en hPanel las claves antiguas que ya no usaba nadie.
 
 ---
 
@@ -86,7 +86,6 @@ cargado** (si no, contarían como «sin resultado» búsquedas que sí lo tienen
 
 | Qué | Quién | Nota |
 |---|---|---|
-| **Desactivar el Modo desarrollo de la CDN** | Eduardo | Se activó como medida temporal para trabajar el diseño (hPanel → Rendimiento → CDN). Sigue puesto. Desactivar al cerrar el rediseño |
 | Dos episodios sin timeline | — | `tcVNXIfRcMw` y `l-OwmhoBQuY`: no existe timeline en ningún sitio. Solo se buscan por transcripción |
 | Jerga mal transcrita («tubles» por «tubeless») | — | Ver P7 en `02_DECISIONES.md` |
 

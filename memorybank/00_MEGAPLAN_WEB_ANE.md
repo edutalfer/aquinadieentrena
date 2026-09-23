@@ -92,5 +92,4 @@ Y en el servidor: `git pull`. Publicado.
 ## BLOQUEANTES
 
 Ninguno bloquea el core. Pendientes menores en `03_ESTADO_ACTUAL.md`:
-desactivar el Modo desarrollo de la CDN al cerrar el rediseño, dos episodios
-sin timeline y la jerga mal transcrita.
+dos episodios sin timeline y la jerga mal transcrita.
