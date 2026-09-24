@@ -84,7 +84,10 @@ cargado** (si no, contarían como «sin resultado» búsquedas que sí lo tienen
 - **Servidor:** `46.202.172.3` · puerto `65002` · usuario `u527801093`
 - **Clave SSH (24/09/2026):** `claude-ane-3` se **borró** de hPanel en una
   limpieza. La pública del Mac (privada en `~/.ssh/claude-ane-2026`) se volvió
-  a dar de alta el mismo día como **`claude-ane-mac`**: es la clave fija del Mac.
+  a dar de alta el mismo día como **`claude-ane-mac`**: es la clave fija del Mac
+  (termina en `…TY3qlYuCHw==`). Ese día se retiró de `~/.ssh/authorized_keys` una
+  clave huérfana que hPanel ya no mostraba. Comprobar con:
+  `awk '/^ssh-/{print substr($2,length($2)-11), $3}' ~/.ssh/authorized_keys`
   `claude-ane-5` es la de un chat de claude.ai del 23/09: su privada ya no
   existe fuera de ese chat. Los chats de claude.ai generan su propia RSA 4096
   y Eduardo la da de alta; se pueden borrar cuando el chat termina.
