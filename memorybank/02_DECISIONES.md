@@ -62,7 +62,7 @@ qué estructura.
 | Docroot (= repo) | `~/domains/aquinadieentrena.cc/public_html` ⚠️ **no** `~/public_html` |
 | Repo bare auxiliar | `~/ane.git` |
 | Python / Node en el servidor | Fuera del PATH: `/opt/alt/python311/bin` y `/opt/alt/alt-nodejs22/root/usr/bin` (ver `pipeline/entorno.sh`) |
-| Autenticación SSH | Clave RSA 4096 en el Mac: `~/.ssh/claude-ane-2026` (privada, 600). Dada de alta en hPanel → Avanzado → Acceso SSH con el nombre **`claude-ane-3`**. Probada el 18/08/2026. **Borrada de hPanel el 24/09/2026**: volver a darla de alta como `claude-ane-mac` (ver estado) |
+| Autenticación SSH | Clave RSA 4096 en el Mac: `~/.ssh/claude-ane-2026` (privada, 600). Dada de alta en hPanel → Avanzado → Acceso SSH con el nombre **`claude-ane-3`**. Probada el 18/08/2026. **Borrada de hPanel el 24/09/2026 y dada de alta de nuevo como `claude-ane-mac`** |
 | Flujo de deploy | Editar → commit → push a GitHub; en el servidor `git pull` |
 
 ---

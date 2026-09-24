@@ -83,10 +83,8 @@ cargado** (si no, contarían como «sin resultado» búsquedas que sí lo tienen
 - **Copia local de Eduardo:** `/Users/eduardotalavera/Documents/Proyectos-IA/aquinadieentrena`
 - **Servidor:** `46.202.172.3` · puerto `65002` · usuario `u527801093`
 - **Clave SSH (24/09/2026):** `claude-ane-3` se **borró** de hPanel en una
-  limpieza. Su privada (`~/.ssh/claude-ane-2026`) está en el Mac: para que el
-  Mac vuelva a entrar hay que dar de alta su pública con el nombre
-  `claude-ane-mac` (`cat ~/.ssh/claude-ane-2026.pub`, o
-  `ssh-keygen -y -f ~/.ssh/claude-ane-2026` si no existe el `.pub`).
+  limpieza. La pública del Mac (privada en `~/.ssh/claude-ane-2026`) se volvió
+  a dar de alta el mismo día como **`claude-ane-mac`**: es la clave fija del Mac.
   `claude-ane-5` es la de un chat de claude.ai del 23/09: su privada ya no
   existe fuera de ese chat. Los chats de claude.ai generan su propia RSA 4096
   y Eduardo la da de alta; se pueden borrar cuando el chat termina.
