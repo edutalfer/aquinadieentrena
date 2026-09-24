@@ -82,11 +82,14 @@ cargado** (si no, contarían como «sin resultado» búsquedas que sí lo tienen
 - **GitHub:** `github.com/edutalfer/aquinadieentrena` (público)
 - **Copia local de Eduardo:** `/Users/eduardotalavera/Documents/Proyectos-IA/aquinadieentrena`
 - **Servidor:** `46.202.172.3` · puerto `65002` · usuario `u527801093`
-- **Clave SSH:** `~/.ssh/claude-ane-2026` en el servidor (600, fuera del repo),
-  dada de alta en hPanel como `claude-ane-3`. Los chats de claude.ai no
-  conservan la privada entre conversaciones: generan su propia RSA 4096 y
-  Eduardo la da de alta (la del 23/09/2026 es `claude-ane-5`). El 23/09
-  Eduardo borró en hPanel las claves antiguas que ya no usaba nadie.
+- **Clave SSH (24/09/2026):** `claude-ane-3` se **borró** de hPanel en una
+  limpieza. Su privada (`~/.ssh/claude-ane-2026`) está en el Mac: para que el
+  Mac vuelva a entrar hay que dar de alta su pública con el nombre
+  `claude-ane-mac` (`cat ~/.ssh/claude-ane-2026.pub`, o
+  `ssh-keygen -y -f ~/.ssh/claude-ane-2026` si no existe el `.pub`).
+  `claude-ane-5` es la de un chat de claude.ai del 23/09: su privada ya no
+  existe fuera de ese chat. Los chats de claude.ai generan su propia RSA 4096
+  y Eduardo la da de alta; se pueden borrar cuando el chat termina.
 
 ---
 
