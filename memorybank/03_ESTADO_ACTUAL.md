@@ -52,6 +52,9 @@ También cuenta los **botones de correo** (tabla `contactos`, desde 23/09):
 resultado y el «Contacto» del pie. Se distinguen por el asunto del `mailto:`
 en `stats.js`: **si cambias el asunto de un botón, revisa esa clasificación**.
 Son clics, no correos enviados.
+El «mándanoslo» del buscador sin resultado escribe a
+`entrenaaquinadie@gmail.com` y no a `hola@`: **es a propósito**, lo decidió
+Eduardo el 24/09/2026. No proponer cambiarlo.
 
 | Pieza | Dónde |
 |---|---|
