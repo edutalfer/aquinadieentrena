@@ -5,6 +5,7 @@
    Recibe de assets/js/stats.js:
      { tipo: "busqueda", termino, resultados, voz, pagina }
      { tipo: "clic",     termino, youtubeId, segundo, pagina }
+     { tipo: "contacto", destino, pagina }   ← botón de correo pulsado
    Responde 204 sin cuerpo. Nunca guarda IP ni cabeceras.
    ============================================================ */
 
@@ -38,12 +39,17 @@ if (!is_array($d)) {
     fin(400);
 }
 
-$termino = ane_normaliza((string) ($d['termino'] ?? ''));
-if (mb_strlen($termino, 'UTF-8') < 2 || ane_parece_personal($termino)) {
-    fin(204);
-}
+$tipo = (string) ($d['tipo'] ?? 'busqueda');
 $pagina = in_array($d['pagina'] ?? '', ['portada', 'episodios'], true) ? $d['pagina'] : 'otra';
 $ahora = gmdate('Y-m-d H:i:s');
+
+$termino = '';
+if ($tipo !== 'contacto') {
+    $termino = ane_normaliza((string) ($d['termino'] ?? ''));
+    if (mb_strlen($termino, 'UTF-8') < 2 || ane_parece_personal($termino)) {
+        fin(204);
+    }
+}
 
 try {
     $bd = ane_bd();
@@ -53,12 +59,20 @@ try {
     $ultimoMinuto = (int) $bd->query("
         SELECT (SELECT COUNT(*) FROM busquedas WHERE fecha >= datetime('now', '-1 minute'))
              + (SELECT COUNT(*) FROM clics     WHERE fecha >= datetime('now', '-1 minute'))
+             + (SELECT COUNT(*) FROM contactos WHERE fecha >= datetime('now', '-1 minute'))
     ")->fetchColumn();
     if ($ultimoMinuto > 300) {
         fin(429);
     }
 
-    if (($d['tipo'] ?? '') === 'clic') {
+    if ($tipo === 'contacto') {
+        $destino = (string) ($d['destino'] ?? '');
+        if (!in_array($destino, ['bici', 'marcas', 'tema', 'contacto'], true)) {
+            fin(400);
+        }
+        $bd->prepare('INSERT INTO contactos (fecha, destino, pagina) VALUES (?, ?, ?)')
+           ->execute([$ahora, $destino, $pagina]);
+    } elseif ($tipo === 'clic') {
         $yid = (string) ($d['youtubeId'] ?? '');
         if (!preg_match('/^[A-Za-z0-9_-]{11}$/', $yid)) {
             fin(400);

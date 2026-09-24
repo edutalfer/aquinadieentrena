@@ -1,7 +1,8 @@
 /* ============================================================
    AQUÍ NADIE ENTRENA — registro anónimo del buscador
    ------------------------------------------------------------
-   Anota qué se busca y qué momento acaba abriendo la gente.
+   Anota qué se busca, qué momento acaba abriendo la gente y qué
+   botón de correo pulsa (bici o cepo, marcas...).
    Sin cookies, sin IP, sin identificadores de ningún tipo.
    Lo lee el panel privado /admin (ver api/stats.php).
 
@@ -73,7 +74,21 @@
     if (!v) return;
     envia({ tipo: "clic", termino: terminoActual, youtubeId: v[1], segundo: t ? +t[1] : 0 });
   }
-  document.addEventListener("click", alPulsar);
+  /* Clic en un correo: qué botón de contacto se usa. Se distingue por el
+     asunto, así no hay que marcar nada en el HTML. Cuenta clics, no
+     correos enviados: el correo lo termina (o no) la app de cada uno. */
+  function alPulsarCorreo(e) {
+    var a = e.target && e.target.closest && e.target.closest('a[href^="mailto:"]');
+    if (!a) return;
+    var asunto = decodeURIComponent((a.href.split("subject=")[1] || "").split("&")[0]);
+    var destino = /bici/i.test(asunto) ? "bici"
+                : /colaboraci|propuesta/i.test(asunto) ? "marcas"
+                : /tema/i.test(asunto) ? "tema"
+                : "contacto";
+    envia({ tipo: "contacto", destino: destino });
+  }
+
+  document.addEventListener("click", function (e) { alPulsar(e); alPulsarCorreo(e); });
   document.addEventListener("auxclick", alPulsar);   // clic con la rueda
 
   /* Si se cierra la pestaña con una búsqueda a medias, que no se pierda */

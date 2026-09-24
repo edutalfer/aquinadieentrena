@@ -47,6 +47,11 @@ clic y panel funcionan a través de la CDN.
 Panel en **https://aquinadieentrena.cc/admin** — usuario y contraseña del
 navegador. Qué se busca, qué no encuentra nada, qué solo aparece en lo hablado,
 qué minuto se abre y búsquedas por día. Exporta CSV. Ver D16 y D17.
+También cuenta los **botones de correo** (tabla `contactos`, desde 23/09):
+«Enviar mi bici», «Enviar propuesta», el «mándanoslo» del buscador sin
+resultado y el «Contacto» del pie. Se distinguen por el asunto del `mailto:`
+en `stats.js`: **si cambias el asunto de un botón, revisa esa clasificación**.
+Son clics, no correos enviados.
 
 | Pieza | Dónde |
 |---|---|

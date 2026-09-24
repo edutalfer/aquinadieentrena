@@ -52,6 +52,14 @@ function ane_bd(): PDO
             pagina     TEXT    NOT NULL
         );
         CREATE INDEX IF NOT EXISTS i_clics_fecha ON clics (fecha);
+
+        CREATE TABLE IF NOT EXISTS contactos (
+            id      INTEGER PRIMARY KEY,
+            fecha   TEXT NOT NULL,
+            destino TEXT NOT NULL,   -- bici | marcas | tema | contacto
+            pagina  TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS i_contactos_fecha ON contactos (fecha);
     ');
     return $pdo;
 }

@@ -162,6 +162,21 @@ $momentos = filas($bd, "
 
 $ultimas = filas($bd, 'SELECT * FROM busquedas ORDER BY id DESC LIMIT 40');
 
+/* Botones de correo: siempre las cuatro filas, aunque estén a cero */
+$contactos = ['bici' => 0, 'marcas' => 0, 'tema' => 0, 'contacto' => 0];
+$ultimoContacto = [];
+foreach (filas($bd, 'SELECT destino, COUNT(*) AS n, MAX(fecha) AS ultima
+                     FROM contactos WHERE fecha >= ? GROUP BY destino', [$desde]) as $r) {
+    $contactos[$r['destino']] = (int) $r['n'];
+    $ultimoContacto[$r['destino']] = $r['ultima'];
+}
+$nombresContacto = [
+    'bici'     => ['¿Bici o cepo? · «Enviar mi bici»', 'Portada'],
+    'marcas'   => ['Marcas · «Enviar propuesta»', 'Portada'],
+    'tema'     => ['«Mándanoslo» tras una búsqueda sin resultado', 'Buscador'],
+    'contacto' => ['«Contacto» del pie de página', 'Pie'],
+];
+
 ?><!DOCTYPE html>
 <html lang="es">
 <head>
@@ -234,6 +249,20 @@ $ultimas = filas($bd, 'SELECT * FROM busquedas ORDER BY id DESC LIMIT 40');
     <div class="cifra"><b><?= $pct($tot['vacias'], $tot['busquedas']) ?></b><span>Sin resultado (<?= $tot['vacias'] ?>)</span></div>
     <div class="cifra"><b><?= $pct($tot['clics'], $tot['busquedas']) ?></b><span>Acaban en YouTube (<?= $tot['clics'] ?> clics)</span></div>
   </div>
+
+  <section>
+    <h2 class="display">Botones de correo</h2>
+    <p class="nota">Cuántas veces se pulsa cada botón. Son clics, no correos enviados:
+       el correo lo termina (o no) la app de cada uno.</p>
+    <table>
+      <tr><th>Botón</th><th>Dónde</th><th class="n">Clics</th><th class="n">Último</th></tr>
+      <?php foreach ($nombresContacto as $clave => [$nombre, $donde]): ?>
+        <tr><td><?= e($nombre) ?></td><td><?= e($donde) ?></td>
+            <td class="n <?= $contactos[$clave] ? '' : 'cero' ?>"><?= $contactos[$clave] ?></td>
+            <td class="n"><?= isset($ultimoContacto[$clave]) ? e(hora_local($ultimoContacto[$clave], $zona, 'd/m H:i')) : '—' ?></td></tr>
+      <?php endforeach; ?>
+    </table>
+  </section>
 
   <section>
     <h2 class="display">Búsquedas por día</h2>
@@ -328,7 +357,7 @@ $ultimas = filas($bd, 'SELECT * FROM busquedas ORDER BY id DESC LIMIT 40');
     <?php endif; ?>
   </section>
 
-  <p class="pie">Registro anónimo: término, nº de resultados, página y fecha. Sin IP, sin cookies, sin identificadores.
+  <p class="pie">Registro anónimo: término, nº de resultados, página, fecha y botón de correo pulsado. Sin IP, sin cookies, sin identificadores.
      Los términos que parecen un correo o un teléfono no se guardan.</p>
 </main>
 </body>
