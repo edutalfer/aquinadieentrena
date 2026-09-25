@@ -90,8 +90,10 @@ página (no toca `estilo.css`). **Fuente de las cifras: el Dossier ANE 2027.**
 - Los botones «Quiero patrocinar este proyecto» llevan el asunto «Propuesta de
   colaboración — <proyecto>»: el panel los cuenta como «marcas».
 - ANE House 2027 (Tour, julio 2027) confirmada por Eduardo el 25/09: sin
-  proyección ni entregables cerrados en el dossier; la ficha usa el formato de
-  2026 y sus cifras reales. Añadir proyección cuando la haya.
+  proyección en el dossier. Entregables: episodio post etapa diario con
+  invitados y **vlogs sueltos** (no diarios, lo pidió Eduardo). Lleva las cifras
+  reales de 2026. Añadir proyección cuando la haya.
+- Marcas «klinpig» y «CMS» se escriben tal cual (confirmado por Eduardo).
 - Pendiente: fotos (van mejor subidas desde el Mac con git que por el chat).
 
 ---
