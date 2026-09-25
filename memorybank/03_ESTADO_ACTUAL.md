@@ -74,6 +74,25 @@ cargado** (si no, contarían como «sin resultado» búsquedas que sí lo tienen
 
 ---
 
+## 🚴 Página de Proyectos (2026-09-25)
+
+`proyectos.html`, enlazada en el menú y en el pie de todas las páginas y desde la
+tarjeta de marcas de la portada. Todo es HTML estático con estilos propios en la
+página (no toca `estilo.css`). **Fuente de las cifras: el Dossier ANE 2027.**
+
+- Donde el dossier se contradecía se usaron las cifras de la ficha de cada
+  proyecto: Cape Epic 2026 **231.554** visualizaciones y **25.773** de media;
+  The Traka 2026 **25.343**. (Las diapositivas de 2027 dicen 231.515, 25.724 y
+  25.366: conviene unificar el dossier.)
+- **Mantenimiento:** cuando termine un proyecto, se pasa de «Lo que viene» a
+  «Lo que ya hemos hecho» con sus cifras reales, y si repite, se le pone el
+  recuadro «La última vez» a la edición siguiente.
+- Los botones «Quiero patrocinar este proyecto» llevan el asunto «Propuesta de
+  colaboración — <proyecto>»: el panel los cuenta como «marcas».
+- Pendiente: fotos (van mejor subidas desde el Mac con git que por el chat).
+
+---
+
 ## Dónde está cada cosa
 
 - **Web pública:** https://aquinadieentrena.cc

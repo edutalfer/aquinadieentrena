@@ -46,9 +46,11 @@ en el título. Whisper en local lo arreglaría (D5 ya lo contemplaba) a cambio d
 Bici o Cepo y marcas usan `mailto:`. Valorar Web3Forms/Formspree para que no
 dependa del cliente de correo del visitante.
 
-### P6 — Sección Proyectos
-Está en el objetivo pero no existe todavía. Falta definir qué proyectos y con
-qué estructura.
+### P6 — Sección Proyectos · **cerrada (2026-09-25)**
+Hecha: `proyectos.html`. Estructura: cifras del primer año → «Lo que viene»
+(los que repiten llevan «La última vez» con sus datos) → «Lo que ya hemos
+hecho» → marcas y formatos. Cada proyecto futuro tiene su botón «Quiero
+patrocinar este proyecto» con el nombre en el asunto del correo.
 
 ### P8 — ¿El plan de Metricool incluye la API? (2026-09-25)
 La Fase 4b (números en directo) necesita que el servidor consulte Metricool

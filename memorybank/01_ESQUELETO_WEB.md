@@ -9,7 +9,7 @@ aquinadieentrena.cc
 ├── /                → Home: BUSCADOR (protagonista) + últimos episodios + hosts
 │                      + newsletter + Bici o Cepo + marcas
 ├── /episodios       → Archivo completo con timelines clicables
-└── /proyectos       → (pendiente)
+└── /proyectos       → proyectos.html: hechos, próximos y botones para sponsors
 ```
 
 ## ESTRUCTURA DEL REPO

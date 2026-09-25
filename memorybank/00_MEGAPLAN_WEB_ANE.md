@@ -45,9 +45,8 @@ newsletter y, en el futuro, tienda de merch.
 
 ### ✅ Fase 1 — Web base
 - [x] Home con buscador, episodios, hosts, newsletter, Bici o Cepo y marcas
-- [ ] Sección Proyectos (no existe aún). Contenido: el **Dossier ANE 2027**
-      (Canva, diseño DAHODksquqA) con proyectos hechos y futuros. Pendiente
-      de que Eduardo lo pase en PDF (Claude no siempre tiene acceso a Canva)
+- [x] Sección Proyectos → `proyectos.html` (2026-09-25), a partir del **Dossier
+      ANE 2027** (Canva DAHODksquqA). Pendiente: fotos de cada proyecto
 - [ ] Valorar formularios reales en vez de `mailto:`
 
 ### ✅ Fase 2 — Pipeline de transcripciones — CUMPLIDA

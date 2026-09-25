@@ -40,7 +40,7 @@ if (!is_array($d)) {
 }
 
 $tipo = (string) ($d['tipo'] ?? 'busqueda');
-$pagina = in_array($d['pagina'] ?? '', ['portada', 'episodios'], true) ? $d['pagina'] : 'otra';
+$pagina = in_array($d['pagina'] ?? '', ['portada', 'episodios', 'proyectos'], true) ? $d['pagina'] : 'otra';
 $ahora = gmdate('Y-m-d H:i:s');
 
 $termino = '';

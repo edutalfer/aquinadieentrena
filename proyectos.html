@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proyectos — Aquí Nadie Entrena</title>
+<meta name="description" content="Cape Epic, ANE House en el Tour, Cruzando Taiwán, The Traka... Lo que hemos hecho fuera del estudio, lo que viene en 2026-2027 y cómo puede entrar tu marca.">
+<meta name="theme-color" content="#191919">
+<meta property="og:title" content="Proyectos — Aquí Nadie Entrena">
+<meta property="og:description" content="No solo un podcast: carreras, viajes y aventuras. Lo que hemos hecho y lo que viene en 2026-2027.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://aquinadieentrena.cc/proyectos">
+<meta property="og:image" content="https://aquinadieentrena.cc/assets/img/icono-512.png">
+<link rel="icon" href="assets/img/icono-512.png">
+<link rel="apple-touch-icon" href="assets/img/icono-180.png">
+<link rel="preload" href="assets/fonts/archivo-black-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/estilo.css?v=20260818d">
+<style>
+  /* ---------- Portada: cifras del primer año ---------- */
+  .cifras-ano { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+                background: var(--gris-carbon); border: 1px solid var(--gris-carbon); margin: 34px 0 30px; }
+  .cifras-ano div { background: var(--negro); padding: 18px 20px; }
+  .cifras-ano b { display: block; font: 900 italic clamp(26px, 3.4vw, 40px)/1 var(--display);
+                  color: var(--azul-destello); letter-spacing: -.02em; }
+  .cifras-ano span { display: block; margin-top: 8px; font-size: 12px; font-weight: 700;
+                     letter-spacing: .1em; text-transform: uppercase; color: #C7CAD1; }
+  .cifras-ano__nota { font-size: 13px; color: var(--gris-medio); margin: -18px 0 30px; }
+  @media (max-width: 760px) { .cifras-ano { grid-template-columns: 1fr 1fr; } }
+
+  .botones { display: flex; flex-wrap: wrap; gap: 12px; }
+  .boton--azul { background: var(--azul); color: var(--blanco); border-color: var(--azul); margin-top: 0; }
+  .boton--azul:hover { background: transparent; color: var(--blanco); border-color: var(--blanco); }
+  .boton--claro { background: transparent; color: var(--blanco); border-color: #5A5E66; margin-top: 0; }
+  .boton--claro:hover { border-color: var(--blanco); }
+
+  /* ---------- Próximos proyectos ---------- */
+  .proximos { display: grid; gap: 22px; }
+  .proyecto { background: var(--blanco); border: 2px solid var(--negro); padding: 28px 28px 30px;
+              display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; }
+  @media (max-width: 860px) { .proyecto { grid-template-columns: 1fr; gap: 18px; } }
+  .proyecto__cuando { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+                      color: var(--azul-enlace); margin: 0 0 10px; }
+  .proyecto h3 { font-size: clamp(28px, 4vw, 42px); margin: 0 0 14px; }
+  .proyecto p { margin: 0 0 16px; font-size: 16px; }
+  .entregables { list-style: none; margin: 0 0 18px; padding: 0; }
+  .entregables li { padding: 7px 0 7px 22px; border-top: 1px solid #E1E3E7; font-size: 15px; position: relative; }
+  .entregables li::before { content: ""; position: absolute; left: 2px; top: 15px; width: 10px; height: 3px;
+                            background: var(--azul); }
+  .proyeccion { font-weight: 700; font-size: 15px; margin: 0 0 20px; }
+  .proyeccion b { font-family: var(--display); font-style: italic; font-weight: 900; font-size: 22px; }
+  .proyecto .boton { margin-top: 0; }
+
+  /* Recuadro «la última vez» para los que repiten */
+  .ultima { background: var(--gris-humo); border-left: 4px solid var(--azul); padding: 20px 22px; align-self: start; }
+  .ultima__titulo { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+                    color: var(--gris-medio); margin: 0 0 14px; }
+  .ultima dl { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  .ultima dt { font: 900 italic 26px/1 var(--display); letter-spacing: -.02em; color: var(--negro); }
+  .ultima dd { margin: 4px 0 0; font-size: 13px; color: var(--gris-medio); }
+  .ultima a { display: inline-block; margin-top: 14px; font-size: 14px; font-weight: 600; color: var(--azul-enlace); }
+  .novedad { background: var(--gris-humo); padding: 20px 22px; align-self: start; font-size: 15px; }
+  .novedad b { display: block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+               color: var(--gris-medio); margin-bottom: 8px; }
+
+  /* ---------- Lo que ya hemos hecho ---------- */
+  .hecho { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--gris-carbon);
+           border: 1px solid var(--gris-carbon); }
+  @media (max-width: 860px) { .hecho { grid-template-columns: 1fr; } }
+  .hecho article { background: var(--negro); padding: 30px 28px 32px; scroll-margin-top: 90px; }
+  .hecho article.ancho { grid-column: 1 / -1; }
+  .hecho__etiqueta { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+                     color: var(--azul-destello); margin: 0 0 10px; }
+  .hecho h3 { font-size: clamp(28px, 3.8vw, 40px); margin: 0 0 14px; }
+  .hecho p { color: #C7CAD1; margin: 0 0 20px; font-size: 16px; }
+  .datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px 18px; margin: 0; }
+  .datos dt { font: 900 italic 28px/1 var(--display); letter-spacing: -.02em; color: var(--azul-destello); }
+  .datos dd { margin: 5px 0 0; font-size: 13px; color: #9BA0A8; }
+
+  /* ---------- Marcas y formatos ---------- */
+  .marcas-lista { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 8px; padding: 0; list-style: none; }
+  .marcas-lista li { border: 2px solid var(--negro); padding: 8px 14px; font: 900 italic 18px/1 var(--display);
+                     text-transform: uppercase; letter-spacing: -.01em; }
+  .formatos { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 0 0 34px; }
+  .formato { border-top: 3px solid var(--azul); padding-top: 12px; }
+  .formato b { display: block; font: 900 italic 20px/1.05 var(--display); text-transform: uppercase; margin-bottom: 6px; }
+  .formato span { font-size: 15px; color: var(--gris-carbon); }
+
+  .cierre { background: var(--azul); color: var(--blanco); padding: 40px 34px; display: flex; flex-wrap: wrap;
+            gap: 22px 40px; align-items: center; justify-content: space-between; }
+  .cierre h2 { font-size: clamp(30px, 4.6vw, 50px); margin: 0 0 10px; }
+  .cierre p { margin: 0; max-width: 52ch; color: rgba(255,255,255,.92); }
+  .cierre .boton { background: var(--blanco); color: var(--azul); border-color: var(--blanco); margin-top: 0; }
+  .cierre .boton:hover { background: transparent; color: var(--blanco); }
+</style>
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="envoltorio cabecera__fila">
+    <a class="logo" href="/"><img src="assets/img/logo-negativo.png" alt="Aquí Nadie Entrena"></a>
+    <nav class="menu">
+      <a href="/#episodios">Episodios</a>
+      <a href="/proyectos">Proyectos</a>
+      <a href="/#hosts">Quiénes somos</a>
+      <a href="/#newsletter">Newsletter</a>
+      <a href="/#cepo">Bici o cepo</a>
+      <a href="/#marcas">Marcas</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══════════ PORTADA ══════════ -->
+  <section class="portada">
+    <div class="envoltorio">
+      <p class="portada__eyebrow">Proyectos · Temporada 2026-2027</p>
+      <h1 class="display">No solo un <em>podcast</em></h1>
+      <p class="portada__sub">
+        El episodio semanal es la base. Pero también nos vas a ver en carrera, de viaje y
+        encerrados en una casa durante el Tour. Contenido dentro y fuera de la bici que la gente
+        <b>ve entero</b>.
+      </p>
+
+      <div class="cifras-ano">
+        <div><b>26,8 M</b><span>Visualizaciones</span></div>
+        <div><b>739.433</b><span>Horas vistas</span></div>
+        <div><b>51.127</b><span>Seguidores</span></div>
+        <div><b>50</b><span>Episodios sin fallar un domingo</span></div>
+      </div>
+      <p class="cifras-ano__nota">Nuestro primer año, de septiembre de 2025 a septiembre de 2026, en YouTube, Instagram y TikTok.</p>
+
+      <div class="botones">
+        <a class="boton boton--azul" href="mailto:hola@aquinadieentrena.cc?subject=Propuesta%20de%20colaboraci%C3%B3n">Quiero ser patrocinador</a>
+        <a class="boton boton--claro" href="#proximos">Ver lo que viene</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ PRÓXIMOS PROYECTOS ══════════ -->
+  <section class="seccion seccion--humo" id="proximos">
+    <div class="envoltorio">
+      <div class="rotulo">
+        <h2 class="display">Lo que viene</h2>
+        <span class="rotulo__num">Octubre 2026 → agosto 2027 · cada uno se puede patrocinar por separado</span>
+      </div>
+
+      <div class="proximos">
+
+        <article class="proyecto">
+          <div>
+            <p class="proyecto__cuando">Octubre 2026 · Castellón</p>
+            <h3 class="display">Mediterranean Epic Gravel</h3>
+            <p>Abrimos la temporada con gravel puro. Cobertura en carrera con el formato que ya
+               funciona: el desgaste y las decisiones contándose en caliente.</p>
+            <ul class="entregables">
+              <li>1 vlog de carrera + 1 vlog pre y post carrera</li>
+              <li>2-5 clips verticales</li>
+            </ul>
+            <p class="proyeccion">Proyección: <b>20.000-40.000</b> visualizaciones</p>
+            <a class="boton boton--solo" href="mailto:hola@aquinadieentrena.cc?subject=Propuesta%20de%20colaboraci%C3%B3n%20%E2%80%94%20Mediterranean%20Epic%20Gravel">Quiero patrocinar este proyecto</a>
+          </div>
+          <div class="novedad"><b>Primera vez</b>El arranque de la temporada: el primer proyecto del calendario 2026-2027.</div>
+        </article>
+
+        <article class="proyecto">
+          <div>
+            <p class="proyecto__cuando">Febrero 2027 · Castellón</p>
+            <h3 class="display">Mediterranean Epic MTB</h3>
+            <p>La puesta a punto antes de Sudáfrica. Cuatro días de MTB por etapas que funcionan como
+               antesala de la Cape: aquí se ve si llegamos o no llegamos.</p>
+            <ul class="entregables">
+              <li>4-5 vlogs de carrera</li>
+              <li>1 episodio de podcast de análisis</li>
+              <li>8-10 clips verticales</li>
+            </ul>
+            <p class="proyeccion">Proyección: <b>80.000-100.000</b> visualizaciones</p>
+            <a class="boton boton--solo" href="mailto:hola@aquinadieentrena.cc?subject=Propuesta%20de%20colaboraci%C3%B3n%20%E2%80%94%20Mediterranean%20Epic%20MTB">Quiero patrocinar este proyecto</a>
+          </div>
+          <div class="novedad"><b>Primera vez</b>El primer capítulo de la historia que termina en la Cape Epic, unas semanas después.</div>
+        </article>
+
+        <article class="proyecto">
+          <div>
+            <p class="proyecto__cuando">Marzo 2027 · Sudáfrica</p>
+            <h3 class="display">Cape Epic 2027</h3>
+            <p>Volvemos a la prueba por etapas más dura del mundo, esta vez sabiendo lo que nos
+               espera. Ocho días de carrera con cobertura diaria: el formato que en 2026 se vio como
+               una serie.</p>
+            <ul class="entregables">
+              <li>9-10 vlogs diarios en carrera</li>
+              <li>3 episodios de podcast: antes, durante y después</li>
+              <li>20-25 clips verticales</li>
+            </ul>
+            <p class="proyeccion">Proyección: <b>230.000-300.000</b> visualizaciones</p>
+            <a class="boton boton--solo" href="mailto:hola@aquinadieentrena.cc?subject=Propuesta%20de%20colaboraci%C3%B3n%20%E2%80%94%20Cape%20Epic%202027">Quiero patrocinar este proyecto</a>
+          </div>
+          <div class="ultima">
+            <p class="ultima__titulo">La última vez · Cape Epic 2026</p>
+            <dl>
+              <div><dt>231.554</dt><dd>visualizaciones</dd></div>
+              <div><dt>25.773</dt><dd>de media por vlog, con picos de +33.000</dd></div>
+              <div><dt>50.773</dt><dd>horas vistas</dd></div>
+              <div><dt>1.258</dt><dd>likes por episodio</dd></div>
+            </dl>
+            <a href="#cape-epic-2026">Ver el proyecto de 2026 ↓</a>
+          </div>
+        </article>
+
+        <article class="proyecto">
+          <div>
+            <p class="proyecto__cuando">Abril 2027 · Mallorca</p>
+            <h3 class="display">Mallorca 312</h3>
+            <p>La cicloturista más masiva del calendario español. Aquí no somos los raros del pelotón:
+               somos uno más de los miles que se levantan a las cinco de la mañana. El proyecto que
+               más directamente habla a nuestra audiencia.</p>
+            <ul class="entregables">
+              <li>1 vlog de carrera de gran formato</li>
+              <li>1 episodio de podcast de preparación</li>
+              <li>6-8 clips verticales</li>
+            </ul>
+            <p class="proyeccion">Proyección: <b>25.000-35.000</b> visualizaciones</p>
+            <a class="boton boton--solo" href="mailto:hola@aquinadieentrena.cc?subject=Propuesta%20de%20colaboraci%C3%B3n%20%E2%80%94%20Mallorca%20312">Quiero patrocinar este proyecto</a>
+          </div>
+          <div class="novedad"><b>Primera vez</b>Nuestra referencia es The Traka 2026: un solo vlog de gran formato, 25.343 visualizaciones.</div>
+        </article>
+
+        <article class="proyecto">
+          <div>
+            <p class="proyecto__cuando">Abril-mayo 2027 · Girona</p>
+            <h3 class="display">The Traka 2027</h3>
+            <p>En 2026 se nos torció: Cristóbal lesionado y Eduardo pinchando en la distancia reina.
+               Aun así, el único vídeo que sacamos fue la pieza con mejor media del año. En 2027 vamos
+               con cobertura completa en la distancia de 300 km.</p>
+            <ul class="entregables">
+              <li>3-4 vídeos: previa, carrera y análisis</li>
+              <li>1 episodio de podcast desde Girona</li>
+              <li>10-12 clips verticales</li>
+            </ul>
+            <p class="proyeccion">Proyección: <b>90.000-120.000</b> visualizaciones</p>
+            <a class="boton boton--solo" href="mailto:hola@aquinadieentrena.cc?subject=Propuesta%20de%20colaboraci%C3%B3n%20%E2%80%94%20The%20Traka%202027">Quiero patrocinar este proyecto</a>
+          </div>
+          <div class="ultima">
+            <p class="ultima__titulo">La última vez · The Traka 2026</p>
+            <dl>
+              <div><dt>25.343</dt><dd>visualizaciones con un solo vlog</dd></div>
+              <div><dt>935</dt><dd>likes</dd></div>
+              <div><dt>Nº 1</dt><dd>mejor media por pieza de todos nuestros proyectos</dd></div>
+            </dl>
+            <a href="#traka-2026">Ver el proyecto de 2026 ↓</a>
+          </div>
+        </article>
+
+        <article class="proyecto">
+          <div>
+            <p class="proyecto__cuando">Agosto 2027 · Suiza</p>
+            <h3 class="display">Swiss Epic 2027</h3>
+            <p>Cerramos temporada donde el paisaje hace la mitad del trabajo. Cinco días por etapas en
+               los Alpes, con el mismo formato de cobertura diaria que funcionó en Sudáfrica.</p>
+            <ul class="entregables">
+              <li>5-6 vlogs diarios en carrera</li>
+              <li>1 episodio de podcast desde Suiza</li>
+              <li>15-20 clips verticales</li>
+            </ul>
+            <p class="proyeccion">Proyección: <b>130.000-160.000</b> visualizaciones</p>
+            <a class="boton boton--solo" href="mailto:hola@aquinadieentrena.cc?subject=Propuesta%20de%20colaboraci%C3%B3n%20%E2%80%94%20Swiss%20Epic%202027">Quiero patrocinar este proyecto</a>
+          </div>
+          <div class="novedad"><b>Primera vez</b>Mismo formato que la Cape Epic 2026, que hizo 25.773 visualizaciones de media por vlog.</div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ LO QUE YA HEMOS HECHO ══════════ -->
+  <section class="seccion seccion--oscura" id="hecho">
+    <div class="envoltorio">
+      <div class="rotulo">
+        <h2 class="display">Lo que ya hemos hecho</h2>
+        <span class="rotulo__num">Fuera del estudio: 49 piezas · 858.313 visualizaciones · 14:42 de retención media</span>
+      </div>
+
+      <div class="hecho">
+
+        <article class="ancho" id="podcast">
+          <p class="hecho__etiqueta">La base · cada domingo</p>
+          <h3 class="display">El podcast</h3>
+          <p>Nuestro motor y el origen de todo. Las grandes aventuras generan picos; el podcast
+             construye la marca semana a semana. Y es donde de verdad se escucha a un patrocinador:
+             el 68 % de todo el tiempo que la audiencia nos dedica está en el episodio semanal.</p>
+          <dl class="datos">
+            <div><dt>50</dt><dd>episodios</dd></div>
+            <div><dt>1,27 M</dt><dd>visualizaciones</dd></div>
+            <div><dt>25.450</dt><dd>de media por episodio</dd></div>
+            <div><dt>36.500</dt><dd>de media en los últimos 5</dd></div>
+            <div><dt>502.376</dt><dd>horas vistas</dd></div>
+            <div><dt>25'</dt><dd>de retención</dd></div>
+          </dl>
+        </article>
+
+        <article class="ancho" id="ane-house-2026">
+          <p class="hecho__etiqueta">Proyecto estrella · Tour de Francia 2026 · Andorra</p>
+          <h3 class="display">ANE House 2026</h3>
+          <p>El mayor despliegue de cobertura ciclista independiente en español. Durante los 21 días
+             del Tour nos encerramos en una casa en Andorra para crear contenido a diario: por la
+             mañana, entrenamiento y vlog; por la tarde, episodio post etapa con invitados del sector.</p>
+          <dl class="datos">
+            <div><dt>23</dt><dd>vídeos</dd></div>
+            <div><dt>428.928</dt><dd>visualizaciones</dd></div>
+            <div><dt>93.931</dt><dd>horas vistas</dd></div>
+            <div><dt>18:09</dt><dd>de retención media</dd></div>
+            <div><dt>566</dt><dd>likes por pieza</dd></div>
+          </dl>
+        </article>
+
+        <article id="cape-epic-2026">
+          <p class="hecho__etiqueta">2026 · Sudáfrica</p>
+          <h3 class="display">Cape Epic 2026</h3>
+          <p>Ocho días de carrera en la prueba por etapas más dura del mundo. No fue solo un resultado
+             deportivo: fue un fenómeno de audiencia que consolidó la comunidad. Nos siguieron como
+             si fuera una serie.</p>
+          <dl class="datos">
+            <div><dt>9</dt><dd>vlogs en carrera</dd></div>
+            <div><dt>231.554</dt><dd>visualizaciones</dd></div>
+            <div><dt>25.773</dt><dd>de media por vlog</dd></div>
+            <div><dt>50.773</dt><dd>horas vistas</dd></div>
+          </dl>
+        </article>
+
+        <article id="taiwan">
+          <p class="hecho__etiqueta">China y Taiwán</p>
+          <h3 class="display">Cruzando Taiwán</h3>
+          <p>Fuimos a la feria de la bicicleta en China y pensamos: ¿por qué no cruzar a Taiwán y
+             atravesar la isla? La industria del ciclismo desde dentro, con fábricas y feria, y a
+             nosotros sufriendo y disfrutando un viaje de estas dimensiones.</p>
+          <dl class="datos">
+            <div><dt>7</dt><dd>piezas</dd></div>
+            <div><dt>113.411</dt><dd>visualizaciones</dd></div>
+            <div><dt>16.273</dt><dd>de media</dd></div>
+            <div><dt>26.963</dt><dd>horas vistas</dd></div>
+          </dl>
+        </article>
+
+        <article id="traka-2026">
+          <p class="hecho__etiqueta">2026 · Girona</p>
+          <h3 class="display">The Traka 2026</h3>
+          <p>No salió como esperábamos: Cristóbal no pudo correr por la lesión de la Cape Epic y
+             Eduardo pinchó al poco de empezar la distancia reina. Aun así, Eduardo corrió la
+             distancia corta, se midió con profesionales e hizo podio.</p>
+          <dl class="datos">
+            <div><dt>1</dt><dd>vlog</dd></div>
+            <div><dt>25.343</dt><dd>visualizaciones</dd></div>
+            <div><dt>935</dt><dd>likes</dd></div>
+            <div><dt>Nº 1</dt><dd>en media por pieza</dd></div>
+          </dl>
+        </article>
+
+        <article id="abr">
+          <p class="hecho__etiqueta">Donde empezó todo</p>
+          <h3 class="display">Andalucía Bike Race</h3>
+          <p>Nuestra primera carrera como pareja y nuestra presentación como ciclistas de competición
+             ante los oyentes. La base de los vlogs de todo lo que vino después.</p>
+          <dl class="datos">
+            <div><dt>6</dt><dd>vlogs</dd></div>
+            <div><dt>107.452</dt><dd>visualizaciones</dd></div>
+            <div><dt>17.909</dt><dd>de media</dd></div>
+            <div><dt>21.052</dt><dd>horas vistas</dd></div>
+          </dl>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ MARCAS Y FORMATOS ══════════ -->
+  <section class="seccion" id="patrocinar">
+    <div class="envoltorio">
+      <div class="rotulo">
+        <h2 class="display">Ya han confiado en nosotros</h2>
+        <span class="rotulo__num">En proyectos como la ABR o la Cape Epic, y en el podcast</span>
+      </div>
+      <ul class="marcas-lista">
+        <li>Maxxis</li><li>Gobik</li><li>226ers</li><li>Julbo</li><li>fi'zi:k</li><li>Team Bike</li>
+        <li>NordVPN</li><li>Trade Republic</li><li>Saily</li><li>iGraal</li><li>PropHero</li>
+      </ul>
+
+      <div class="rotulo" style="margin-top:64px">
+        <h2 class="display">Elige dónde encajas</h2>
+        <span class="rotulo__num">No ponemos tu logo en una esquina: lo metemos en la historia</span>
+      </div>
+      <div class="formatos">
+        <div class="formato"><b>Title sponsor</b><span>Tu marca en el nombre de un proyecto entero.</span></div>
+        <div class="formato"><b>Marca en el maillot</b><span>Presencia visual en cada pieza de carrera.</span></div>
+        <div class="formato"><b>Sección patrocinada</b><span>Bici o cepo y los formatos que se repiten cada semana.</span></div>
+        <div class="formato"><b>Menciones en el episodio</b><span>Ad-reads dentro del podcast semanal, donde está el 68 % del tiempo de visionado.</span></div>
+        <div class="formato"><b>Proyecto a medida</b><span>Una carrera, un viaje, un lanzamiento.</span></div>
+        <div class="formato"><b>Sorteos y leads</b><span>Acciones con la comunidad para generar contactos.</span></div>
+      </div>
+
+      <div class="cierre">
+        <div>
+          <h2 class="display">¿Te subes?</h2>
+          <p>Cuéntanos qué buscas y te mandamos el dossier completo con audiencia, formatos y
+             tarifas. Tú eliges el formato y adaptamos el presupuesto.</p>
+        </div>
+        <a class="boton" href="mailto:hola@aquinadieentrena.cc?subject=Propuesta%20de%20colaboraci%C3%B3n">Quiero ser patrocinador</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pie">
+  <div class="envoltorio">
+    <div class="pie__fila">
+      <div class="pie__logo">
+        <img src="assets/img/logo-negativo.png" alt="Aquí Nadie Entrena">
+        <p class="display pie__claim">Hablamos de <em>todo</em>.</p>
+      </div>
+      <div>
+        <h4>Escuchar</h4>
+        <ul>
+          <li><a href="https://www.youtube.com/@aqui.nadie.entrena" target="_blank" rel="noopener">YouTube</a></li>
+          <li><a href="https://open.spotify.com/show/7EUC3MLxf5Zmfw8eUroFXx" target="_blank" rel="noopener">Spotify</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Redes</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/aquinadieentrena.podcast/" target="_blank" rel="noopener">Instagram</a></li>
+          <li><a href="https://www.tiktok.com/@aquinadieentrena" target="_blank" rel="noopener">TikTok</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Más</h4>
+        <ul>
+          <li><a href="/proyectos">Proyectos</a></li>
+          <li><a href="https://aquinadieentrena.beehiiv.com/" target="_blank" rel="noopener">Newsletter</a></li>
+          <li><a href="https://aumbral.com/" target="_blank" rel="noopener">A Umbral</a></li>
+          <li><a href="mailto:hola@aquinadieentrena.cc">Contacto</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/aviso-legal">Aviso legal</a></li>
+          <li><a href="/privacidad">Privacidad</a></li>
+          <li><a href="/cookies">Cookies</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="pie__legal">© 2026 Aquí Nadie Entrena · Eduardo Talavera y Cristóbal Meseguer</p>
+  </div>
+</footer>
+
+<script src="assets/js/stats.js?v=20260925"></script>
+<!-- Metricool tracker -->
+<script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"c7db82b313f4393f7f613082e4e13b84"})});</script>
+</body>
+</html>

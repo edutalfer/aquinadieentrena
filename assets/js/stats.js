@@ -16,7 +16,8 @@
 
   var URL_API = "/api/stats.php";
   var ESPERA = 1500;   // ms sin teclear para dar la búsqueda por buena
-  var PAGINA = /episodios/.test(location.pathname) ? "episodios" : "portada";
+  var PAGINA = /episodios/.test(location.pathname) ? "episodios"
+             : /proyectos/.test(location.pathname) ? "proyectos" : "portada";
 
   var pendiente = null;     // búsqueda aún sin enviar
   var temporizador = null;
