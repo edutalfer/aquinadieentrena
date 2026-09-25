@@ -82,7 +82,7 @@ página (no toca `estilo.css`). **Fuente de las cifras: el Dossier ANE 2027.**
 
 - **Cifras actualizadas con Metricool el 25/09/2026** (datos reales de YouTube,
   vídeo a vídeo). Qué vídeos forman cada proyecto, cómo se sacan y lo que queda
-  por aclarar (visualizaciones de ANE House): **`05_CIFRAS_PROYECTOS.md`**.
+  por aclarar (visualizaciones de ANE House): **`06_CIFRAS_PROYECTOS.md`**.
 - **Mantenimiento:** cuando termine un proyecto, se pasa de «Lo que viene» a
   «Lo que ya hemos hecho» con sus cifras reales, y si repite, se le pone el
   recuadro «La última vez» a la edición siguiente.
