@@ -52,6 +52,20 @@ qué estructura.
 
 ---
 
+### P8 — ¿El plan de Metricool incluye la API? (2026-09-25)
+La Fase 4b (números en directo) necesita que el servidor consulte Metricool
+solo, cada día: eso es la **API REST**, que según la ayuda de Metricool solo
+existe en los planes **Advanced y Custom**. El MCP que usa Claude funciona en
+cualquier plan, pero no sirve para un proceso automático del servidor.
+Se comprueba en Metricool → Ajustes de cuenta → API: si aparece un token, la hay.
+- **Si la hay:** token + `userId` + `blogId` (5337599) en `~/datos/`, y adelante.
+- **Si no:** subir de plan, o plan B con la API oficial de cada red: YouTube
+  Data API (gratis y sencilla), Instagram Graph API (token que caduca cada 60
+  días), TikTok (la más difícil: exige app aprobada). Punto intermedio posible:
+  YouTube automático y el resto actualizado a mano una vez al mes.
+
+---
+
 ## 🖥️ ENTORNO DE TRABAJO
 
 | Qué | Dónde |

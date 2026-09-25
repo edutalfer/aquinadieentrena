@@ -45,7 +45,9 @@ newsletter y, en el futuro, tienda de merch.
 
 ### ✅ Fase 1 — Web base
 - [x] Home con buscador, episodios, hosts, newsletter, Bici o Cepo y marcas
-- [ ] Sección Proyectos (no existe aún)
+- [ ] Sección Proyectos (no existe aún). Contenido: el **Dossier ANE 2027**
+      (Canva, diseño DAHODksquqA) con proyectos hechos y futuros. Pendiente
+      de que Eduardo lo pase en PDF (Claude no siempre tiene acceso a Canva)
 - [ ] Valorar formularios reales en vez de `mailto:`
 
 ### ✅ Fase 2 — Pipeline de transcripciones — CUMPLIDA
@@ -70,6 +72,27 @@ newsletter y, en el futuro, tienda de merch.
       busca términos técnicos y no encuentra (ver P7)
 - [ ] Búsqueda semántica ("ruedas rápidas" → "material aero")
 - [x] Analytics de búsquedas = ideas para episodios → panel privado `/admin` (D16, D17, 2026-09-23)
+
+### Fase 4b — Números en directo (propuesta de Eduardo, 2026-09-25)
+Una página pública (p. ej. `/numeros`) con los datos del proyecto que se
+actualizan solos cada día. Para el público y, sobre todo, para los sponsors:
+el dossier puede enlazarla como «datos en directo» en vez de cifras congeladas.
+
+- [ ] **Qué enseñar:** seguidores por plataforma (YouTube, Instagram, TikTok)
+      y total; visualizaciones de la temporada; episodios publicados; y datos
+      propios de la web que ya tenemos en `~/datos/ane.db` (búsquedas, temas más
+      buscados). Datos curiosos a elegir con Eduardo.
+- [ ] **Cómo (propuesta, en la línea de D11: el navegador solo lee JSON):**
+      cron diario de Hostinger (hPanel → Avanzado → Cron Jobs) → script PHP
+      consulta la API de Metricool → guarda `data/numeros.json` + histórico
+      diario en SQLite (para gráficas de crecimiento) → la página lo pinta.
+      El token de Metricool vive en `~/datos/`: nunca en el repo ni en el
+      navegador.
+- [ ] **Trampas ya conocidas de Metricool:** las visualizaciones son las
+      generadas *dentro* del rango consultado, no acumuladas (consultar la
+      temporada entera de una vez); Instagram hay que sumar Reels + vistas de
+      cuenta; TikTok usa `TKEV02` (`TKEV07` y `TKEV12` vienen vacías).
+- [ ] ⛔ **Bloqueado por P8** (¿tenemos API de Metricool?).
 
 ### Fase 5 — Tienda merch (sin fecha)
 
