@@ -42,12 +42,12 @@ por rango: aquí no aplica la trampa de las visualizaciones por periodo).
 | The Traka 2026 | 26.648 | — | 3.510 | 7:54 | 943 |
 | ANE House 2026 | **314.020** | 13.653 | 94.512 | 18:03 | 567 |
 
-## ⚠️ Pendiente de aclarar con Eduardo
+## ⚠️ Notas y pendientes
 
-- **ANE House**: el dossier dice **428.928** visualizaciones, pero en YouTube los
-  23 vídeos suman 314.020, aunque horas, likes y visionado medio sí cuadran con
-  el dossier. Probablemente el dossier suma otras plataformas. La web sigue
-  mostrando 428.928 hasta que se confirme.
+- ~~ANE House~~ **Aclarado (25/09):** las **428.928** visualizaciones del dossier
+  suman **todas las plataformas** (lo confirmó Eduardo); en YouTube solo son
+  314.020. La web muestra 428.928 con la etiqueta «sumando todas las
+  plataformas». Ojo al actualizar: esa cifra no sale de la consulta de YouTube.
 - **«Fuera del estudio: 49 piezas · 858.313 · 14:42»** (dossier) no se puede
   reproducir: incluye 3 vlogs de entrenamiento sin identificar, y ya en el
   dossier los cinco proyectos suman más que ese total. Se deja tal cual.
