@@ -50,8 +50,6 @@ dependa del cliente de correo del visitante.
 Está en el objetivo pero no existe todavía. Falta definir qué proyectos y con
 qué estructura.
 
----
-
 ### P8 — ¿El plan de Metricool incluye la API? (2026-09-25)
 La Fase 4b (números en directo) necesita que el servidor consulte Metricool
 solo, cada día: eso es la **API REST**, que según la ayuda de Metricool solo
