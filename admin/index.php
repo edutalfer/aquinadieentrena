@@ -1,6 +1,6 @@
 <?php
 /* ============================================================
-   AQUÍ NADIE ENTRENA — panel privado de estadísticas  /admin
+   AQUÍ NADIE ENTRENA — panel privado · pestaña Estadísticas  /admin
    ------------------------------------------------------------
    Acceso con usuario y contraseña del navegador (Basic Auth,
    siempre sobre HTTPS). Las credenciales NO están en el repo
@@ -10,48 +10,7 @@
    ============================================================ */
 
 declare(strict_types=1);
-require dirname(__DIR__) . '/api/_bd.php';
-
-header('Cache-Control: no-store, private');
-header('X-Robots-Tag: noindex, nofollow');
-header('X-Frame-Options: DENY');
-header('Referrer-Policy: no-referrer');
-
-/* ---------- Acceso ---------- */
-
-function ane_credenciales(): array
-{
-    $u = $_SERVER['PHP_AUTH_USER'] ?? null;
-    $p = $_SERVER['PHP_AUTH_PW'] ?? null;
-    if ($u === null) {   // algunos servidores solo pasan la cabecera cruda
-        $h = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
-        if (stripos($h, 'basic ') === 0) {
-            $dec = base64_decode(substr($h, 6), true);
-            if ($dec !== false && strpos($dec, ':') !== false) {
-                [$u, $p] = explode(':', $dec, 2);
-            }
-        }
-    }
-    return [(string) $u, (string) $p];
-}
-
-$cfgFichero = ANE_DATOS . '/admin.php';
-$cfg = is_file($cfgFichero) ? require $cfgFichero : null;
-[$usuario, $clave] = ane_credenciales();
-
-$dentro = is_array($cfg) && isset($cfg['usuario'], $cfg['hash']) && $usuario !== ''
-    && hash_equals((string) $cfg['usuario'], $usuario)
-    && password_verify($clave, (string) $cfg['hash']);
-
-if (!$dentro) {
-    if ($usuario !== '') {
-        usleep(600000);   // frena los intentos a lo bruto
-    }
-    header('WWW-Authenticate: Basic realm="ANE - panel privado", charset="UTF-8"');
-    http_response_code(401);
-    echo 'Acceso restringido.';
-    exit;
-}
+require __DIR__ . '/_comun.php';   // acceso, CSRF, estilos y cabecera
 
 /* ---------- Periodo y zona horaria ---------- */
 
@@ -184,62 +143,18 @@ $nombresContacto = [
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Panel privado — Aquí Nadie Entrena</title>
-<style>
-  @font-face { font-family: "Archivo"; src: url("/assets/fonts/archivo-black-italic.woff2") format("woff2");
-               font-weight: 900; font-style: italic; font-display: swap; }
-  @font-face { font-family: "Inter"; src: url("/assets/fonts/inter.woff2") format("woff2");
-               font-weight: 400 700; font-display: swap; }
-  :root { --azul: #3F77DA; --negro: #191919; --enlace: #2A5CB8; --destello: #B2C8F0;
-          --gris: #6E747F; --humo: #F2F3F5; --linea: #E1E3E7; }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 15px/1.5 "Inter", system-ui, sans-serif; color: var(--negro); background: var(--humo); }
-  .display { font-family: "Archivo", sans-serif; font-weight: 900; font-style: italic;
-             text-transform: uppercase; letter-spacing: -0.02em; line-height: .9; }
-  header { background: var(--negro); color: #fff; padding: 22px 0; }
-  .caja { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
-  header .caja { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; }
-  header h1 { margin: 0; font-size: 30px; }
-  header h1 em { color: var(--azul); font-style: italic; }
-  nav a { color: #C7CAD1; text-decoration: none; font-weight: 700; font-size: 12px; letter-spacing: .1em;
-          text-transform: uppercase; padding: 7px 11px; border: 1px solid #33363D; margin-left: 4px; }
-  nav a.si { background: var(--azul); border-color: var(--azul); color: #fff; }
-  main.caja { padding: 32px 20px 60px; }   /* más específico que .caja, que ponía el margen de arriba a 0 */
-  .cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 22px; }
-  .cifra { background: #fff; border: 2px solid var(--negro); padding: 16px 18px; }
-  .cifra b { display: block; font: 900 italic 40px/1 "Archivo", sans-serif; }
-  .cifra span { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
-  .rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  @media (max-width: 860px) { .rejilla { grid-template-columns: 1fr; } }
-  section { background: #fff; border: 1px solid var(--linea); padding: 18px 20px; margin-bottom: 18px; }
-  section h2 { margin: 0 0 4px; font-size: 22px; }
-  section p.nota { margin: 0 0 12px; color: var(--gris); font-size: 13px; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { text-align: left; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--gris);
-       border-bottom: 2px solid var(--negro); padding: 6px 8px 6px 0; }
-  td { border-bottom: 1px solid var(--linea); padding: 7px 8px 7px 0; vertical-align: top; }
-  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
-  td.cero { color: var(--gris); }
-  a { color: var(--enlace); }
-  .dias { display: flex; align-items: flex-end; gap: 3px; height: 130px; padding-top: 8px; }
-  .dias div { flex: 1; background: var(--azul); min-height: 2px; position: relative; }
-  .dias div:hover { background: var(--negro); }
-  .vacio { color: var(--gris); font-style: italic; padding: 8px 0; }
-  .pie { color: var(--gris); font-size: 12px; margin-top: 10px; }
-</style>
+<?php ane_admin_estilo(); ?>
 </head>
 <body>
 
-<header>
-  <div class="caja">
-    <h1 class="display">Panel <em>privado</em></h1>
-    <nav>
-      <?php foreach ([1 => 'Hoy', 7 => '7 días', 30 => '30 días', 90 => '90 días', 365 => 'Año'] as $k => $txt): ?>
-        <a href="?d=<?= $k ?>" class="<?= $k === $dias ? 'si' : '' ?>"><?= $txt ?></a>
-      <?php endforeach; ?>
-      <a href="?d=<?= $dias ?>&amp;csv=1">CSV</a>
-    </nav>
-  </div>
-</header>
+<?php
+  $navPeriodos = '';
+  foreach ([1 => 'Hoy', 7 => '7 días', 30 => '30 días', 90 => '90 días', 365 => 'Año'] as $k => $txt) {
+      $navPeriodos .= '<a href="?d=' . $k . '" class="' . ($k === $dias ? 'si' : '') . '">' . $txt . '</a>';
+  }
+  $navPeriodos .= '<a href="?d=' . $dias . '&amp;csv=1">CSV</a>';
+  ane_admin_cabecera('estadisticas', $navPeriodos);
+?>
 
 <main class="caja">
 

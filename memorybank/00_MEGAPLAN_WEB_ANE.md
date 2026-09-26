@@ -47,7 +47,9 @@ newsletter y, en el futuro, tienda de merch.
 - [x] Home con buscador, episodios, hosts, newsletter, Bici o Cepo y marcas
 - [x] Sección Proyectos → `proyectos.html` (2026-09-25), a partir del **Dossier
       ANE 2027** (Canva DAHODksquqA). Pendiente: fotos de cada proyecto
-- [ ] Valorar formularios reales en vez de `mailto:`
+- [ ] Valorar formularios reales en vez de `mailto:` (Bici o Cepo y marcas)
+- [x] Formularios de inscripción a eventos con gestión en el panel (D18, 2026-09-26).
+      La misma base serviría para Bici o Cepo y marcas si se decide (P5)
 
 ### ✅ Fase 2 — Pipeline de transcripciones — CUMPLIDA
 - [x] Scripts escritos, probados y documentados (`pipeline/`)

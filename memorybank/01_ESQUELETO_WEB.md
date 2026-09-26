@@ -9,7 +9,9 @@ aquinadieentrena.cc
 ├── /                → Home: BUSCADOR (protagonista) + últimos episodios + hosts
 │                      + newsletter + Bici o Cepo + marcas
 ├── /episodios       → Archivo completo con timelines clicables
-└── /proyectos       → proyectos.html: hechos, próximos y botones para sponsors
+├── /proyectos       → proyectos.html: hechos, próximos y botones para sponsors
+├── /f/<código>      → formulario.php: inscripción a un evento (oculto, noindex)
+└── /admin/          → panel privado: Estadísticas · Formularios
 ```
 
 ## ESTRUCTURA DEL REPO

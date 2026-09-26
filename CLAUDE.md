@@ -94,8 +94,9 @@ está bien, purgar en hPanel → Rendimiento → CDN → Purge cache.
 `data/indice_busqueda.json` **sí** se sirve porque lo necesita el navegador.
 Si creas carpetas nuevas con material en bruto, bloquéalas también.
 
-**Fuera del repo, en `~/datos/`:** la base de estadísticas (`ane.db`) y las
-credenciales del panel (`admin.php`). El repo es público: ahí no entra nunca.
+**Fuera del repo, en `~/datos/`:** la base (`ane.db`: estadísticas **y las
+inscripciones a eventos, que son datos personales**), las credenciales del panel
+(`admin.php`) y la clave de firma (`secreto`). El repo es público: ahí no entra nunca.
 
 ---
 

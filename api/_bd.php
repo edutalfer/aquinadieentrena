@@ -1,6 +1,6 @@
 <?php
 /* ============================================================
-   AQUÍ NADIE ENTRENA — acceso a la base de estadísticas
+   AQUÍ NADIE ENTRENA — acceso a la base (estadísticas y formularios)
    ------------------------------------------------------------
    No se sirve por web: .htaccess bloquea los ficheros que
    empiezan por «_». Lo incluyen api/stats.php y admin/.
@@ -8,6 +8,7 @@
    Los datos viven FUERA del docroot y del repo (que es público):
      ~/datos/ane.db     base SQLite (se crea sola)
      ~/datos/admin.php  usuario y hash de la contraseña del panel
+     ~/datos/secreto    clave para firmar (anti-bots y CSRF; se crea sola)
    ============================================================ */
 
 declare(strict_types=1);
@@ -60,6 +61,36 @@ function ane_bd(): PDO
             pagina  TEXT NOT NULL
         );
         CREATE INDEX IF NOT EXISTS i_contactos_fecha ON contactos (fecha);
+
+        -- Formularios de inscripción a eventos (ver api/_formularios.php)
+        CREATE TABLE IF NOT EXISTS formularios (
+            id             INTEGER PRIMARY KEY,
+            token          TEXT    NOT NULL UNIQUE,   -- el código de /f/<token>
+            titulo         TEXT    NOT NULL,
+            descripcion    TEXT    NOT NULL DEFAULT \'\',
+            preguntas      TEXT    NOT NULL DEFAULT \'[]\',  -- JSON
+            limite         INTEGER NOT NULL DEFAULT 0,  -- 0 = sin límite
+            cierre         TEXT,                        -- UTC; NULL = sin fecha
+            abierto        INTEGER NOT NULL DEFAULT 1,
+            una_por_correo INTEGER NOT NULL DEFAULT 1,
+            lista_espera   INTEGER NOT NULL DEFAULT 0,
+            mostrar_plazas INTEGER NOT NULL DEFAULT 1,
+            mensaje_ok     TEXT    NOT NULL DEFAULT \'\',
+            aviso_extra    TEXT    NOT NULL DEFAULT \'\',
+            creado         TEXT    NOT NULL,
+            actualizado    TEXT    NOT NULL
+        );
+
+        -- Datos personales de los inscritos: se borran después del evento
+        CREATE TABLE IF NOT EXISTS form_respuestas (
+            id       INTEGER PRIMARY KEY,
+            form_id  INTEGER NOT NULL,
+            fecha    TEXT    NOT NULL,
+            datos    TEXT    NOT NULL,       -- JSON [{id, titulo, valor}]
+            correo   TEXT    NOT NULL DEFAULT \'\',  -- normalizado, para duplicados
+            reserva  INTEGER NOT NULL DEFAULT 0      -- 1 = lista de espera
+        );
+        CREATE INDEX IF NOT EXISTS i_form_respuestas ON form_respuestas (form_id, reserva);
     ');
     return $pdo;
 }

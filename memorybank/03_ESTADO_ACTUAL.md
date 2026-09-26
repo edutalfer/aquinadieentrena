@@ -74,6 +74,32 @@ cargado** (si no, contarían como «sin resultado» búsquedas que sí lo tienen
 
 ---
 
+## 📝 Formularios de inscripción a eventos (2026-09-26)
+
+Estilo Google Forms, pero cortan de verdad al llegar al límite (ver D18).
+
+- **Crear y gestionar:** panel → pestaña **Formularios** (`/admin/formularios.php`).
+  Un formulario nuevo nace con Correo, Nombre y apellidos y Teléfono móvil,
+  todas obligatorias. Tipos de pregunta: corta, párrafo, correo, teléfono,
+  número, fecha, opción única, casillas y desplegable.
+- **Enlace público:** `https://aquinadieentrena.cc/f/<código>` (10 caracteres
+  aleatorios). No está enlazado en la web y lleva `noindex`. Vista previa sin
+  enviar: añadir `?previa=1`.
+- **Descripción con formato:** `**negrita**`, `_cursiva_`, líneas `- ` = lista,
+  `[texto](https://…)`. Todo el HTML se escapa antes.
+- **Piezas:** `formulario.php` (público), `admin/formularios.php` (gestión),
+  `admin/_comun.php` (acceso, CSRF, estilos y pestañas de todo el panel),
+  `api/_formularios.php` (lógica). Tablas `formularios` y `form_respuestas`
+  en `~/datos/ane.db`. Clave de firma en `~/datos/secreto` (se crea sola).
+- **Datos personales:** el formulario promete borrarlos **un mes después del
+  evento**. El listado avisa de los formularios cerrados hace más de 30 días que
+  aún guardan inscripciones → descargar CSV y «Borrar todas las respuestas».
+  Documentado en `privacidad.html` («Inscripción a eventos»).
+- **Probado en local** con PHP 8.4 (límite, envío con la última plaza ya cogida,
+  lista de espera, duplicados, validación, bots, CSRF, CSV) antes de publicar.
+
+---
+
 ## 🚴 Página de Proyectos (2026-09-25)
 
 `proyectos.html`, enlazada en el menú y en el pie de todas las páginas y desde la
