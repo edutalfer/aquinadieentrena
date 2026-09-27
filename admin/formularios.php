@@ -206,9 +206,12 @@ function ane_etiqueta_estado(array $e): string
   .aviso-datos { background: var(--destello); padding: 12px 16px; margin-bottom: 18px; font-size: 14px; }
   .estado { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
             padding: 3px 8px; }
-  .estado--si { background: var(--azul); color: #fff; }
-  .estado--medio { background: var(--destello); color: var(--negro); }
-  .estado--no { background: var(--linea); color: var(--negro); }
+  /* Doble clase a propósito: gana a reglas genéricas como «.cifra span»,
+     que las volvía grises y con la tipografía de titular */
+  .estado.estado--si { background: var(--enlace); color: #fff; }        /* 6,3:1 */
+  .estado.estado--medio { background: var(--destello); color: var(--negro); }
+  .estado.estado--no { background: var(--linea); color: var(--negro); }
+  .cifra .estado { font: 700 14px/1.2 "Inter", sans-serif; letter-spacing: .08em; padding: 7px 12px; margin: 4px 0 12px; }
   .enlace { display: flex; gap: 6px; align-items: center; }
   .enlace code { font-size: 12px; background: var(--humo); padding: 4px 6px; }
   .acciones { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -493,7 +496,7 @@ function ane_etiqueta_estado(array $e): string
     <div class="cifra"><b><?= $e['ocupadas'] ?><?= $e['limite'] ? '<span style="font-size:22px;letter-spacing:0;color:var(--gris)"> / ' . $e['limite'] . '</span>' : '' ?></b><span>Confirmadas</span></div>
     <div class="cifra"><b><?= $e['reservas'] ?></b><span>En lista de espera</span></div>
     <div class="cifra"><b><?= $e['limite'] ? $e['quedan'] : '∞' ?></b><span>Plazas libres</span></div>
-    <div class="cifra"><b style="font-size:26px;padding-top:8px"><?= ane_etiqueta_estado($e) ?></b><span>Estado</span></div>
+    <div class="cifra"><?= ane_etiqueta_estado($e) ?><br><span>Estado</span></div>
   </div>
 
   <section>
