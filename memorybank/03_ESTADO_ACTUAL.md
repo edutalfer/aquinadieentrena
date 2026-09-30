@@ -207,8 +207,9 @@ Riesgo real si ambos tocan `index.html` a la vez.
    tocaron `data/episodios.js` y el HTML siguió en `?v=20260831`. Arreglado el
    23/09. Tras cada alta, `git diff --stat` tiene que mostrar también
    `index.html` y `episodios.html`; si no, súbelo a mano.
-7. **`Referrer-Policy: no-referrer` en el panel rompía todos los POST**: con esa
+7. **`Referrer-Policy: no-referrer` en el panel rompe los POST en local**: con esa
    política Chrome manda `Origin: null` y la comprobación de origen del CSRF los
-   rechazaba (403). Los tests con `curl` pasaban porque `curl` no manda
-   `Origin`. Ahora es `same-origin`. **Prueba el panel con un navegador**
-   (Playwright vale), no solo con `curl`.
+   rechaza (403). En producción no pasaba porque el `.htaccess` pisa la cabecera
+   con `strict-origin-when-cross-origin`, pero `php -S` en local no lee el
+   `.htaccess`. Ahora el panel ya manda `same-origin`. **Prueba el panel con un
+   navegador** (Playwright vale), no solo con `curl`, que no manda `Origin`.

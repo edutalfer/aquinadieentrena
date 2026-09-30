@@ -18,7 +18,8 @@ header('Cache-Control: no-store, private');
 header('X-Robots-Tag: noindex, nofollow');
 header('X-Frame-Options: DENY');
 /* same-origin y no no-referrer: con no-referrer Chrome manda «Origin: null» en
-   los POST de formulario y la comprobación de origen de abajo los rechazaba todos */
+   los POST y la comprobación de origen de abajo los rechaza. (En producción el
+   .htaccess pisa esta cabecera, pero en local con php -S no.) */
 header('Referrer-Policy: same-origin');
 
 /* ---------- Acceso ---------- */
