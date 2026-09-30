@@ -158,8 +158,10 @@ Eduardo lo diga).
   laterales del culotte y puños neutros (sin azul): el mono es una base neutra
   para que destaquen las marcas.
 - **Con la referencia de un mono Gobik negro (01/10/2026):** muslos rectos y
-  separados desde la entrepierna, cadera y glúteo más contenidos, mangas casi
-  verticales y **negro mate** (rugosidad alta, casi sin brillo).
+  separados desde la entrepierna, cadera y glúteo más contenidos, mangas separadas y
+  **negro mate** (rugosidad alta, casi sin brillo). Silueta calcada de sus fotos
+  de frente y espalda: mangas separadas del cuerpo, entrepierna alta (~0,93) y
+  perneras largas.
 - **Tablas:** `mono_proyectos`, `mono_huecos`, `mono_pujas` (datos de contacto
   de empresas) y `ajustes`, en `~/datos/ane.db`. En `privacidad.html` (#patrocinio).
 - **Probado en local** (Playwright + SwiftShader): selector, clic en calcas,

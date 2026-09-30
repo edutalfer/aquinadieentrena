@@ -505,7 +505,7 @@ $datosJs = [
 </footer>
 
 <script type="application/json" id="datos-maillot"><?= json_encode($datosJs, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
-<script type="module" src="/assets/js/maillot.min.js?v=20261001d"></script>
+<script type="module" src="/assets/js/maillot.min.js?v=20261001e"></script>
 <script src="/assets/js/stats.js?v=20260930"></script>
 </body>
 </html>

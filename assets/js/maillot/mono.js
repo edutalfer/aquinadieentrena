@@ -44,16 +44,16 @@ export const COLOR = {
 
 /* Tronco: y · medio ancho · medio fondo delante · medio fondo detrás */
 const PERFIL = [
-  [0.862, 0.080, 0.050, 0.058],
-  [0.900, 0.140, 0.084, 0.094],
-  [0.940, 0.156, 0.090, 0.102],
-  [0.990, 0.150, 0.090, 0.102],
-  [1.050, 0.146, 0.090, 0.098],
-  [1.100, 0.136, 0.092, 0.094],
-  [1.170, 0.142, 0.101, 0.096],
-  [1.240, 0.155, 0.113, 0.099],
-  [1.310, 0.168, 0.120, 0.102],
-  [1.365, 0.174, 0.113, 0.102],
+  [0.925, 0.075, 0.048, 0.056],
+  [0.960, 0.126, 0.080, 0.090],
+  [0.995, 0.134, 0.086, 0.096],
+  [1.040, 0.135, 0.088, 0.097],
+  [1.070, 0.134, 0.089, 0.094],
+  [1.100, 0.133, 0.092, 0.092],
+  [1.170, 0.140, 0.100, 0.094],
+  [1.240, 0.152, 0.112, 0.098],
+  [1.310, 0.164, 0.119, 0.101],
+  [1.365, 0.170, 0.113, 0.101],
   [1.405, 0.160, 0.096, 0.095],
   [1.440, 0.132, 0.082, 0.086],
   [1.462, 0.104, 0.074, 0.078],
@@ -64,7 +64,7 @@ const Y_CUELLO = 1.49;
 /* El escote baja por delante, como en los monos de crono */
 const ESCOTE = 0.03;
 const corteCuello = (z) => Y_CUELLO - ESCOTE * Math.min(1, Math.max(-0.35, z / 0.065));
-const Y_BASE = 0.864;
+const Y_BASE = 0.929;
 
 /* Tabla precalculada del perfil (Catmull-Rom), para no interpolar en cada punto */
 const TAB_N = 1024;
@@ -147,14 +147,14 @@ function smin(a, b, k) {
 export const MANGAS = {}, PIERNAS = {};
 const DELTOIDES = {}, GLUTEOS = {}, PECTORALES = {}, DORSALES = {}, CUADRICEPS = {}, ISQUIOS = {};
 for (const s of [1, -1]) {
-  MANGAS[s] = cono([0.186 * s, 1.392, -0.006], [0.212 * s, 1.068, 0.016], 0.058, 0.046);
-  PIERNAS[s] = cono([0.094 * s, 0.945, -0.010], [0.106 * s, 0.535, 0.006], 0.080, 0.064);
-  DELTOIDES[s] = elipsoide([0.174 * s, 1.384, -0.004], [0.058, 0.068, 0.066]);
+  MANGAS[s] = cono([0.194 * s, 1.388, -0.006], [0.236 * s, 1.088, 0.014], 0.060, 0.046);
+  PIERNAS[s] = cono([0.074 * s, 1.000, -0.008], [0.084 * s, 0.545, 0.004], 0.075, 0.060);
+  DELTOIDES[s] = elipsoide([0.180 * s, 1.382, -0.004], [0.06, 0.068, 0.066]);
   PECTORALES[s] = elipsoide([0.066 * s, 1.318, 0.078], [0.078, 0.056, 0.042]);
   DORSALES[s] = elipsoide([0.112 * s, 1.235, -0.035], [0.052, 0.105, 0.064]);
-  GLUTEOS[s] = elipsoide([0.068 * s, 0.950, -0.045], [0.078, 0.085, 0.066]);
-  CUADRICEPS[s] = elipsoide([0.100 * s, 0.760, 0.016], [0.062, 0.17, 0.066]);
-  ISQUIOS[s] = elipsoide([0.098 * s, 0.790, -0.022], [0.062, 0.15, 0.064]);
+  GLUTEOS[s] = elipsoide([0.062 * s, 0.985, -0.042], [0.07, 0.08, 0.064]);
+  CUADRICEPS[s] = elipsoide([0.080 * s, 0.790, 0.014], [0.06, 0.18, 0.062]);
+  ISQUIOS[s] = elipsoide([0.080 * s, 0.820, -0.018], [0.06, 0.16, 0.062]);
 }
 
 export function sdf(x, y, z) {
@@ -352,8 +352,8 @@ vec3 equipaje(vec3 p, vec3 n) {
   /* Corte blanco/negro de mono de contrarreloj: el negro sube por los
      costados; delante el blanco baja en pico y detrás, en U */
   float corte = at < 1.5708
-    ? 0.925 + 0.2 * pow(clamp(at / 1.5708, 0.0, 1.0), 1.5)
-    : 0.975 + 0.15 * pow(clamp((3.14159 - at) / 1.5708, 0.0, 1.0), 1.6);
+    ? 0.965 + 0.165 * pow(clamp(at / 1.5708, 0.0, 1.0), 1.5)
+    : 1.0 + 0.13 * pow(clamp((3.14159 - at) / 1.5708, 0.0, 1.0), 1.6);
   float wy = fwidth(p.y) + 0.0006;
   float grosor = 0.0045;
   float blanco = smoothstep(corte - wy, corte + wy, p.y);
@@ -484,8 +484,8 @@ export const ZONAS = {
   "abdomen":      { desde: [0, 1.150, 1], hacia: [0, 0, -1], tam: [0.20, 0.080], mira: 0 },
   "espalda-alta": { desde: [0, 1.320, -1], hacia: [0, 0, 1], tam: [0.25, 0.095], mira: PI },
   "espalda-baja": { desde: [0, 1.140, -1], hacia: [0, 0, 1], tam: [0.21, 0.080], mira: PI },
-  "costado-izq":  { desde: [1, 0.995, 0.005], hacia: [-1, 0, 0], tam: [0.08, 0.12], mira: -1.2, vertical: true },
-  "costado-der":  { desde: [-1, 0.995, 0.005], hacia: [1, 0, 0], tam: [0.08, 0.12], mira: 1.2, vertical: true },
+  "costado-izq":  { desde: [1, 1.03, 0.005], hacia: [-1, 0, 0], tam: [0.08, 0.12], mira: -1.2, vertical: true },
+  "costado-der":  { desde: [-1, 1.03, 0.005], hacia: [1, 0, 0], tam: [0.08, 0.12], mira: 1.2, vertical: true },
   "manga-izq":    { tubo: "manga", lado: 1, t: 0.52, tam: [0.10, 0.12], mira: -PI / 2 },
   "manga-der":    { tubo: "manga", lado: -1, t: 0.52, tam: [0.10, 0.12], mira: PI / 2 },
   "culote-izq":   { tubo: "pierna", lado: 1, t: 0.5, tam: [0.09, 0.22], mira: -PI / 2, vertical: true },
