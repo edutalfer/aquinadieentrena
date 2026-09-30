@@ -94,8 +94,13 @@ está bien, purgar en hPanel → Rendimiento → CDN → Purge cache.
 `data/indice_busqueda.json` **sí** se sirve porque lo necesita el navegador.
 Si creas carpetas nuevas con material en bruto, bloquéalas también.
 
+**El mono 3D (`/maillot`) va compilado.** La fuente está en
+`assets/js/maillot/` y lo que se sirve es `assets/js/maillot.min.js` (three.js
+empaquetado con esbuild). Si tocas la fuente, recompila (ver
+`assets/js/maillot/LEEME.md`) y sube el `?v=` en `maillot.php`.
+
 **Fuera del repo, en `~/datos/`:** la base (`ane.db`: estadísticas **y las
-inscripciones a eventos, que son datos personales**), las credenciales del panel
+inscripciones a eventos y las ofertas por el mono, que son datos personales**), las credenciales del panel
 (`admin.php`) y la clave de firma (`secreto`). El repo es público: ahí no entra nunca.
 
 ---

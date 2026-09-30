@@ -17,7 +17,8 @@
   var URL_API = "/api/stats.php";
   var ESPERA = 1500;   // ms sin teclear para dar la búsqueda por buena
   var PAGINA = /episodios/.test(location.pathname) ? "episodios"
-             : /proyectos/.test(location.pathname) ? "proyectos" : "portada";
+             : /proyectos/.test(location.pathname) ? "proyectos"
+             : /maillot/.test(location.pathname) ? "maillot" : "portada";
 
   var pendiente = null;     // búsqueda aún sin enviar
   var temporizador = null;
@@ -83,7 +84,7 @@
     if (!a) return;
     var asunto = decodeURIComponent((a.href.split("subject=")[1] || "").split("&")[0]);
     var destino = /bici/i.test(asunto) ? "bici"
-                : /colaboraci|propuesta/i.test(asunto) ? "marcas"
+                : /colaboraci|propuesta|mono/i.test(asunto) ? "marcas"
                 : /tema/i.test(asunto) ? "tema"
                 : "contacto";
     envia({ tipo: "contacto", destino: destino });

@@ -50,6 +50,8 @@ newsletter y, en el futuro, tienda de merch.
 - [ ] Valorar formularios reales en vez de `mailto:` (Bici o Cepo y marcas)
 - [x] Formularios de inscripción a eventos con gestión en el panel (D18, 2026-09-26).
       La misma base serviría para Bici o Cepo y marcas si se decide (P5)
+- [x] Mono en 3D con huecos de patrocinio y ofertas, gestión en el panel
+      (D19, 2026-09-30). Falta: precios de Eduardo, abrir ofertas y enlazarlo
 
 ### ✅ Fase 2 — Pipeline de transcripciones — CUMPLIDA
 - [x] Scripts escritos, probados y documentados (`pipeline/`)

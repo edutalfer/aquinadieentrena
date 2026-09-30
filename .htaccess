@@ -37,6 +37,9 @@
   # Páginas ocultas (no enlazadas, noindex). Las pinta formulario.php.
   RewriteRule ^f/([A-Za-z0-9]{6,32})/?$ formulario.php?t=$1 [L,QSA]
 
+  # ---------- El mono y sus huecos de patrocinio: /maillot ----------
+  RewriteRule ^maillot/?$ maillot.php [L,QSA]
+
   # ---------- Redirigir las URLs con .html a las limpias ----------
   # Solo actua sobre la peticion original del navegador (THE_REQUEST),
   # nunca sobre la reescritura interna de mas abajo, para no crear un bucle.

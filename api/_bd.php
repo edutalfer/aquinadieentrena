@@ -1,6 +1,6 @@
 <?php
 /* ============================================================
-   AQUÍ NADIE ENTRENA — acceso a la base (estadísticas y formularios)
+   AQUÍ NADIE ENTRENA — acceso a la base (estadísticas, formularios y mono)
    ------------------------------------------------------------
    No se sirve por web: .htaccess bloquea los ficheros que
    empiezan por «_». Lo incluyen api/stats.php y admin/.
@@ -91,6 +91,40 @@ function ane_bd(): PDO
             reserva  INTEGER NOT NULL DEFAULT 0      -- 1 = lista de espera
         );
         CREATE INDEX IF NOT EXISTS i_form_respuestas ON form_respuestas (form_id, reserva);
+
+        -- Huecos de patrocinio del mono (ver api/_maillot.php). La forma y
+        -- la posición de cada zona están en el código; aquí, el precio.
+        CREATE TABLE IF NOT EXISTS huecos (
+            zona        TEXT    PRIMARY KEY,
+            nombre      TEXT    NOT NULL,
+            descripcion TEXT    NOT NULL DEFAULT \'\',
+            activo      INTEGER NOT NULL DEFAULT 0,    -- 0 = no se ofrece
+            minimo      INTEGER NOT NULL DEFAULT 0,    -- euros
+            incremento  INTEGER NOT NULL DEFAULT 50,   -- euros
+            cierre      TEXT,                          -- UTC; NULL = sin fecha
+            adjudicado  TEXT    NOT NULL DEFAULT \'\',   -- marca; se ve en la web
+            actualizado TEXT    NOT NULL
+        );
+
+        -- Ofertas: datos de contacto de empresas. Se borran al cerrar la temporada.
+        CREATE TABLE IF NOT EXISTS pujas (
+            id       INTEGER PRIMARY KEY,
+            zona     TEXT    NOT NULL,
+            fecha    TEXT    NOT NULL,
+            importe  INTEGER NOT NULL,
+            empresa  TEXT    NOT NULL,
+            contacto TEXT    NOT NULL DEFAULT \'\',
+            correo   TEXT    NOT NULL,
+            telefono TEXT    NOT NULL DEFAULT \'\',
+            mensaje  TEXT    NOT NULL DEFAULT \'\',
+            estado   TEXT    NOT NULL DEFAULT \'valida\'  -- pendiente | valida | anulada
+        );
+        CREATE INDEX IF NOT EXISTS i_pujas_zona ON pujas (zona, estado, importe);
+
+        CREATE TABLE IF NOT EXISTS ajustes (
+            clave TEXT PRIMARY KEY,
+            valor TEXT NOT NULL
+        );
     ');
     return $pdo;
 }

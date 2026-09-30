@@ -123,6 +123,33 @@ página (no toca `estilo.css`). **Fuente de las cifras: el Dossier ANE 2027.**
 
 ---
 
+## 👕 El mono: huecos de patrocinio con ofertas (2026-09-30)
+
+Ver D19. Página `/maillot` (todavía **no enlazada** desde el menú: se enlaza
+cuando Eduardo ponga precios y abra las ofertas).
+
+- **Gestión:** panel → pestaña **Mono** (`/admin/maillot.php`): qué huecos se
+  ofrecen, oferta mínima, subida mínima, cierre y «Adjudicado a»; ofertas
+  (validar, anular, borrar, CSV); ajustes (aceptar ofertas, revisar antes de
+  que cuenten, título, texto de entrada y condiciones). Nace **cerrado** y con
+  **revisión activada**.
+- **Zonas:** `pecho`, `abdomen`, `espalda-alta`, `espalda-baja`, `costado-izq/der`,
+  `manga-izq/der`, `culote-izq/der`. El nombre y el precio están en la base; la
+  forma, en `assets/js/maillot/mono.js` (`ZONAS`). Para añadir una zona hay que
+  tocar **las dos**: `ANE_MAILLOT_ZONAS` en `api/_maillot.php` y `ZONAS` en `mono.js`.
+- **3D:** fuente en `assets/js/maillot/` (`mono.js` = geometría y parches,
+  `maillot.js` = escena y formulario). **Hay que recompilar**
+  `assets/js/maillot.min.js` tras tocarla (ver `assets/js/maillot/LEEME.md`) y
+  subir el `?v=` en `maillot.php`.
+- **Tablas:** `huecos`, `pujas` (datos de contacto de empresas) y `ajustes` en
+  `~/datos/ane.db`. La web promete borrar las ofertas al cerrar el patrocinio de
+  la temporada → botón «Borrar todas las ofertas». En `privacidad.html` (#patrocinio).
+- **Probado en local** (Playwright + SwiftShader): giro, clic en huecos, ofertas
+  bajas, correctas y de bots, flujo sin JavaScript, móvil sin scroll lateral y
+  todas las acciones del panel.
+
+---
+
 ## Dónde está cada cosa
 
 - **Web pública:** https://aquinadieentrena.cc
@@ -180,3 +207,8 @@ Riesgo real si ambos tocan `index.html` a la vez.
    tocaron `data/episodios.js` y el HTML siguió en `?v=20260831`. Arreglado el
    23/09. Tras cada alta, `git diff --stat` tiene que mostrar también
    `index.html` y `episodios.html`; si no, súbelo a mano.
+7. **`Referrer-Policy: no-referrer` en el panel rompía todos los POST**: con esa
+   política Chrome manda `Origin: null` y la comprobación de origen del CSRF los
+   rechazaba (403). Los tests con `curl` pasaban porque `curl` no manda
+   `Origin`. Ahora es `same-origin`. **Prueba el panel con un navegador**
+   (Playwright vale), no solo con `curl`.

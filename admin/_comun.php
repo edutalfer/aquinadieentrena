@@ -17,7 +17,9 @@ require_once dirname(__DIR__) . '/api/_formularios.php';
 header('Cache-Control: no-store, private');
 header('X-Robots-Tag: noindex, nofollow');
 header('X-Frame-Options: DENY');
-header('Referrer-Policy: no-referrer');
+/* same-origin y no no-referrer: con no-referrer Chrome manda «Origin: null» en
+   los POST de formulario y la comprobación de origen de abajo los rechazaba todos */
+header('Referrer-Policy: same-origin');
 
 /* ---------- Acceso ---------- */
 
@@ -140,7 +142,8 @@ function ane_admin_estilo(): void
 /* $nav: botones propios de la pestaña (p. ej. los periodos de las estadísticas) */
 function ane_admin_cabecera(string $pestana, string $nav = ''): void
 {
-    $pestanas = ['estadisticas' => ['/admin/', 'Estadísticas'], 'formularios' => ['/admin/formularios.php', 'Formularios']];
+    $pestanas = ['estadisticas' => ['/admin/', 'Estadísticas'], 'formularios' => ['/admin/formularios.php', 'Formularios'],
+                 'maillot' => ['/admin/maillot.php', 'Mono']];
     ?>
 <header>
   <div class="caja">
