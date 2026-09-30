@@ -44,6 +44,7 @@ export const COLOR = {
 
 /* Tronco: y · medio ancho · medio fondo delante · medio fondo detrás */
 const PERFIL = [
+  [0.835, 0.105, 0.062, 0.070],
   [0.880, 0.150, 0.090, 0.100],
   [0.930, 0.160, 0.095, 0.110],
   [0.990, 0.158, 0.092, 0.108],
@@ -59,8 +60,8 @@ const PERFIL = [
   [1.480, 0.080, 0.064, 0.068],
   [1.495, 0.074, 0.061, 0.065],
 ];
-const Y_CUELLO = 1.49;
-const Y_BASE = 0.885;
+const Y_CUELLO = 1.487;
+const Y_BASE = 0.838;
 
 /* Tabla precalculada del perfil (Catmull-Rom), para no interpolar en cada punto */
 const TAB_N = 1024;
@@ -130,26 +131,45 @@ function smin(a, b, k) {
   return Math.min(a, b) - h * h * k * 0.25;
 }
 
-/* Las piezas, a los dos lados */
+/* Las piezas, a los dos lados. Proporciones de un ciclista de 1,80 m:
+   brazos casi pegados al cuerpo, como en los configuradores de equipaje. */
 export const MANGAS = {}, PIERNAS = {};
-const DELTOIDES = {}, GLUTEOS = {};
+const DELTOIDES = {}, GLUTEOS = {}, PECTORALES = {}, DORSALES = {}, CUADRICEPS = {}, ISQUIOS = {};
 for (const s of [1, -1]) {
-  MANGAS[s] = cono([0.176 * s, 1.388, -0.004], [0.238 * s, 1.085, 0.020], 0.058, 0.047);
-  PIERNAS[s] = cono([0.086 * s, 0.940, -0.012], [0.108 * s, 0.535, 0.010], 0.096, 0.069);
-  DELTOIDES[s] = elipsoide([0.164 * s, 1.382, -0.004], [0.058, 0.064, 0.064]);
-  GLUTEOS[s] = elipsoide([0.066 * s, 0.962, -0.060], [0.088, 0.092, 0.071]);
+  MANGAS[s] = cono([0.184 * s, 1.392, -0.006], [0.226 * s, 1.062, 0.014], 0.057, 0.044);
+  PIERNAS[s] = cono([0.086 * s, 0.940, -0.012], [0.104 * s, 0.535, 0.012], 0.095, 0.068);
+  DELTOIDES[s] = elipsoide([0.170 * s, 1.384, -0.004], [0.056, 0.066, 0.064]);
+  PECTORALES[s] = elipsoide([0.066 * s, 1.318, 0.078], [0.078, 0.056, 0.042]);
+  DORSALES[s] = elipsoide([0.112 * s, 1.235, -0.035], [0.052, 0.105, 0.064]);
+  GLUTEOS[s] = elipsoide([0.066 * s, 0.962, -0.062], [0.088, 0.090, 0.071]);
+  CUADRICEPS[s] = elipsoide([0.092 * s, 0.770, 0.030], [0.074, 0.165, 0.068]);
+  ISQUIOS[s] = elipsoide([0.090 * s, 0.790, -0.032], [0.070, 0.150, 0.064]);
 }
 
 export function sdf(x, y, z) {
   const s = x >= 0 ? 1 : -1;          // simétrico: basta con el lado del punto
   let d = tronco(x, y, z);
+  d = smin(d, PECTORALES[s](x, y, z), 0.025);
+  d = smin(d, DORSALES[s](x, y, z), 0.035);
   d = smin(d, GLUTEOS[s](x, y, z), 0.03);
   d = smin(d, DELTOIDES[s](x, y, z), 0.03);
-  d = smin(d, MANGAS[s](x, y, z), 0.022);
-  /* Las dos piernas se funden con la cadera, no entre sí */
-  const pl = PIERNAS[1](x, y, z), pr = PIERNAS[-1](x, y, z);
-  d = smin(d, Math.min(pl, pr), 0.035);
+  d = smin(d, MANGAS[s](x, y, z), 0.02);
+  /* Cada pierna, con sus músculos, se funde con la cadera; las dos piernas entre sí no */
+  const pierna = (t) => smin(smin(PIERNAS[t](x, y, z), CUADRICEPS[t](x, y, z), 0.03), ISQUIOS[t](x, y, z), 0.03);
+  d = smin(d, smin(pierna(1), pierna(-1), 0.012), 0.035);
   return d;
+}
+
+/* Oclusión ambiental: cuánto «se esconde» cada punto (axilas, entrepierna,
+   bajo el glúteo). Se calcula una vez por vértice. */
+function oclusion(x, y, z, nx, ny, nz) {
+  let occ = 0, peso = 1;
+  for (let i = 1; i <= 5; i++) {
+    const h = 0.012 * i;
+    occ += (h - sdf(x + nx * h, y + ny * h, z + nz * h)) * peso;
+    peso *= 0.75;
+  }
+  return Math.min(1, Math.max(0.25, 1 - occ * 7));
 }
 
 /* ============================================================
@@ -230,6 +250,7 @@ export function mallaMono(paso = 0.008) {
 
   /* Cada vértice, pegado a la superficie exacta; la normal, del gradiente */
   const nor = new Float32Array(pos.length);
+  const ao = new Float32Array(pos.length / 3);
   const e = 0.0006;
   for (let v = 0; v < pos.length; v += 3) {
     let x = pos[v], y = pos[v + 1], z = pos[v + 2];
@@ -248,11 +269,13 @@ export function mallaMono(paso = 0.008) {
     pos[v] = x; pos[v + 1] = y; pos[v + 2] = z;
     const gl = Math.hypot(gx, gy, gz) || 1;
     nor[v] = gx / gl; nor[v + 1] = gy / gl; nor[v + 2] = gz / gl;
+    ao[v / 3] = oclusion(x, y, z, nor[v], nor[v + 1], nor[v + 2]);
   }
 
   const g = new BufferGeometry();
   g.setAttribute("position", new Float32BufferAttribute(pos, 3));
   g.setAttribute("normal", new Float32BufferAttribute(nor, 3));
+  g.setAttribute("oclusion", new Float32BufferAttribute(ao, 1));
   g.setIndex(new Uint32BufferAttribute(tri, 1));
   g.computeBoundingSphere();
   return g;
@@ -264,79 +287,113 @@ export function mallaMono(paso = 0.008) {
 
 function materialEquipaje() {
   const m = new MeshPhysicalMaterial({
-    color: "#ffffff", roughness: 0.6, metalness: 0, sheen: 0.3, sheenRoughness: 0.55, sheenColor: "#ffffff",
+    color: "#ffffff", roughness: 0.6, metalness: 0, sheen: 0.18, sheenRoughness: 0.5, sheenColor: "#ffffff",
+    envMapIntensity: 0.22,
   });
   const u = {
-    cBlanco: { value: new Color("#F3F4F6") },
-    cNegro: { value: new Color("#141518") },
+    cBlanco: { value: new Color("#DEE2E7") },
+    cNegro: { value: new Color("#121315") },
     cAzul: { value: new Color(COLOR.azul) },
-    cSilicona: { value: new Color("#2C2E33") },
-    cDentro: { value: new Color("#C3C8D0") },
-    cDentroNegro: { value: new Color("#07070A") },
-    cCremallera: { value: new Color("#BCC1C8") },
+    cSilicona: { value: new Color("#2A2C31") },
+    cDentro: { value: new Color("#9CA3AD") },
+    cDentroNegro: { value: new Color("#0A0A0C") },
+    cCostura: { value: new Color("#D2D6DC") },
     mA: { value: new Vector3(...MANGAS[1].a) }, mB: { value: new Vector3(...MANGAS[1].b) },
     pA: { value: new Vector3(...PIERNAS[1].a) }, pB: { value: new Vector3(...PIERNAS[1].b) },
     yCuello: { value: Y_CUELLO },
+    cuelloAB: { value: new Vector3(TAB[TAB_N * 3 - 3], TAB[TAB_N * 3 - 2], TAB[TAB_N * 3 - 1]) },
+    rMangaFin: { value: MANGAS[1].r2 }, rPiernaFin: { value: PIERNAS[1].r2 },
   };
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vObj;\nvarying vec3 vObjN;")
-      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvObj = position;\nvObjN = normal;");
+      .replace("#include <common>", "#include <common>\nattribute float oclusion;\nvarying vec3 vObj;\nvarying vec3 vObjN;\nvarying float vOcl;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvObj = position;\nvObjN = normal;\nvOcl = oclusion;");
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
 varying vec3 vObj;
 varying vec3 vObjN;
-uniform vec3 cBlanco, cNegro, cAzul, cSilicona, cDentro, cDentroNegro, cCremallera;
+varying float vOcl;
+uniform vec3 cBlanco, cNegro, cAzul, cSilicona, cDentro, cDentroNegro, cCostura;
 uniform vec3 mA, mB, pA, pB;
-uniform float yCuello;
-float tramo(vec3 p, vec3 a, vec3 b) { vec3 ba = b - a; return dot(p - a, ba) / dot(ba, ba); }
+uniform float yCuello, rMangaFin, rPiernaFin;
+uniform vec3 cuelloAB;
 float rugosidad = 0.6;
+float linea(float d, float ancho) { float w = fwidth(d) + 0.0002; return 1.0 - smoothstep(ancho - w, ancho + w, abs(d)); }
+/* Punto (t a lo largo, r al eje, radial) respecto a un tubo */
+vec3 tubo(vec3 q, vec3 a, vec3 b, out vec3 radial) {
+  vec3 ba = b - a; float L = length(ba); vec3 d = ba / L;
+  float ax = dot(q - a, d);
+  vec3 rv = (q - a) - d * ax;
+  radial = normalize(rv + vec3(1e-6));
+  return vec3(ax / L, length(rv), L);
+}
 vec3 equipaje(vec3 p, vec3 n) {
   vec3 q = vec3(abs(p.x), p.y, p.z);          // los dos lados son iguales
   vec3 qn = vec3(sign(p.x) * n.x, n.y, n.z);
-  float w = fwidth(p.y) * 1.2 + 0.0008;
-  /* Corte blanco/negro de mono de contrarreloj: el negro sube por los
-     costados; delante el blanco baja en pico y detrás, en U */
   float th = atan(p.x, p.z);
   float at = abs(th);
+  /* Corte blanco/negro de mono de contrarreloj: el negro sube por los
+     costados; delante el blanco baja en pico y detrás, en U */
   float corte = at < 1.5708
     ? 0.905 + 0.225 * pow(clamp(at / 1.5708, 0.0, 1.0), 0.85)
     : 0.995 + 0.135 * pow(clamp((3.14159 - at) / 1.5708, 0.0, 1.0), 1.7);
-  float blanco = smoothstep(corte - w, corte + w, p.y);
-  /* Las mangas son siempre blancas */
-  float tm = tramo(q, mA, mB);
-  vec3 dm = normalize(mB - mA);
-  float rm = length((q - mA) - dm * dot(q - mA, dm));
-  float enManga = step(rm, 0.085) * step(0.25, tm) * step(tm, 1.004);
+  float wy = fwidth(p.y) + 0.0006;
+  float grosor = 0.0045;
+  float blanco = smoothstep(corte - wy, corte + wy, p.y);
+  vec3 rm; vec3 m = tubo(q, mA, mB, rm);
+  float enManga = step(m.y, 0.085) * step(0.22, m.x) * step(m.x, 1.03);
   blanco = max(blanco, enManga);
   vec3 c = mix(cNegro, cBlanco, blanco);
-  rugosidad = mix(0.4, 0.62, blanco);
-  /* Tejido: canalé fino en blanco (en horizontal el tronco, a lo largo en la manga) */
-  float canal = enManga > 0.5 ? sin(atan(qn.z, qn.x) * 90.0) : sin(p.y * 520.0);
-  c *= 1.0 - 0.018 * blanco * canal;
-  /* Detrás: la costura del bolsillo, justo encima del negro */
-  float costura = abs(p.y - 1.045) - 0.0012;
-  if (p.z < -0.05 && costura < w && p.y > corte + 0.02) c = mix(c, cCremallera, 0.8);
-  /* Cuello: tira negra y el hueco, por dentro */
-  c = mix(c, cNegro, smoothstep(yCuello - 0.011 - w, yCuello - 0.011 + w, p.y));
-  if (p.y > yCuello - 0.003 && n.y > 0.6) c = cDentro;
+  rugosidad = mix(0.42, 0.6, blanco);
+
+  /* Tejido: canalé fino (a lo largo en la manga, en horizontal en el tronco) */
+  float canal = enManga > 0.5 ? sin(atan(rm.z, rm.x) * 110.0) : sin(p.y * 560.0);
+  c *= 1.0 - 0.03 * blanco * canal;
+  /* Paneles de rejilla detrás del hombro, como en los monos de crono */
+  float xs = mix(0.074, 0.158, clamp((yCuello - p.y) / 0.19, 0.0, 1.0));   // costura raglán
+  if (p.z < -0.02 && q.x > xs && q.x < xs + 0.042 && p.y > 1.24 && p.y < yCuello - 0.03 && enManga < 0.5) {
+    vec2 uv = vec2(q.x * 900.0, p.y * 900.0);
+    uv.x += step(1.0, mod(uv.y, 2.0)) * 0.5;
+    float punto = 1.0 - smoothstep(0.22, 0.32, length(fract(uv) - 0.5));
+    c = mix(c, c * 0.72, punto);
+  }
+  /* Costuras: raglán delante y detrás, costados y bajo del cuello */
+  float cost = 0.0;
+  if (p.y > 1.28 && p.y < yCuello - 0.01 && abs(p.z) > 0.025) cost = max(cost, linea(q.x - xs, 0.0009));
+  if (enManga < 0.5 && p.y > corte + 0.01 && p.y < 1.33) cost = max(cost, linea(p.z + 0.004, 0.0009) * step(0.08, q.x));
+  if (p.z < -0.05 && p.y > corte + 0.02) cost = max(cost, linea(p.y - 1.045, 0.001));
+  c = mix(c, c * 0.78, cost * blanco);
+
+  /* Cuello: ribete negro */
+  c = mix(c, cNegro, smoothstep(yCuello - 0.009 - wy, yCuello - 0.009 + wy, p.y));
   /* Cremallera escondida */
-  if (p.z > 0.0 && abs(p.x) < 0.0018 && p.y > corte + 0.01 && p.y < yCuello - 0.011) c = cCremallera;
-  /* Puño: ribete en Azul ANE y el hueco del brazo */
-  if (enManga > 0.5) {
-    c = mix(c, cAzul, smoothstep(0.93 - 0.004, 0.93 + 0.004, tm));
-    if (tm > 0.985 && dot(qn, dm) > 0.7) c = cDentro;
+  if (p.z > 0.0 && p.y > corte + 0.01 && p.y < yCuello - 0.013) c = mix(c, c * 0.84, linea(p.x, 0.0012));
+
+  /* Puño en Azul ANE */
+  if (enManga > 0.5) c = mix(c, cAzul, smoothstep(0.935 - 0.004, 0.935 + 0.004, m.x));
+  /* Perneras: banda de silicona */
+  vec3 rp; vec3 pp = tubo(q, pA, pB, rp);
+  bool enPierna = pp.y < 0.13 && pp.x > 0.5 && pp.x < 1.03;
+  if (enPierna) c = mix(c, cSilicona, smoothstep(0.935 - 0.004, 0.935 + 0.004, pp.x));
+
+  /* Bocas de cuello, mangas y perneras: son tapas planas, pero se pintan como
+     un hueco con el grosor de la tela en el borde y sombra hacia dentro */
+  float boca = -1.0; vec3 dentro = cDentro; vec3 borde = c;
+  if (p.y > yCuello - 0.002 && n.y > 0.7) {
+    float e = length(vec2(p.x / cuelloAB.x, p.z / (p.z >= 0.0 ? cuelloAB.y : cuelloAB.z)));
+    boca = (1.0 - e) * min(cuelloAB.x, cuelloAB.y); borde = cNegro;
+  } else if (enManga > 0.5 && m.x > 0.995 && dot(qn, normalize(mB - mA)) > 0.7) {
+    boca = rMangaFin - m.y; borde = cAzul;
+  } else if (enPierna && pp.x > 0.995 && dot(qn, normalize(pB - pA)) > 0.7) {
+    boca = rPiernaFin - pp.y; borde = cSilicona; dentro = cDentroNegro;
   }
-  /* Perneras: banda de silicona y el hueco */
-  float tp = tramo(q, pA, pB);
-  vec3 dp = normalize(pB - pA);
-  float rp = length((q - pA) - dp * dot(q - pA, dp));
-  if (rp < 0.12 && tp > 0.5 && tp < 1.004) {
-    c = mix(c, cSilicona, smoothstep(0.93 - 0.004, 0.93 + 0.004, tp));
-    if (tp > 0.99 && dot(qn, dp) > 0.7) { c = cDentroNegro; rugosidad = 1.0; }
+  if (boca > -0.5) {
+    float hondo = smoothstep(grosor, grosor + 0.03, boca);
+    c = boca < grosor ? borde * 0.92 : mix(dentro, dentro * 0.35, hondo);
+    rugosidad = 0.95;
   }
-  return c;
+  return c * mix(0.35, 1.0, vOcl);
 }`)
       .replace("vec4 diffuseColor = vec4( diffuse, opacity );",
                "vec4 diffuseColor = vec4( equipaje( vObj, normalize( vObjN ) ), opacity );")

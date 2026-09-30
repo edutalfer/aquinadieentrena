@@ -208,7 +208,7 @@ $datosJs = [
   @media (max-width: 600px) { .carreras__lista { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .carrera { padding: 10px 11px; } .carrera b { font-size: 13.5px; } .carrera span { font-size: 12px; } .carrera small { font-size: 10px; } }
   .escena { position: relative; background: var(--blanco); border: 2px solid var(--negro); }
-  .escena__lienzo { height: min(78vh, 680px); min-height: 420px; touch-action: pan-y; cursor: grab; user-select: none; }
+  .escena__lienzo { background: radial-gradient(ellipse at 50% 38%, #FAFBFC 0%, #EDF0F4 55%, #DCE1E8 100%); height: min(78vh, 680px); min-height: 420px; touch-action: pan-y; cursor: grab; user-select: none; }
   .escena__lienzo:active { cursor: grabbing; }
   @media (max-width: 600px) { .escena__lienzo { height: 480px; min-height: 0; } }
   .escena__lienzo canvas { display: block; width: 100%; height: 100%; }
@@ -505,7 +505,7 @@ $datosJs = [
 </footer>
 
 <script type="application/json" id="datos-maillot"><?= json_encode($datosJs, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
-<script type="module" src="/assets/js/maillot.min.js?v=20261001"></script>
+<script type="module" src="/assets/js/maillot.min.js?v=20261001b"></script>
 <script src="/assets/js/stats.js?v=20260930"></script>
 </body>
 </html>

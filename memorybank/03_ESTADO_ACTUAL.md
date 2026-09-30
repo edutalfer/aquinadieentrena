@@ -146,6 +146,12 @@ Eduardo lo diga).
   distancia; la malla (~53.000 triángulos) se calcula al cargar (~0,5 s; en
   móvil, rejilla más gruesa). **Hay que recompilar** `assets/js/maillot.min.js`
   (ver `assets/js/maillot/LEEME.md`) y subir el `?v=` en `maillot.php`.
+- **Acabado (01/10/2026):** pectorales, dorsales, glúteos, cuádriceps e isquios;
+  oclusión ambiental por vértice (axilas, entrepierna); costuras raglán y de
+  costado, paneles de rejilla detrás del hombro, canalé; bocas de cuello, mangas
+  y perneras pintadas como hueco; luz de estudio (RoomEnvironment). Se probó
+  vaciar las bocas de verdad en la función de distancia y **no sirve**: la tela
+  (4,5 mm) es más fina que la rejilla (7,5 mm) y sale un borde roto.
 - **Tablas:** `mono_proyectos`, `mono_huecos`, `mono_pujas` (datos de contacto
   de empresas) y `ajustes`, en `~/datos/ane.db`. En `privacidad.html` (#patrocinio).
 - **Probado en local** (Playwright + SwiftShader): selector, clic en calcas,

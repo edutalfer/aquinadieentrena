@@ -11,8 +11,9 @@
 
 import {
   WebGLRenderer, Scene, PerspectiveCamera, HemisphereLight, DirectionalLight,
-  Raycaster, Vector2, NeutralToneMapping, SRGBColorSpace, Group,
+  Raycaster, Vector2, NeutralToneMapping, SRGBColorSpace, Group, PMREMGenerator,
 } from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { creaMono, creaParche, pintaParche, ZONAS } from "./mono.js";
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -53,21 +54,25 @@ const escena3d = (() => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = NeutralToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 0.95;
   caja.appendChild(renderer.domElement);
 
   const scene = new Scene();
   const camara = new PerspectiveCamera(28, 1, 0.1, 20);
   const CENTRO_Y = 1.02;
 
-  scene.add(new HemisphereLight("#ffffff", "#aab0ba", 1.35));
-  const clave = new DirectionalLight("#ffffff", 2.1);
-  clave.position.set(1.6, 2.6, 3.2);
+  /* Luz de estudio: un entorno suave (reflejos y relleno) y tres focos */
+  const pmrem = new PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  pmrem.dispose();
+  scene.add(new HemisphereLight("#ffffff", "#8e96a2", 0.4));
+  const clave = new DirectionalLight("#ffffff", 1.55);
+  clave.position.set(2.4, 2.6, 2.2);
   scene.add(clave);
-  const relleno = new DirectionalLight("#ffffff", 0.7);
+  const relleno = new DirectionalLight("#ffffff", 0.3);
   relleno.position.set(-3, 1.2, 1.5);
   scene.add(relleno);
-  const contra = new DirectionalLight("#ffffff", 1.1);
+  const contra = new DirectionalLight("#ffffff", 0.9);
   contra.position.set(0.5, 2.2, -3.2);
   scene.add(contra);
 
