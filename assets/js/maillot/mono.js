@@ -26,7 +26,7 @@
 import {
   BufferGeometry, Float32BufferAttribute, Uint32BufferAttribute, Vector3, Euler, Mesh, Group, Object3D,
   MeshStandardMaterial, MeshPhysicalMaterial, CanvasTexture, SRGBColorSpace, Raycaster,
-  PlaneGeometry, MeshBasicMaterial, Color,
+  PlaneGeometry, MeshBasicMaterial, Color, Vector4,
 } from "three";
 import { DecalGeometry } from "three/examples/jsm/geometries/DecalGeometry.js";
 
@@ -56,11 +56,14 @@ const PERFIL = [
   [1.365, 0.174, 0.113, 0.102],
   [1.405, 0.160, 0.096, 0.095],
   [1.440, 0.132, 0.082, 0.086],
-  [1.462, 0.100, 0.072, 0.076],
-  [1.480, 0.080, 0.064, 0.068],
-  [1.495, 0.074, 0.061, 0.065],
+  [1.462, 0.104, 0.074, 0.078],
+  [1.480, 0.086, 0.066, 0.070],
+  [1.495, 0.080, 0.063, 0.067],
 ];
-const Y_CUELLO = 1.487;
+const Y_CUELLO = 1.49;
+/* El escote baja por delante, como en los monos de crono */
+const ESCOTE = 0.03;
+const corteCuello = (z) => Y_CUELLO - ESCOTE * Math.min(1, Math.max(-0.35, z / 0.065));
 const Y_BASE = 0.838;
 
 /* Tabla precalculada del perfil (Catmull-Rom), para no interpolar en cada punto */
@@ -82,13 +85,19 @@ const TAB = new Float32Array(TAB_N * 3);
   }
 })();
 
+/* Medio ancho y fondos del tronco a una altura */
+function perfilEn(y) {
+  const s = Math.round((Math.min(TAB_Y1, Math.max(TAB_Y0, y)) - TAB_Y0) / (TAB_Y1 - TAB_Y0) * (TAB_N - 1)) * 3;
+  return [TAB[s], TAB[s + 1], TAB[s + 2]];
+}
+
 function tronco(x, y, z) {
   const yc = Math.min(TAB_Y1, Math.max(TAB_Y0, y));
   const s = Math.round((yc - TAB_Y0) / (TAB_Y1 - TAB_Y0) * (TAB_N - 1)) * 3;
   const a = TAB[s], b = z >= 0 ? TAB[s + 1] : TAB[s + 2];
   const q = Math.sqrt((x / a) * (x / a) + (z / b) * (z / b));
   let d = (q - 1) * Math.min(a, b);
-  d = Math.max(d, y - Y_CUELLO, Y_BASE - y);
+  d = Math.max(d, y - corteCuello(z), Y_BASE - y);
   return d;
 }
 
@@ -136,9 +145,9 @@ function smin(a, b, k) {
 export const MANGAS = {}, PIERNAS = {};
 const DELTOIDES = {}, GLUTEOS = {}, PECTORALES = {}, DORSALES = {}, CUADRICEPS = {}, ISQUIOS = {};
 for (const s of [1, -1]) {
-  MANGAS[s] = cono([0.184 * s, 1.392, -0.006], [0.226 * s, 1.062, 0.014], 0.057, 0.044);
+  MANGAS[s] = cono([0.186 * s, 1.392, -0.006], [0.228 * s, 1.062, 0.014], 0.06, 0.045);
   PIERNAS[s] = cono([0.086 * s, 0.940, -0.012], [0.104 * s, 0.535, 0.012], 0.095, 0.068);
-  DELTOIDES[s] = elipsoide([0.170 * s, 1.384, -0.004], [0.056, 0.066, 0.064]);
+  DELTOIDES[s] = elipsoide([0.174 * s, 1.384, -0.004], [0.058, 0.068, 0.066]);
   PECTORALES[s] = elipsoide([0.066 * s, 1.318, 0.078], [0.078, 0.056, 0.042]);
   DORSALES[s] = elipsoide([0.112 * s, 1.235, -0.035], [0.052, 0.105, 0.064]);
   GLUTEOS[s] = elipsoide([0.066 * s, 0.962, -0.062], [0.088, 0.090, 0.071]);
@@ -287,8 +296,8 @@ export function mallaMono(paso = 0.008) {
 
 function materialEquipaje() {
   const m = new MeshPhysicalMaterial({
-    color: "#ffffff", roughness: 0.6, metalness: 0, sheen: 0.18, sheenRoughness: 0.5, sheenColor: "#ffffff",
-    envMapIntensity: 0.22,
+    color: "#ffffff", roughness: 0.6, metalness: 0, sheen: 0.12, sheenRoughness: 0.5, sheenColor: "#ffffff",
+    envMapIntensity: 0.14,
   });
   const u = {
     cBlanco: { value: new Color("#DEE2E7") },
@@ -301,7 +310,10 @@ function materialEquipaje() {
     mA: { value: new Vector3(...MANGAS[1].a) }, mB: { value: new Vector3(...MANGAS[1].b) },
     pA: { value: new Vector3(...PIERNAS[1].a) }, pB: { value: new Vector3(...PIERNAS[1].b) },
     yCuello: { value: Y_CUELLO },
-    cuelloAB: { value: new Vector3(TAB[TAB_N * 3 - 3], TAB[TAB_N * 3 - 2], TAB[TAB_N * 3 - 1]) },
+    escote: { value: ESCOTE },
+    cuelloBajo: { value: new Vector4(...perfilEn(Y_CUELLO - ESCOTE), Y_CUELLO - ESCOTE) },
+    cuelloAlto: { value: new Vector4(...perfilEn(Y_CUELLO + ESCOTE * 0.35), Y_CUELLO + ESCOTE * 0.35) },
+    cLateral: { value: new Color("#222429") },
     rMangaFin: { value: MANGAS[1].r2 }, rPiernaFin: { value: PIERNAS[1].r2 },
   };
   m.onBeforeCompile = (sh) => {
@@ -316,8 +328,10 @@ varying vec3 vObjN;
 varying float vOcl;
 uniform vec3 cBlanco, cNegro, cAzul, cSilicona, cDentro, cDentroNegro, cCostura;
 uniform vec3 mA, mB, pA, pB;
-uniform float yCuello, rMangaFin, rPiernaFin;
-uniform vec3 cuelloAB;
+uniform float yCuello, rMangaFin, rPiernaFin, escote;
+uniform vec4 cuelloBajo, cuelloAlto;
+uniform vec3 cLateral;
+float corteCuello(float z) { return yCuello - escote * clamp(z / 0.065, -0.35, 1.0); }
 float rugosidad = 0.6;
 float linea(float d, float ancho) { float w = fwidth(d) + 0.0002; return 1.0 - smoothstep(ancho - w, ancho + w, abs(d)); }
 /* Punto (t a lo largo, r al eje, radial) respecto a un tubo */
@@ -336,8 +350,8 @@ vec3 equipaje(vec3 p, vec3 n) {
   /* Corte blanco/negro de mono de contrarreloj: el negro sube por los
      costados; delante el blanco baja en pico y detrás, en U */
   float corte = at < 1.5708
-    ? 0.905 + 0.225 * pow(clamp(at / 1.5708, 0.0, 1.0), 0.85)
-    : 0.995 + 0.135 * pow(clamp((3.14159 - at) / 1.5708, 0.0, 1.0), 1.7);
+    ? 0.925 + 0.2 * pow(clamp(at / 1.5708, 0.0, 1.0), 1.5)
+    : 0.975 + 0.15 * pow(clamp((3.14159 - at) / 1.5708, 0.0, 1.0), 1.6);
   float wy = fwidth(p.y) + 0.0006;
   float grosor = 0.0045;
   float blanco = smoothstep(corte - wy, corte + wy, p.y);
@@ -352,7 +366,8 @@ vec3 equipaje(vec3 p, vec3 n) {
   c *= 1.0 - 0.03 * blanco * canal;
   /* Paneles de rejilla detrás del hombro, como en los monos de crono */
   float xs = mix(0.074, 0.158, clamp((yCuello - p.y) / 0.19, 0.0, 1.0));   // costura raglán
-  if (p.z < -0.02 && q.x > xs && q.x < xs + 0.042 && p.y > 1.24 && p.y < yCuello - 0.03 && enManga < 0.5) {
+  float anchoRejilla = p.z < 0.0 ? 0.045 : 0.03;
+  if (abs(p.z) > 0.02 && q.x > xs && q.x < xs + anchoRejilla && p.y > (p.z < 0.0 ? 1.23 : 1.27) && p.y < corteCuello(p.z) - 0.04 && enManga < 0.5) {
     vec2 uv = vec2(q.x * 900.0, p.y * 900.0);
     uv.x += step(1.0, mod(uv.y, 2.0)) * 0.5;
     float punto = 1.0 - smoothstep(0.22, 0.32, length(fract(uv) - 0.5));
@@ -362,29 +377,43 @@ vec3 equipaje(vec3 p, vec3 n) {
   float cost = 0.0;
   if (p.y > 1.28 && p.y < yCuello - 0.01 && abs(p.z) > 0.025) cost = max(cost, linea(q.x - xs, 0.0009));
   if (enManga < 0.5 && p.y > corte + 0.01 && p.y < 1.33) cost = max(cost, linea(p.z + 0.004, 0.0009) * step(0.08, q.x));
-  if (p.z < -0.05 && p.y > corte + 0.02) cost = max(cost, linea(p.y - 1.045, 0.001));
   c = mix(c, c * 0.78, cost * blanco);
+  /* Detrás: la tira del bolsillo, en curva, con su pespunte */
+  float yBolsillo = 1.058 + 0.05 * pow(q.x / 0.14, 2.0);
+  if (p.z < -0.03 && p.y > corte + 0.015) {
+    float tira = linea(p.y - yBolsillo, 0.0035);
+    float pesp = linea(p.y - yBolsillo + 0.0045, 0.0005) * step(0.5, fract(q.x * 260.0));
+    c = mix(c, c * 0.72, max(tira, pesp));
+  }
 
   /* Cuello: ribete negro */
-  c = mix(c, cNegro, smoothstep(yCuello - 0.009 - wy, yCuello - 0.009 + wy, p.y));
+  c = mix(c, cNegro, smoothstep(corteCuello(p.z) - 0.009 - wy, corteCuello(p.z) - 0.009 + wy, p.y));
   /* Cremallera escondida */
-  if (p.z > 0.0 && p.y > corte + 0.01 && p.y < yCuello - 0.013) c = mix(c, c * 0.84, linea(p.x, 0.0012));
+  if (p.z > 0.0 && p.y > corte + 0.01 && p.y < corteCuello(p.z) - 0.012) c = mix(c, c * 0.86, linea(p.x, 0.0011));
 
   /* Puño en Azul ANE */
-  if (enManga > 0.5) c = mix(c, cAzul, smoothstep(0.935 - 0.004, 0.935 + 0.004, m.x));
+  if (enManga > 0.5) c = mix(c, c * 0.9, smoothstep(0.95 - 0.003, 0.95 + 0.003, m.x));
   /* Perneras: banda de silicona */
   vec3 rp; vec3 pp = tubo(q, pA, pB, rp);
   bool enPierna = pp.y < 0.13 && pp.x > 0.5 && pp.x < 1.03;
-  if (enPierna) c = mix(c, cSilicona, smoothstep(0.935 - 0.004, 0.935 + 0.004, pp.x));
+  if (enPierna) {
+    /* Panel lateral del culotte, un negro algo más claro, con su costura */
+    float fuera = dot(rp, vec3(1.0, 0.0, 0.0));
+    float lat = smoothstep(0.52, 0.56, fuera);
+    c = mix(c, cLateral, lat * (1.0 - blanco));
+    c = mix(c, c * 0.6, linea(fuera - 0.54, 0.012) * (1.0 - blanco) * step(pp.x, 0.93));
+    c = mix(c, cSilicona, smoothstep(0.935 - 0.004, 0.935 + 0.004, pp.x));
+  }
 
   /* Bocas de cuello, mangas y perneras: son tapas planas, pero se pintan como
      un hueco con el grosor de la tela en el borde y sombra hacia dentro */
   float boca = -1.0; vec3 dentro = cDentro; vec3 borde = c;
-  if (p.y > yCuello - 0.002 && n.y > 0.7) {
-    float e = length(vec2(p.x / cuelloAB.x, p.z / (p.z >= 0.0 ? cuelloAB.y : cuelloAB.z)));
-    boca = (1.0 - e) * min(cuelloAB.x, cuelloAB.y); borde = cNegro;
+  if (p.y > corteCuello(p.z) - 0.002 && n.y > 0.8) {
+    vec4 ab = mix(cuelloBajo, cuelloAlto, clamp((p.y - cuelloBajo.w) / (cuelloAlto.w - cuelloBajo.w), 0.0, 1.0));
+    float e = length(vec2(p.x / ab.x, p.z / (p.z >= 0.0 ? ab.y : ab.z)));
+    boca = (1.0 - e) * min(ab.x, ab.y); borde = cNegro;
   } else if (enManga > 0.5 && m.x > 0.995 && dot(qn, normalize(mB - mA)) > 0.7) {
-    boca = rMangaFin - m.y; borde = cAzul;
+    boca = rMangaFin - m.y; borde = cBlanco * 0.85;
   } else if (enPierna && pp.x > 0.995 && dot(qn, normalize(pB - pA)) > 0.7) {
     boca = rPiernaFin - pp.y; borde = cSilicona; dentro = cDentroNegro;
   }

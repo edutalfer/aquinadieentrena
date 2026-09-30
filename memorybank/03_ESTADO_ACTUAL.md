@@ -152,6 +152,11 @@ Eduardo lo diga).
   y perneras pintadas como hueco; luz de estudio (RoomEnvironment). Se probó
   vaciar las bocas de verdad en la función de distancia y **no sirve**: la tela
   (4,5 mm) es más fina que la rejilla (7,5 mm) y sale un borde roto.
+- **Ajuste con las vistas de Virklon que mandó Eduardo (01/10/2026):** escote
+  que baja por delante, rejilla delante y detrás del hombro, tira del bolsillo
+  en curva detrás, corte blanco/negro en curva suave (no en pico), paneles
+  laterales del culotte y puños neutros (sin azul): el mono es una base neutra
+  para que destaquen las marcas.
 - **Tablas:** `mono_proyectos`, `mono_huecos`, `mono_pujas` (datos de contacto
   de empresas) y `ajustes`, en `~/datos/ane.db`. En `privacidad.html` (#patrocinio).
 - **Probado en local** (Playwright + SwiftShader): selector, clic en calcas,

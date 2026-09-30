@@ -65,9 +65,9 @@ const escena3d = (() => {
   const pmrem = new PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   pmrem.dispose();
-  scene.add(new HemisphereLight("#ffffff", "#8e96a2", 0.4));
-  const clave = new DirectionalLight("#ffffff", 1.55);
-  clave.position.set(2.4, 2.6, 2.2);
+  scene.add(new HemisphereLight("#ffffff", "#7d8592", 0.32));
+  const clave = new DirectionalLight("#ffffff", 1.8);
+  clave.position.set(-2.2, 2.8, 2.4);
   scene.add(clave);
   const relleno = new DirectionalLight("#ffffff", 0.3);
   relleno.position.set(-3, 1.2, 1.5);
