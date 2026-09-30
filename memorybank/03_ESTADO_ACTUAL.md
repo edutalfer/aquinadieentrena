@@ -123,30 +123,33 @@ página (no toca `estilo.css`). **Fuente de las cifras: el Dossier ANE 2027.**
 
 ---
 
-## 👕 El mono: huecos de patrocinio con ofertas (2026-09-30)
+## 👕 El mono: huecos de patrocinio con ofertas por proyecto (D19, D20)
 
-Ver D19. Página `/maillot` (todavía **no enlazada** desde el menú: se enlaza
-cuando Eduardo ponga precios y abra las ofertas).
+Página `/maillot` (todavía **no enlazada** desde el menú: se enlaza cuando
+Eduardo lo diga).
 
-- **Gestión:** panel → pestaña **Mono** (`/admin/maillot.php`): qué huecos se
-  ofrecen, oferta mínima, subida mínima, cierre y «Adjudicado a»; ofertas
-  (validar, anular, borrar, CSV); ajustes (aceptar ofertas, revisar antes de
-  que cuenten, título, texto de entrada y condiciones). Nace **cerrado** y con
-  **revisión activada**.
+- **Proyectos:** selector arriba. Nacen Mediterranean Epic MTB, Cape Epic 2027,
+  The Traka 2027 y Swiss Epic 2027, **abiertos a ofertas**, con los diez huecos
+  visibles y **sin mínimo**. En el panel se renombran, se cierran, se ocultan o
+  se crean más (los nuevos nacen cerrados).
+- **Gestión:** panel → pestaña **Mono** (`/admin/maillot.php?p=<proyecto>`):
+  datos del proyecto; por hueco, si se ofrece, oferta mínima, subida, cierre y
+  «Adjudicado a»; ofertas (validar, anular, borrar, CSV) y borrar las del
+  proyecto al cerrarlo. Abajo, para toda la página: **revisar antes de que
+  cuenten** (activado) y los textos.
 - **Zonas:** `pecho`, `abdomen`, `espalda-alta`, `espalda-baja`, `costado-izq/der`,
-  `manga-izq/der`, `culote-izq/der`. El nombre y el precio están en la base; la
-  forma, en `assets/js/maillot/mono.js` (`ZONAS`). Para añadir una zona hay que
-  tocar **las dos**: `ANE_MAILLOT_ZONAS` en `api/_maillot.php` y `ZONAS` en `mono.js`.
-- **3D:** fuente en `assets/js/maillot/` (`mono.js` = geometría y parches,
-  `maillot.js` = escena y formulario). **Hay que recompilar**
-  `assets/js/maillot.min.js` tras tocarla (ver `assets/js/maillot/LEEME.md`) y
-  subir el `?v=` en `maillot.php`.
-- **Tablas:** `huecos`, `pujas` (datos de contacto de empresas) y `ajustes` en
-  `~/datos/ane.db`. La web promete borrar las ofertas al cerrar el patrocinio de
-  la temporada → botón «Borrar todas las ofertas». En `privacidad.html` (#patrocinio).
-- **Probado en local** (Playwright + SwiftShader): giro, clic en huecos, ofertas
-  bajas, correctas y de bots, flujo sin JavaScript, móvil sin scroll lateral y
-  todas las acciones del panel.
+  `manga-izq/der`, `culote-izq/der`. Nombre y precio en la base; la posición,
+  en `assets/js/maillot/mono.js` (`ZONAS`). Para añadir una zona hay que tocar
+  **las dos**: `ANE_MAILLOT_ZONAS` en `api/_maillot.php` y `ZONAS` en `mono.js`.
+- **3D:** fuente en `assets/js/maillot/` (`mono.js` = forma, equipaje y calcas;
+  `maillot.js` = escena, selector y formulario). La forma es una función de
+  distancia; la malla (~53.000 triángulos) se calcula al cargar (~0,5 s; en
+  móvil, rejilla más gruesa). **Hay que recompilar** `assets/js/maillot.min.js`
+  (ver `assets/js/maillot/LEEME.md`) y subir el `?v=` en `maillot.php`.
+- **Tablas:** `mono_proyectos`, `mono_huecos`, `mono_pujas` (datos de contacto
+  de empresas) y `ajustes`, en `~/datos/ane.db`. En `privacidad.html` (#patrocinio).
+- **Probado en local** (Playwright + SwiftShader): selector, clic en calcas,
+  ofertas, proyecto cerrado, panel completo.
 
 ---
 

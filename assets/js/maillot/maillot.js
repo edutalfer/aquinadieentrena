@@ -19,12 +19,16 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
 const datos = JSON.parse($("#datos-maillot").textContent);
+let proyectos = datos.proyectos || [];
+let actual = datos.actual;
 let huecos = {};
-function guardaHuecos(lista) {
+const proyectoActual = () => proyectos.find((p) => p.slug === actual) || proyectos[0] || { huecos: [], abierto: false };
+function guardaDatos(lista) {
+  if (lista) proyectos = lista;
   huecos = {};
-  for (const h of lista) if (h.estado !== "oculto") huecos[h.zona] = h;
+  for (const h of proyectoActual().huecos) if (h.estado !== "oculto") huecos[h.zona] = h;
 }
-guardaHuecos(datos.huecos);
+guardaDatos();
 
 const ofertable = (h) => h && (h.estado === "libre" || h.estado === "oferta");
 const euros = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " €";
@@ -73,19 +77,24 @@ const escena3d = (() => {
   pivote.add(giro);
   scene.add(pivote);
   pivote.position.y = CENTRO_Y;
-  const { grupo, cuerpo } = creaMono();
+  /* En móviles, rejilla algo más gruesa: la malla se calcula en el navegador */
+  const movil = window.matchMedia("(max-width: 700px)").matches;
+  const { grupo, cuerpo, malla } = creaMono(movil ? 0.0095 : 0.0075);
   grupo.position.y = -CENTRO_Y;
   giro.add(grupo);
+  scene.updateMatrixWorld(true);
 
+  /* Una calca por hueco del catálogo; se ven solo las del proyecto elegido */
   const parches = {};
-  for (const zona of Object.keys(huecos)) {
-    if (!ZONAS[zona]) continue;
-    const m = creaParche(zona);
+  for (const zona of Object.keys(ZONAS)) {
+    const m = creaParche(zona, malla);
+    if (!m) continue;
     parches[zona] = m;
     grupo.add(m);
   }
   const pintaTodos = () => {
     for (const [zona, m] of Object.entries(parches)) {
+      m.visible = !!huecos[zona];
       if (huecos[zona]) pintaParche(m, huecos[zona], { elegido: zona === elegida, encima: zona === encima });
     }
   };
@@ -240,15 +249,17 @@ const select = $("#zona");
 const importe = $("#importe");
 const ayudaImporte = $("#ayuda-importe");
 
-const ESTADOS = { libre: "Libre", oferta: "Con ofertas", cerrado: "Plazo cerrado", adjudicado: "Adjudicado" };
+const ESTADOS = { libre: "Libre", oferta: "Con ofertas", cerrado: "Cerrado", adjudicado: "Adjudicado" };
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+const FICHA_INICIAL = ficha ? ficha.innerHTML : "";
+
 function pintaFicha() {
   const h = huecos[elegida];
-  if (!h) return;
+  if (!h) { if (ficha) ficha.innerHTML = FICHA_INICIAL; return; }
   let cifras;
   if (h.estado === "adjudicado") {
     cifras = `<div style="grid-column:1/-1"><b>${esc(h.adjudicado)}</b><span>Este hueco ya tiene marca</span></div>`;
@@ -256,50 +267,59 @@ function pintaFicha() {
     const alta = h.maxima !== null
       ? `<b>${euros(h.maxima)}</b><span>Oferta más alta${h.ofertas > 1 ? ` · ${h.ofertas} ofertas` : ""}</span>`
       : `<b>—</b><span>Aún sin ofertas</span>`;
-    const minima = ofertable(h)
-      ? `<b>${euros(h.siguiente)}</b><span>Oferta mínima ahora</span>`
-      : `<b>Cerrado</b><span>Ya no admite ofertas</span>`;
+    const minima = !ofertable(h) ? `<b>Cerrado</b><span>No admite ofertas</span>`
+      : h.siguiente > 1 ? `<b>${euros(h.siguiente)}</b><span>Oferta mínima ahora</span>`
+      : `<b>Libre</b><span>Sin oferta mínima</span>`;
     cifras = `<div>${alta}</div><div>${minima}</div>`;
   }
   ficha.innerHTML = `
-    <p class="ficha__zona">${esc(ESTADOS[h.estado] || "")}${h.cierre && ofertable(h) ? " · cierra el " + esc(h.cierre) : ""}</p>
+    <p class="ficha__zona">${esc(proyectoActual().nombre)} · ${esc(ESTADOS[h.estado] || "")}${h.cierre && ofertable(h) ? " · cierra el " + esc(h.cierre) : ""}</p>
     <h2 class="display">${esc(h.nombre)}</h2>
     <p class="ficha__desc">${esc(h.descripcion)}</p>
     <div class="ficha__cifras">${cifras}</div>`;
 }
 
-function pintaTarjeta(h) {
-  const li = $(`#hueco-${CSS.escape(h.zona)}`);
-  if (!li) return;
-  const chip = $(".chip", li);
-  chip.className = "chip chip--" + h.estado;
-  chip.textContent = ESTADOS[h.estado];
-  const cifra = $(".hueco__cifra", li);
-  cifra.innerHTML = h.estado === "libre" ? `Oferta mínima: <b>${euros(h.minimo)}</b>`
-    : h.estado === "adjudicado" ? `Para <b>${esc(h.adjudicado)}</b>`
-    : h.maxima !== null ? `Oferta más alta: <b>${euros(h.maxima)}</b>` : "Sin ofertas";
-  const boton = $("[data-elegir]", li);
-  if (boton && !ofertable(h)) boton.remove();
+function cifraHueco(h) {
+  switch (h.estado) {
+    case "libre": return h.minimo > 1 ? `Oferta mínima: <b>${euros(h.minimo)}</b>` : "Sin ofertas todavía";
+    case "adjudicado": return `Para <b>${esc(h.adjudicado)}</b>`;
+    default: return h.maxima !== null ? `Oferta más alta: <b>${euros(h.maxima)}</b>` : "Sin ofertas";
+  }
+}
+
+function pintaLista() {
+  const ul = $("#lista-huecos");
+  if (!ul) return;
+  const p = proyectoActual();
+  $("#lista-proyecto") && ($("#lista-proyecto").textContent = p.nombre);
+  ul.innerHTML = Object.values(huecos).map((h) => `
+    <li class="hueco${h.zona === elegida ? " hueco--elegido" : ""}" id="hueco-${esc(h.zona)}" data-zona="${esc(h.zona)}">
+      <span class="chip chip--${h.estado}">${ESTADOS[h.estado]}</span>
+      <h3 class="display">${esc(h.nombre)}</h3>
+      <p>${esc(h.descripcion)}</p>
+      <p class="hueco__cifra">${cifraHueco(h)}</p>
+      ${h.cierre && ofertable(h) ? `<p>Cierra el ${esc(h.cierre)}</p>` : ""}
+      ${p.abierto && ofertable(h) ? `<a class="mando" href="/maillot?p=${encodeURIComponent(p.slug)}&zona=${encodeURIComponent(h.zona)}#oferta" data-elegir="${esc(h.zona)}">Hacer oferta</a>` : ""}
+    </li>`).join("");
 }
 
 function pintaOpciones() {
   if (!select) return;
-  for (const o of Array.from(select.options)) {
-    const h = huecos[o.value];
-    if (!o.value) continue;
-    if (!ofertable(h)) { o.disabled = true; continue; }
-    o.textContent = `${h.nombre} — desde ${euros(h.siguiente)}`;
-  }
+  const antes = select.value;
+  select.innerHTML = '<option value="">Elige un hueco</option>' + Object.values(huecos).filter(ofertable)
+    .map((h) => `<option value="${esc(h.zona)}">${esc(h.nombre)}${h.siguiente > 1 ? " — desde " + euros(h.siguiente) : ""}</option>`).join("");
+  if (huecos[antes] && ofertable(huecos[antes])) select.value = antes;
 }
 
 function pintaAyuda() {
   if (!ayudaImporte) return;
   const h = huecos[elegida];
-  if (ofertable(h)) {
+  if (ofertable(h) && h.siguiente > 1) {
     ayudaImporte.textContent = `Euros, sin IVA. Como mínimo ${euros(h.siguiente)}.`;
     importe.placeholder = String(h.siguiente);
   } else {
-    ayudaImporte.textContent = "Euros, sin IVA. Elige un hueco para ver la oferta mínima.";
+    ayudaImporte.textContent = ofertable(h) ? "Euros, sin IVA. Este hueco no tiene oferta mínima."
+      : "Euros, sin IVA. Elige un hueco para ver la oferta mínima.";
     importe.placeholder = "0";
   }
 }
@@ -322,11 +342,45 @@ function eligeZona(z, { desde3d = false, desdeSelect = false } = {}) {
 select && select.addEventListener("change", () => select.value && eligeZona(select.value, { desdeSelect: true }));
 
 /* «Hacer oferta» de la lista: sube al mono y a la ficha sin recargar */
-$$("[data-elegir]").forEach((a) => a.addEventListener("click", (e) => {
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-elegir]");
+  if (!a) return;
   e.preventDefault();
   eligeZona(a.dataset.elegir);
   $("#escena").scrollIntoView({ behavior: reposo ? "auto" : "smooth", block: "start" });
   setTimeout(() => importe && importe.focus({ preventScroll: true }), reposo ? 0 : 600);
+});
+
+/* ---------- Cambio de proyecto sin recargar ---------- */
+
+function cambiaProyecto(slug) {
+  if (!proyectos.some((p) => p.slug === slug)) return;
+  actual = slug;
+  elegida = "";
+  guardaDatos();
+  const p = proyectoActual();
+  $$("[data-proyecto]").forEach((a) => {
+    const si = a.dataset.proyecto === slug;
+    a.classList.toggle("carrera--si", si);
+    if (si) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
+  });
+  $("#proyecto") && ($("#proyecto").value = slug);
+  $("#form-proyecto-nombre") && ($("#form-proyecto-nombre").textContent = p.nombre);
+  if (form) form.hidden = !p.abierto;
+  $("#aviso-cerrado") && ($("#aviso-cerrado").hidden = !!p.abierto);
+  const a = $("#aviso-form");
+  a && a.remove();
+  pintaFicha();
+  pintaOpciones();
+  pintaAyuda();
+  pintaLista();
+  escena3d && escena3d.repinta();
+  try { history.replaceState(null, "", "/maillot?p=" + encodeURIComponent(slug) + "#mono"); } catch (_) { /* nada */ }
+}
+
+$$("[data-proyecto]").forEach((a) => a.addEventListener("click", (e) => {
+  e.preventDefault();
+  cambiaProyecto(a.dataset.proyecto);
 }));
 
 /* ---------- Envío sin recargar ---------- */
@@ -359,8 +413,8 @@ form && form.addEventListener("submit", async (e) => {
       method: "POST", body: new FormData(form), headers: { Accept: "application/json" }, credentials: "same-origin",
     });
     const res = await r.json();
-    guardaHuecos(res.huecos || []);
-    Object.values(huecos).forEach(pintaTarjeta);
+    guardaDatos(res.proyectos);
+    pintaLista();
     pintaOpciones();
     if (res.ok) {
       avisa(res.estado === "valida"

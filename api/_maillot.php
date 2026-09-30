@@ -5,6 +5,10 @@
    Librería común de maillot.php (página pública /maillot) y
    admin/maillot.php (gestión). No se sirve por web (`_*.php`).
 
+   Cada oferta es por un hueco del mono EN UN PROYECTO (una
+   carrera: Cape Epic, The Traka...). Los precios, los cierres y
+   las ofertas van por proyecto.
+
    Las ofertas NO son vinculantes: son una forma de que una marca
    diga cuánto vale para ella un hueco. En la web solo se publica
    la cifra más alta de cada hueco, nunca quién la ha hecho.
@@ -17,29 +21,37 @@
 declare(strict_types=1);
 require_once __DIR__ . '/_formularios.php';   // ane_h, sellos, fechas, texto con formato
 
-/* Zonas del mono. La geometría de cada una está en assets/js/maillot/mono.js
-   con la MISMA clave: si añades una aquí, dale forma allí. */
+/* Zonas del mono. La posición de cada una está en assets/js/maillot/mono.js
+   con la MISMA clave: si añades una aquí, dale sitio allí. */
 const ANE_MAILLOT_ZONAS = [
     'pecho'        => ['Pecho',             'Delante, a la altura del pecho. El sitio que más se ve.'],
     'abdomen'      => ['Abdomen',           'Delante, justo debajo del pecho.'],
     'espalda-alta' => ['Espalda alta',      'Detrás, entre los omóplatos. Lo que ve la rueda de detrás.'],
-    'espalda-baja' => ['Espalda baja',      'Detrás, en la zona lumbar.'],
-    'costado-izq'  => ['Costado izquierdo', 'Panel lateral, bajo el brazo izquierdo.'],
-    'costado-der'  => ['Costado derecho',   'Panel lateral, bajo el brazo derecho.'],
+    'espalda-baja' => ['Espalda baja',      'Detrás, sobre los riñones.'],
+    'costado-izq'  => ['Costado izquierdo', 'Lateral, sobre el negro, bajo el brazo izquierdo.'],
+    'costado-der'  => ['Costado derecho',   'Lateral, sobre el negro, bajo el brazo derecho.'],
     'manga-izq'    => ['Manga izquierda',   'Cara exterior de la manga.'],
     'manga-der'    => ['Manga derecha',     'Cara exterior de la manga.'],
-    'culote-izq'   => ['Culote izquierdo',  'Lateral del muslo, sobre el negro del culote.'],
-    'culote-der'   => ['Culote derecho',    'Lateral del muslo, sobre el negro del culote.'],
+    'culote-izq'   => ['Culotte izquierdo', 'Lateral del muslo, sobre el negro del culotte.'],
+    'culote-der'   => ['Culotte derecho',   'Lateral del muslo, sobre el negro del culotte.'],
+];
+
+/* Proyectos con los que nace la sección (los de proyectos.html). Desde el
+   panel se pueden renombrar, ocultar o añadir más. */
+const ANE_MAILLOT_PROYECTOS = [
+    'mediterranean-epic-mtb' => ['Mediterranean Epic MTB', 'Febrero 2027 · Castellón'],
+    'cape-epic-2027'         => ['Cape Epic 2027',         'Marzo 2027 · Sudáfrica'],
+    'the-traka-2027'         => ['The Traka 2027',         'Abril-mayo 2027 · Girona'],
+    'swiss-epic-2027'        => ['Swiss Epic 2027',        'Agosto 2027 · Suiza'],
 ];
 
 const ANE_MAILLOT_MAX_IMPORTE = 1000000;
 
 const ANE_MAILLOT_AJUSTES = [
-    'abierto'     => '0',   // 1 = se aceptan ofertas
     'revision'    => '1',   // 1 = una oferta no cuenta hasta que la validas en el panel
-    'titulo'      => 'Tu marca en el mono ANE 2027',
-    'intro'       => "Este es el mono con el que vamos a correr la temporada 2027. Cada hueco libre está a la venta: elige uno, mira la oferta más alta y haz la tuya.\n\nAl cierre hablamos con la mejor oferta de cada hueco.",
-    'condiciones' => "- Las ofertas **no son vinculantes** para ninguna de las dos partes: son la forma de decirnos cuánto vale para tu marca ese hueco.\n- Importes en euros y **sin IVA**, por la temporada completa.\n- Al cierre de cada hueco hablamos con la oferta más alta para cerrar el acuerdo. Podemos declinar cualquier oferta.\n- En la web solo se publica la cifra de la oferta más alta, nunca quién la ha hecho.",
+    'titulo'      => 'Tu marca en nuestro mono',
+    'intro'       => "Elige la carrera, gira el mono y pincha en el hueco donde quieres ver tu marca. Verás la oferta más alta de cada hueco y cuánto hace falta para superarla.\n\nAl cierre hablamos con la mejor oferta de cada hueco.",
+    'condiciones' => "- Cada oferta es **por un proyecto**: tu marca va en el mono que llevamos en esa carrera y en el contenido que sale de ella.\n- Las ofertas **no son vinculantes** para ninguna de las dos partes: son la forma de decirnos cuánto vale para tu marca ese hueco.\n- Importes en euros y **sin IVA**.\n- Al cierre de cada hueco hablamos con la oferta más alta para cerrar el acuerdo. Podemos declinar cualquier oferta.\n- En la web solo se publica la cifra de la oferta más alta, nunca quién la ha hecho.",
 ];
 
 /* ---------- Ajustes ---------- */
@@ -66,27 +78,57 @@ function ane_maillot_guarda_ajustes(PDO $bd, array $nuevos): void
     }
 }
 
+/* ---------- Proyectos ---------- */
+
+/* Todos, en su orden. $soloActivos: los que salen en la web */
+function ane_maillot_proyectos(PDO $bd, bool $soloActivos = false): array
+{
+    $ins = $bd->prepare('INSERT OR IGNORE INTO mono_proyectos (slug, nombre, detalle, orden) VALUES (?, ?, ?, ?)');
+    $n = 0;
+    foreach (ANE_MAILLOT_PROYECTOS as $slug => [$nombre, $detalle]) {
+        $ins->execute([$slug, $nombre, $detalle, 10 * ++$n]);
+    }
+    $out = [];
+    foreach ($bd->query('SELECT * FROM mono_proyectos ORDER BY orden, rowid') as $p) {
+        if (!$soloActivos || (int) $p['activo']) {
+            $out[$p['slug']] = $p;
+        }
+    }
+    return $out;
+}
+
+function ane_maillot_slug(string $s): string
+{
+    $s = iconv('UTF-8', 'ASCII//TRANSLIT', $s) ?: $s;
+    return trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower($s)), '-');
+}
+
 /* ---------- Huecos ---------- */
 
-/* Todos los huecos del catálogo, en su orden, con sus cifras:
+/* Los huecos de un proyecto, en el orden del catálogo, con sus cifras:
    maxima (oferta válida más alta o null), validas, pendientes, total. */
-function ane_maillot_huecos(PDO $bd): array
+function ane_maillot_huecos(PDO $bd, string $proyecto): array
 {
-    $ins = $bd->prepare('INSERT OR IGNORE INTO huecos (zona, nombre, descripcion, actualizado) VALUES (?, ?, ?, ?)');
+    $ins = $bd->prepare('INSERT OR IGNORE INTO mono_huecos (proyecto, zona, nombre, descripcion, actualizado)
+                         VALUES (?, ?, ?, ?, ?)');
     foreach (ANE_MAILLOT_ZONAS as $zona => [$nombre, $desc]) {
-        $ins->execute([$zona, $nombre, $desc, ane_ahora()]);
+        $ins->execute([$proyecto, $zona, $nombre, $desc, ane_ahora()]);
     }
     $filas = [];
-    foreach ($bd->query('SELECT * FROM huecos') as $h) {
+    $st = $bd->prepare('SELECT * FROM mono_huecos WHERE proyecto = ?');
+    $st->execute([$proyecto]);
+    foreach ($st as $h) {
         $filas[$h['zona']] = $h;
     }
     $cifras = [];
-    foreach ($bd->query("SELECT zona,
-                                MAX(CASE WHEN estado = 'valida' THEN importe END) AS maxima,
-                                SUM(estado = 'valida')    AS validas,
-                                SUM(estado = 'pendiente') AS pendientes,
-                                COUNT(*)                  AS total
-                         FROM pujas GROUP BY zona") as $c) {
+    $st = $bd->prepare("SELECT zona,
+                               MAX(CASE WHEN estado = 'valida' THEN importe END) AS maxima,
+                               SUM(estado = 'valida')    AS validas,
+                               SUM(estado = 'pendiente') AS pendientes,
+                               COUNT(*)                  AS total
+                        FROM mono_pujas WHERE proyecto = ? GROUP BY zona");
+    $st->execute([$proyecto]);
+    foreach ($st as $c) {
         $cifras[$c['zona']] = $c;
     }
     $out = [];
@@ -105,8 +147,9 @@ function ane_maillot_huecos(PDO $bd): array
     return $out;
 }
 
-/* oculto (no se ofrece) | adjudicado | cerrado (pasó la fecha) | oferta | libre */
-function ane_maillot_estado(array $h): string
+/* oculto (no se ofrece) | adjudicado | cerrado (pasó la fecha o el proyecto
+   no admite ofertas) | oferta | libre */
+function ane_maillot_estado(array $h, bool $proyectoAbierto = true): string
 {
     if (!(int) $h['activo']) {
         return 'oculto';
@@ -114,7 +157,7 @@ function ane_maillot_estado(array $h): string
     if (trim((string) $h['adjudicado']) !== '') {
         return 'adjudicado';
     }
-    if ($h['cierre'] && $h['cierre'] <= ane_ahora()) {
+    if (!$proyectoAbierto || ($h['cierre'] && $h['cierre'] <= ane_ahora())) {
         return 'cerrado';
     }
     return $h['maxima'] !== null ? 'oferta' : 'libre';
@@ -131,9 +174,9 @@ function ane_maillot_siguiente(array $h): int
 }
 
 /* Lo que ve el público de cada hueco. Nada de quién ha ofertado. */
-function ane_maillot_publico(array $h): array
+function ane_maillot_publico(array $h, bool $proyectoAbierto = true): array
 {
-    $estado = ane_maillot_estado($h);
+    $estado = ane_maillot_estado($h, $proyectoAbierto);
     return [
         'zona'        => $h['zona'],
         'nombre'      => $h['nombre'],
@@ -146,6 +189,25 @@ function ane_maillot_publico(array $h): array
         'cierre'      => $h['cierre'] ? ane_utc_a_local($h['cierre'], 'j/n/Y H:i') : null,
         'adjudicado'  => $estado === 'adjudicado' ? $h['adjudicado'] : null,
     ];
+}
+
+/* Lo que ve el público de todos los proyectos activos, con sus huecos */
+function ane_maillot_datos_publicos(PDO $bd): array
+{
+    $out = [];
+    foreach (ane_maillot_proyectos($bd, true) as $slug => $p) {
+        $abierto = (bool) (int) $p['abierto'];
+        $huecos = [];
+        foreach (ane_maillot_huecos($bd, $slug) as $h) {
+            $pub = ane_maillot_publico($h, $abierto);
+            if ($pub['estado'] !== 'oculto') {
+                $huecos[] = $pub;
+            }
+        }
+        $out[] = ['slug' => $slug, 'nombre' => $p['nombre'], 'detalle' => $p['detalle'],
+                  'abierto' => $abierto, 'huecos' => $huecos];
+    }
+    return $out;
 }
 
 function ane_maillot_euros(int $n): string
@@ -166,9 +228,10 @@ function ane_maillot_importe(string $s): ?int
 /* ---------- Validación de lo que envía el público ---------- */
 
 /* Devuelve [datos limpios, errores por campo] */
-function ane_maillot_valida(array $post): array
+function ane_maillot_valida(array $post, array $proyectos): array
 {
     $d = [
+        'proyecto' => (string) ($post['proyecto'] ?? ''),
         'zona'     => (string) ($post['zona'] ?? ''),
         'importe'  => ane_recorta((string) ($post['importe'] ?? ''), 20),
         'empresa'  => ane_recorta((string) ($post['empresa'] ?? ''), 120),
@@ -178,6 +241,9 @@ function ane_maillot_valida(array $post): array
         'mensaje'  => ane_recorta((string) ($post['mensaje'] ?? ''), 1000),
     ];
     $e = [];
+    if (!isset($proyectos[$d['proyecto']])) {
+        $e['proyecto'] = 'Elige un proyecto.';
+    }
     if (!isset(ANE_MAILLOT_ZONAS[$d['zona']])) {
         $e['zona'] = 'Elige un hueco.';
     }
@@ -211,33 +277,34 @@ function ane_maillot_valida(array $post): array
 /* ---------- Guardar una oferta ---------- */
 
 /* Resultado: ['ok' => true, 'estado' => 'valida'|'pendiente']
-         o    ['ok' => false, 'motivo' => 'cerrado'|'bajo'|'saturado'] */
+         o    ['ok' => false, 'motivo' => 'cerrado'|'bajo'|'saturado', 'siguiente' => int] */
 function ane_maillot_oferta(PDO $bd, array $d): array
 {
     $bd->exec('BEGIN IMMEDIATE');
     try {
         $ajustes = ane_maillot_ajustes($bd);
-        $h = ane_maillot_huecos($bd)[$d['zona']] ?? null;
-        $estado = $h ? ane_maillot_estado($h) : 'oculto';
-        if (!(int) $ajustes['abierto'] || !in_array($estado, ['libre', 'oferta'], true)) {
+        $p = ane_maillot_proyectos($bd, true)[$d['proyecto']] ?? null;
+        $h = $p ? (ane_maillot_huecos($bd, $d['proyecto'])[$d['zona']] ?? null) : null;
+        $estado = $h ? ane_maillot_estado($h, (bool) (int) $p['abierto']) : 'oculto';
+        if (!in_array($estado, ['libre', 'oferta'], true)) {
             $bd->exec('ROLLBACK');
             return ['ok' => false, 'motivo' => 'cerrado'];
         }
         if ($d['importe_n'] < ane_maillot_siguiente($h)) {
             $bd->exec('ROLLBACK');
-            return ['ok' => false, 'motivo' => 'bajo'];
+            return ['ok' => false, 'motivo' => 'bajo', 'siguiente' => ane_maillot_siguiente($h)];
         }
         /* Freno contra avalanchas de bots: 20 ofertas por minuto en total */
-        $recientes = (int) $bd->query("SELECT COUNT(*) FROM pujas
+        $recientes = (int) $bd->query("SELECT COUNT(*) FROM mono_pujas
                                        WHERE fecha >= datetime('now', '-1 minute')")->fetchColumn();
         if ($recientes >= 20) {
             $bd->exec('ROLLBACK');
             return ['ok' => false, 'motivo' => 'saturado'];
         }
         $nuevoEstado = (int) $ajustes['revision'] ? 'pendiente' : 'valida';
-        $bd->prepare('INSERT INTO pujas (zona, fecha, importe, empresa, contacto, correo, telefono, mensaje, estado)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-           ->execute([$d['zona'], ane_ahora(), $d['importe_n'], $d['empresa'], $d['contacto'],
+        $bd->prepare('INSERT INTO mono_pujas (proyecto, zona, fecha, importe, empresa, contacto, correo, telefono, mensaje, estado)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+           ->execute([$d['proyecto'], $d['zona'], ane_ahora(), $d['importe_n'], $d['empresa'], $d['contacto'],
                       mb_strtolower($d['correo'], 'UTF-8'), $d['telefono'], $d['mensaje'], $nuevoEstado]);
         $bd->exec('COMMIT');
         return ['ok' => true, 'estado' => $nuevoEstado];

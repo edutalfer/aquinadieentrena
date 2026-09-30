@@ -6,8 +6,12 @@ ninguna CDN externa: todo sale de nuestro servidor.
 
 | Fichero | Qué hace |
 |---|---|
-| `mono.js` | Geometría del mono (tronco, mangas, perneras), zonas de patrocinio (`ZONAS`) y cómo se pinta cada parche |
-| `maillot.js` | Escena, luces, giro con el ratón o el dedo, clic en los huecos, ficha y envío de ofertas |
+| `mono.js` | La forma (función de distancia → malla con surface nets), el equipaje (shader: blanco/negro, cuello, puños, silicona), las zonas de patrocinio (`ZONAS`) como calcas y cómo se pinta cada una |
+| `maillot.js` | Escena, luces, giro con el ratón o el dedo, clic en los huecos, selector de proyecto, ficha y envío de ofertas |
+
+Para cambiar la silueta: `PERFIL` (tronco por alturas) y las piezas `MANGAS`,
+`PIERNAS`, `DELTOIDES`, `GLUTEOS`. Para cambiar el diseño del mono (dónde
+acaba el blanco, colores de puños...): la función `equipaje` del shader.
 
 Las claves de `ZONAS` tienen que coincidir con `ANE_MAILLOT_ZONAS` en
 `api/_maillot.php`.

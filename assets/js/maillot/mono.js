@@ -1,25 +1,34 @@
 /* ============================================================
-   AQUÍ NADIE ENTRENA — el mono en 3D
+   AQUÍ NADIE ENTRENA — el mono en 3D (maillot + culotte)
    ------------------------------------------------------------
-   Un mono de ciclismo hecho a base de funciones, sin modelo
-   externo: el tronco es una superelipse que cambia de ancho con
-   la altura, y mangas y perneras son tubos. Arriba blanco, abajo
-   negro (el culote).
+   Sin modelo externo. El cuerpo se describe como una función de
+   distancia (SDF): tronco de sección elíptica que cambia con la
+   altura, deltoides, glúteos, mangas y perneras, todo fundido con
+   uniones suaves (hombros, sisas y entrepierna sin costuras). De
+   esa función sale la malla con «surface nets» y cada vértice se
+   pega a la superficie exacta. Las normales salen del gradiente,
+   así que se ve liso aunque la rejilla sea de 8 mm.
 
-   Cada hueco de patrocinio es un «parche» que se calcula con la
-   MISMA función que la superficie que lo lleva, un pelo por
-   encima, así se ciñe al cuerpo sin trucos. Las claves de ZONAS
-   deben coincidir con ANE_MAILLOT_ZONAS de api/_maillot.php.
+   Los colores del equipaje (maillot blanco, culotte negro, cuello,
+   puños en Azul ANE, silicona de las perneras, cremallera) no
+   están en la malla: los pinta un shader según la posición, así
+   que las líneas salen nítidas con cualquier resolución.
 
-   Ejes: y hacia arriba (en metros, más o menos), el pecho mira
-   a +z y +x es el lado IZQUIERDO de quien lo lleva puesto.
+   Cada hueco de patrocinio es una calca (DecalGeometry) proyectada
+   sobre el cuerpo: se ciñe a la forma sin trucos.
+   Las claves de ZONAS deben coincidir con ANE_MAILLOT_ZONAS de
+   api/_maillot.php.
+
+   Ejes: y hacia arriba (metros), el pecho mira a +z y +x es el
+   lado IZQUIERDO de quien lo lleva puesto.
    ============================================================ */
 
 import {
-  BufferGeometry, Float32BufferAttribute, Vector3, Mesh, Group,
-  MeshStandardMaterial, MeshPhysicalMaterial, CanvasTexture, SRGBColorSpace,
-  DoubleSide, PlaneGeometry, MeshBasicMaterial,
+  BufferGeometry, Float32BufferAttribute, Uint32BufferAttribute, Vector3, Euler, Mesh, Group, Object3D,
+  MeshStandardMaterial, MeshPhysicalMaterial, CanvasTexture, SRGBColorSpace, Raycaster,
+  PlaneGeometry, MeshBasicMaterial, Color,
 } from "three";
+import { DecalGeometry } from "three/examples/jsm/geometries/DecalGeometry.js";
 
 const PI = Math.PI;
 
@@ -29,297 +38,423 @@ export const COLOR = {
   negro: "#191919", blanco: "#FFFFFF", humo: "#F2F3F5", linea: "#E1E3E7", gris: "#6E747F",
 };
 
-/* ---------- Utilidades ---------- */
+/* ============================================================
+   1. La forma: función de distancia
+   ============================================================ */
 
-/* Interpolación suave (Catmull-Rom) sobre una tabla [[x, v1, v2...], ...] */
-function tabla(filas) {
-  return function (x) {
-    const n = filas.length;
-    if (x <= filas[0][0]) return filas[0].slice(1);
-    if (x >= filas[n - 1][0]) return filas[n - 1].slice(1);
+/* Tronco: y · medio ancho · medio fondo delante · medio fondo detrás */
+const PERFIL = [
+  [0.880, 0.150, 0.090, 0.100],
+  [0.930, 0.160, 0.095, 0.110],
+  [0.990, 0.158, 0.092, 0.108],
+  [1.050, 0.146, 0.090, 0.098],
+  [1.100, 0.136, 0.092, 0.094],
+  [1.170, 0.142, 0.101, 0.096],
+  [1.240, 0.155, 0.113, 0.099],
+  [1.310, 0.168, 0.120, 0.102],
+  [1.365, 0.174, 0.113, 0.102],
+  [1.405, 0.160, 0.096, 0.095],
+  [1.440, 0.132, 0.082, 0.086],
+  [1.462, 0.100, 0.072, 0.076],
+  [1.480, 0.080, 0.064, 0.068],
+  [1.495, 0.074, 0.061, 0.065],
+];
+const Y_CUELLO = 1.49;
+const Y_BASE = 0.885;
+
+/* Tabla precalculada del perfil (Catmull-Rom), para no interpolar en cada punto */
+const TAB_N = 1024;
+const TAB_Y0 = PERFIL[0][0], TAB_Y1 = PERFIL[PERFIL.length - 1][0];
+const TAB = new Float32Array(TAB_N * 3);
+(function () {
+  const n = PERFIL.length;
+  for (let s = 0; s < TAB_N; s++) {
+    const y = TAB_Y0 + (TAB_Y1 - TAB_Y0) * s / (TAB_N - 1);
     let i = 0;
-    while (i < n - 2 && x > filas[i + 1][0]) i++;
-    const p0 = filas[Math.max(0, i - 1)], p1 = filas[i], p2 = filas[i + 1], p3 = filas[Math.min(n - 1, i + 2)];
-    const t = (x - p1[0]) / (p2[0] - p1[0]);
-    const t2 = t * t, t3 = t2 * t;
-    const out = [];
-    for (let k = 1; k < p1.length; k++) {
-      out.push(0.5 * ((2 * p1[k]) + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2
-        + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3));
+    while (i < n - 2 && y > PERFIL[i + 1][0]) i++;
+    const p0 = PERFIL[Math.max(0, i - 1)], p1 = PERFIL[i], p2 = PERFIL[i + 1], p3 = PERFIL[Math.min(n - 1, i + 2)];
+    const t = (y - p1[0]) / (p2[0] - p1[0]), t2 = t * t, t3 = t2 * t;
+    for (let k = 1; k <= 3; k++) {
+      TAB[s * 3 + k - 1] = 0.5 * ((2 * p1[k]) + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2
+        + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3);
     }
-    return out;
+  }
+})();
+
+function tronco(x, y, z) {
+  const yc = Math.min(TAB_Y1, Math.max(TAB_Y0, y));
+  const s = Math.round((yc - TAB_Y0) / (TAB_Y1 - TAB_Y0) * (TAB_N - 1)) * 3;
+  const a = TAB[s], b = z >= 0 ? TAB[s + 1] : TAB[s + 2];
+  const q = Math.sqrt((x / a) * (x / a) + (z / b) * (z / b));
+  let d = (q - 1) * Math.min(a, b);
+  d = Math.max(d, y - Y_CUELLO, Y_BASE - y);
+  return d;
+}
+
+/* Cono redondeado (Íñigo Quílez), con el extremo b cortado en plano */
+function cono(a, b, r1, r2) {
+  const bax = b[0] - a[0], bay = b[1] - a[1], baz = b[2] - a[2];
+  const l2 = bax * bax + bay * bay + baz * baz, L = Math.sqrt(l2);
+  const rr = r1 - r2, a2 = l2 - rr * rr, il2 = 1 / l2;
+  const dx = bax / L, dy = bay / L, dz = baz / L;
+  const f = function (x, y, z) {
+    const pax = x - a[0], pay = y - a[1], paz = z - a[2];
+    const yy = pax * bax + pay * bay + paz * baz;
+    const zz = yy - l2;
+    const qx = pax * l2 - bax * yy, qy = pay * l2 - bay * yy, qz = paz * l2 - baz * yy;
+    const x2 = qx * qx + qy * qy + qz * qz;
+    const y2 = yy * yy * l2, z2 = zz * zz * l2;
+    const k = Math.sign(rr) * rr * rr * x2;
+    let d;
+    if (Math.sign(zz) * a2 * z2 > k) d = Math.sqrt(x2 + z2) * il2 - r2;
+    else if (Math.sign(yy) * a2 * y2 < k) d = Math.sqrt(x2 + y2) * il2 - r1;
+    else d = (Math.sqrt(x2 * a2 * il2) + yy * rr) * il2 - r1;
+    /* corte plano en b: manga y pernera acaban en un borde, como la prenda */
+    return Math.max(d, (x - b[0]) * dx + (y - b[1]) * dy + (z - b[2]) * dz);
   };
-}
-
-const lerp = (a, b, t) => a + (b - a) * t;
-const S = (t, e) => Math.sign(t) * Math.pow(Math.abs(t), e);   // superelipse
-
-/* ---------- Tronco ----------
-   y: altura · a: medio ancho · b: medio fondo · zc: el centro se adelanta
-   o se retrasa (pecho delante, glúteos detrás) */
-const PERFIL = tabla([
-  [0.860, 0.160, 0.106, -0.012],
-  [0.900, 0.168, 0.116, -0.014],
-  [0.960, 0.171, 0.119, -0.012],
-  [1.030, 0.157, 0.112, -0.002],
-  [1.090, 0.143, 0.107,  0.004],
-  [1.180, 0.151, 0.116,  0.009],
-  [1.270, 0.167, 0.127,  0.012],
-  [1.340, 0.178, 0.127,  0.008],
-  [1.392, 0.186, 0.117,  0.000],
-  [1.428, 0.166, 0.100, -0.005],
-  [1.458, 0.118, 0.080, -0.008],
-  [1.484, 0.074, 0.066, -0.006],
-  [1.505, 0.063, 0.059, -0.005],
-]);
-export const Y_ABAJO = 0.86;
-export const Y_ARRIBA = 1.505;
-const EXP = 2 / 2.35;
-
-/* θ = 0 delante, crece hacia la izquierda de quien lo lleva (+x) */
-function tronco(theta, y) {
-  const [a, b, zc] = PERFIL(y);
-  return new Vector3(a * S(Math.sin(theta), EXP), y, zc + b * S(Math.cos(theta), EXP));
-}
-function troncoCentro(y) {
-  return new Vector3(0, y, PERFIL(y)[2]);
-}
-
-/* Donde acaba el blanco y empieza el culote: un poco más alto por detrás */
-const corte = (theta) => 0.995 + 0.016 * (1 - Math.cos(theta)) / 2;
-
-/* ---------- Tubos (mangas y perneras) ---------- */
-function tubo({ p0, p1, radios, lado, fondo = 1 }) {
-  const P0 = new Vector3(...p0), P1 = new Vector3(...p1);
-  const arriba = P0.clone().sub(P1).normalize();            // eje, hacia el hombro o la cadera
-  const fuera0 = new Vector3(lado, 0, 0);
-  const fuera = fuera0.sub(arriba.clone().multiplyScalar(fuera0.dot(arriba))).normalize();
-  const w = new Vector3().crossVectors(arriba, fuera);       // de «fuera» hacia la derecha de quien mira
-  const R = tabla(radios);
-  const f = (theta, s) => {
-    const r = R(s)[0];
-    const c = P0.clone().lerp(P1, s);
-    const fz = Math.abs(w.z) > 0.5 ? fondo : 1;
-    return c.add(fuera.clone().multiplyScalar(r * Math.cos(theta)))
-            .add(w.clone().multiplyScalar(r * fz * Math.sin(theta)));
-  };
-  f.centro = (s) => P0.clone().lerp(P1, s);
-  f.eje = arriba.clone().negate();
-  f.radio = (s) => R(s)[0];
+  f.a = a; f.b = b; f.r1 = r1; f.r2 = r2; f.L = L; f.dir = [dx, dy, dz];
   return f;
 }
 
-const MANGA = (lado) => tubo({
-  p0: [0.150 * lado, 1.405, -0.004], p1: [0.258 * lado, 1.146, 0.004], lado,
-  radios: [[-0.1, 0.074], [0, 0.072], [0.25, 0.064], [0.6, 0.056], [1, 0.050]],
-});
-const PIERNA = (lado) => tubo({
-  p0: [0.084 * lado, 0.945, -0.008], p1: [0.106 * lado, 0.565, 0.004], lado, fondo: 1.07,
-  radios: [[-0.15, 0.093], [0, 0.092], [0.3, 0.088], [0.7, 0.078], [1, 0.071]],
-});
-const TUBOS = { manga: { 1: MANGA(1), [-1]: MANGA(-1) }, pierna: { 1: PIERNA(1), [-1]: PIERNA(-1) } };
-
-/* ---------- Mallas a partir de una función (u, v) → punto ----------
-   Las normales se calculan con la función de la superficie completa
-   (no con la malla), así dos trozos que se tocan no dejan costura. */
-function malla(pos, { nu, nv, cerradoU = false, normal, desplaza = 0 }) {
-  const cols = cerradoU ? nu : nu + 1;
-  const vert = [], nor = [], uv = [], idx = [];
-  for (let j = 0; j <= nv; j++) {
-    const v = j / nv;
-    for (let i = 0; i < cols; i++) {
-      const u = i / nu;
-      const p = pos(u, v);
-      const n = normal(u, v, p);
-      if (desplaza) p.add(n.clone().multiplyScalar(desplaza));
-      vert.push(p.x, p.y, p.z);
-      nor.push(n.x, n.y, n.z);
-      uv.push(u, v);
-    }
-  }
-  for (let j = 0; j < nv; j++) {
-    for (let i = 0; i < nu; i++) {
-      const i1 = cerradoU ? (i + 1) % nu : i + 1;
-      const a = j * cols + i, b = j * cols + i1, c = (j + 1) * cols + i, d = (j + 1) * cols + i1;
-      idx.push(a, b, d, a, d, c);
-    }
-  }
-  const g = new BufferGeometry();
-  g.setAttribute("position", new Float32BufferAttribute(vert, 3));
-  g.setAttribute("normal", new Float32BufferAttribute(nor, 3));
-  g.setAttribute("uv", new Float32BufferAttribute(uv, 2));
-  g.setIndex(idx);
-  return g;
-}
-
-/* Normal numérica de una superficie f(θ, t), orientada hacia fuera */
-function normalDe(f, centro) {
-  const e = 1e-4;
-  return (theta, t, p) => {
-    const du = f(theta + e, t).sub(f(theta - e, t));
-    const dv = f(theta, t + e).sub(f(theta, t - e));
-    const n = new Vector3().crossVectors(du, dv).normalize();
-    if (n.dot(p.clone().sub(centro(t))) < 0) n.negate();
-    return n;
+function elipsoide(c, r) {
+  return function (x, y, z) {
+    const px = (x - c[0]) / r[0], py = (y - c[1]) / r[1], pz = (z - c[2]) / r[2];
+    const k0 = Math.sqrt(px * px + py * py + pz * pz);
+    const k1 = Math.sqrt(px * px / (r[0] * r[0]) + py * py / (r[1] * r[1]) + pz * pz / (r[2] * r[2]));
+    return k1 > 0 ? k0 * (k0 - 1) / k1 : -Math.min(r[0], r[1], r[2]);
   };
 }
 
-const nTronco = normalDe(tronco, troncoCentro);
-const nTubo = (f) => normalDe(f, (s) => f.centro(s));
+function smin(a, b, k) {
+  const h = Math.max(k - Math.abs(a - b), 0) / k;
+  return Math.min(a, b) - h * h * k * 0.25;
+}
 
-/* Tapa plana (fondo de manga, pernera, cuello...) */
-function tapa(borde, centro, pasos = 48) {
-  const vert = [centro.x, centro.y, centro.z], idx = [];
-  for (let i = 0; i < pasos; i++) {
-    const p = borde(i / pasos * 2 * PI);
-    vert.push(p.x, p.y, p.z);
+/* Las piezas, a los dos lados */
+export const MANGAS = {}, PIERNAS = {};
+const DELTOIDES = {}, GLUTEOS = {};
+for (const s of [1, -1]) {
+  MANGAS[s] = cono([0.176 * s, 1.388, -0.004], [0.238 * s, 1.085, 0.020], 0.058, 0.047);
+  PIERNAS[s] = cono([0.086 * s, 0.940, -0.012], [0.108 * s, 0.535, 0.010], 0.096, 0.069);
+  DELTOIDES[s] = elipsoide([0.164 * s, 1.382, -0.004], [0.058, 0.064, 0.064]);
+  GLUTEOS[s] = elipsoide([0.066 * s, 0.962, -0.060], [0.088, 0.092, 0.071]);
+}
+
+export function sdf(x, y, z) {
+  const s = x >= 0 ? 1 : -1;          // simétrico: basta con el lado del punto
+  let d = tronco(x, y, z);
+  d = smin(d, GLUTEOS[s](x, y, z), 0.03);
+  d = smin(d, DELTOIDES[s](x, y, z), 0.03);
+  d = smin(d, MANGAS[s](x, y, z), 0.022);
+  /* Las dos piernas se funden con la cadera, no entre sí */
+  const pl = PIERNAS[1](x, y, z), pr = PIERNAS[-1](x, y, z);
+  d = smin(d, Math.min(pl, pr), 0.035);
+  return d;
+}
+
+/* ============================================================
+   2. De la función a la malla: surface nets
+   ============================================================ */
+
+const CAJA = { x0: -0.35, x1: 0.35, y0: 0.50, y1: 1.54, z0: -0.2, z1: 0.2 };
+
+export function mallaMono(paso = 0.008) {
+  const nx = Math.ceil((CAJA.x1 - CAJA.x0) / paso) + 1;
+  const ny = Math.ceil((CAJA.y1 - CAJA.y0) / paso) + 1;
+  const nz = Math.ceil((CAJA.z1 - CAJA.z0) / paso) + 1;
+  const campo = new Float32Array(nx * ny * nz);
+  const idx = (i, j, k) => (k * ny + j) * nx + i;
+  for (let k = 0; k < nz; k++) {
+    const z = CAJA.z0 + k * paso;
+    for (let j = 0; j < ny; j++) {
+      const y = CAJA.y0 + j * paso;
+      for (let i = 0; i < nx; i++) campo[idx(i, j, k)] = sdf(CAJA.x0 + i * paso, y, z);
+    }
   }
-  for (let i = 0; i < pasos; i++) idx.push(0, 1 + i, 1 + (i + 1) % pasos);
+
+  /* Un vértice por celda que cruza la superficie */
+  const vcelda = new Int32Array((nx - 1) * (ny - 1) * (nz - 1)).fill(-1);
+  const cidx = (i, j, k) => (k * (ny - 1) + j) * (nx - 1) + i;
+  const pos = [];
+  const ARISTAS = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
+  const esq = new Float32Array(8);
+  for (let k = 0; k < nz - 1; k++) {
+    for (let j = 0; j < ny - 1; j++) {
+      for (let i = 0; i < nx - 1; i++) {
+        let mascara = 0;
+        for (let c = 0; c < 8; c++) {
+          const v = campo[idx(i + (c & 1), j + ((c >> 1) & 1), k + ((c >> 2) & 1))];
+          esq[c] = v;
+          if (v < 0) mascara |= 1 << c;
+        }
+        if (mascara === 0 || mascara === 255) continue;
+        let sx = 0, sy = 0, sz = 0, n = 0;
+        for (const [c0, c1] of ARISTAS) {
+          const v0 = esq[c0], v1 = esq[c1];
+          if ((v0 < 0) === (v1 < 0)) continue;
+          const t = v0 / (v0 - v1);
+          sx += (c0 & 1) + ((c1 & 1) - (c0 & 1)) * t;
+          sy += ((c0 >> 1) & 1) + (((c1 >> 1) & 1) - ((c0 >> 1) & 1)) * t;
+          sz += ((c0 >> 2) & 1) + (((c1 >> 2) & 1) - ((c0 >> 2) & 1)) * t;
+          n++;
+        }
+        vcelda[cidx(i, j, k)] = pos.length / 3;
+        pos.push(CAJA.x0 + (i + sx / n) * paso, CAJA.y0 + (j + sy / n) * paso, CAJA.z0 + (k + sz / n) * paso);
+      }
+    }
+  }
+
+  /* Un quad por cada arista de la rejilla que cruza la superficie */
+  const tri = [];
+  const quad = (a, b, c, d, dentroPrimero) => {
+    if (a < 0 || b < 0 || c < 0 || d < 0) return;
+    if (dentroPrimero) tri.push(a, b, c, a, c, d);
+    else tri.push(a, c, b, a, d, c);
+  };
+  for (let k = 1; k < nz - 1; k++) {
+    for (let j = 1; j < ny - 1; j++) {
+      for (let i = 1; i < nx - 1; i++) {
+        const v0 = campo[idx(i, j, k)] < 0;
+        if (v0 !== (campo[idx(i + 1, j, k)] < 0)) {   // arista en x
+          quad(vcelda[cidx(i, j - 1, k - 1)], vcelda[cidx(i, j, k - 1)], vcelda[cidx(i, j, k)], vcelda[cidx(i, j - 1, k)], v0);
+        }
+        if (v0 !== (campo[idx(i, j + 1, k)] < 0)) {   // arista en y
+          quad(vcelda[cidx(i - 1, j, k - 1)], vcelda[cidx(i - 1, j, k)], vcelda[cidx(i, j, k)], vcelda[cidx(i, j, k - 1)], v0);
+        }
+        if (v0 !== (campo[idx(i, j, k + 1)] < 0)) {   // arista en z
+          quad(vcelda[cidx(i - 1, j - 1, k)], vcelda[cidx(i, j - 1, k)], vcelda[cidx(i, j, k)], vcelda[cidx(i - 1, j, k)], v0);
+        }
+      }
+    }
+  }
+
+  /* Cada vértice, pegado a la superficie exacta; la normal, del gradiente */
+  const nor = new Float32Array(pos.length);
+  const e = 0.0006;
+  for (let v = 0; v < pos.length; v += 3) {
+    let x = pos[v], y = pos[v + 1], z = pos[v + 2];
+    let gx = 0, gy = 0, gz = 0;
+    for (let it = 0; it < 3; it++) {
+      const d = sdf(x, y, z);
+      gx = sdf(x + e, y, z) - sdf(x - e, y, z);
+      gy = sdf(x, y + e, z) - sdf(x, y - e, z);
+      gz = sdf(x, y, z + e) - sdf(x, y, z - e);
+      const g2 = (gx * gx + gy * gy + gz * gz) / (4 * e * e);
+      if (g2 < 1e-6) break;
+      const f = d / g2 / (2 * e);
+      x -= gx * f; y -= gy * f; z -= gz * f;
+      if (Math.abs(d) < 1e-5) break;
+    }
+    pos[v] = x; pos[v + 1] = y; pos[v + 2] = z;
+    const gl = Math.hypot(gx, gy, gz) || 1;
+    nor[v] = gx / gl; nor[v + 1] = gy / gl; nor[v + 2] = gz / gl;
+  }
+
   const g = new BufferGeometry();
-  g.setAttribute("position", new Float32BufferAttribute(vert, 3));
-  g.setIndex(idx);
-  g.computeVertexNormals();
+  g.setAttribute("position", new Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new Float32BufferAttribute(nor, 3));
+  g.setIndex(new Uint32BufferAttribute(tri, 1));
+  g.computeBoundingSphere();
   return g;
 }
 
-/* ---------- El mono completo ---------- */
-export function creaMono() {
-  const grupo = new Group();
-  const tela = (color, rugosidad, brillo) => new MeshPhysicalMaterial({
-    color, roughness: rugosidad, metalness: 0, sheen: brillo, sheenRoughness: 0.6, sheenColor: "#ffffff",
+/* ============================================================
+   3. El equipaje: colores pintados por posición
+   ============================================================ */
+
+function materialEquipaje() {
+  const m = new MeshPhysicalMaterial({
+    color: "#ffffff", roughness: 0.6, metalness: 0, sheen: 0.3, sheenRoughness: 0.55, sheenColor: "#ffffff",
   });
-  const blanco = tela("#F4F5F7", 0.62, 0.35);
-  const negro = tela("#161719", 0.55, 0.08);
-  const interior = new MeshStandardMaterial({ color: "#D3D7DD", roughness: 1, side: DoubleSide });
-  const interiorNegro = new MeshStandardMaterial({ color: "#0B0B0C", roughness: 1, side: DoubleSide });
-  const cuerpo = [];
-  const add = (g, m) => { const x = new Mesh(g, m); grupo.add(x); cuerpo.push(x); return x; };
-
-  /* Tronco: blanco de la cintura para arriba, negro por debajo */
-  const nuT = 128;
-  add(malla((u, v) => { const th = u * 2 * PI; return tronco(th, lerp(corte(th), Y_ARRIBA, v)); },
-    { nu: nuT, nv: 70, cerradoU: true, normal: (u, v, p) => { const th = u * 2 * PI; return nTronco(th, lerp(corte(th), Y_ARRIBA, v), p); } }), blanco);
-  add(malla((u, v) => { const th = u * 2 * PI; return tronco(th, lerp(Y_ABAJO, corte(th), v)); },
-    { nu: nuT, nv: 18, cerradoU: true, normal: (u, v, p) => { const th = u * 2 * PI; return nTronco(th, lerp(Y_ABAJO, corte(th), v), p); } }), negro);
-  add(tapa((th) => tronco(th, Y_ABAJO), troncoCentro(Y_ABAJO)), interiorNegro);
-  /* Cuello: el hueco se ve por dentro, más oscuro */
-  add(tapa((th) => tronco(th, Y_ARRIBA - 0.012).multiply(new Vector3(0.94, 1, 0.94)), troncoCentro(Y_ARRIBA - 0.02)), interior);
-
-  /* Cremallera: una línea fina en el centro del pecho */
-  const cremallera = new MeshStandardMaterial({ color: "#C3C8CF", roughness: 0.5 });
-  add(malla((u, v) => tronco(lerp(-0.012, 0.012, u), lerp(1.06, Y_ARRIBA, v)),
-    { nu: 2, nv: 40, normal: (u, v, p) => nTronco(lerp(-0.012, 0.012, u), lerp(1.06, Y_ARRIBA, v), p), desplaza: 0.0012 }), cremallera);
-
-  for (const lado of [1, -1]) {
-    /* Manga, con un puño algo más gris y el interior oscuro */
-    const m = TUBOS.manga[lado], nm = nTubo(m);
-    add(malla((u, v) => m(u * 2 * PI, lerp(-0.1, 1, v)),
-      { nu: 64, nv: 40, cerradoU: true, normal: (u, v, p) => nm(u * 2 * PI, lerp(-0.1, 1, v), p) }), blanco);
-    add(malla((u, v) => m(u * 2 * PI, lerp(0.93, 1, v)),
-      { nu: 64, nv: 3, cerradoU: true, normal: (u, v, p) => nm(u * 2 * PI, lerp(0.93, 1, v), p), desplaza: 0.0015 }),
-      new MeshStandardMaterial({ color: "#DDE0E5", roughness: 0.7 }));
-    add(tapa((th) => m(th, 1), m.centro(1)), interior);
-
-    /* Pernera del culote, con la banda de silicona abajo */
-    const p = TUBOS.pierna[lado], np = nTubo(p);
-    add(malla((u, v) => p(u * 2 * PI, lerp(-0.15, 1, v)),
-      { nu: 64, nv: 50, cerradoU: true, normal: (u, v, q) => np(u * 2 * PI, lerp(-0.15, 1, v), q) }), negro);
-    add(malla((u, v) => p(u * 2 * PI, lerp(0.9, 1, v)),
-      { nu: 64, nv: 4, cerradoU: true, normal: (u, v, q) => np(u * 2 * PI, lerp(0.9, 1, v), q), desplaza: 0.0015 }),
-      new MeshStandardMaterial({ color: "#2E3035", roughness: 0.8 }));
-    add(tapa((th) => p(th, 1), p.centro(1)), interiorNegro);
+  const u = {
+    cBlanco: { value: new Color("#F3F4F6") },
+    cNegro: { value: new Color("#141518") },
+    cAzul: { value: new Color(COLOR.azul) },
+    cSilicona: { value: new Color("#2C2E33") },
+    cDentro: { value: new Color("#C3C8D0") },
+    cDentroNegro: { value: new Color("#07070A") },
+    cCremallera: { value: new Color("#BCC1C8") },
+    mA: { value: new Vector3(...MANGAS[1].a) }, mB: { value: new Vector3(...MANGAS[1].b) },
+    pA: { value: new Vector3(...PIERNAS[1].a) }, pB: { value: new Vector3(...PIERNAS[1].b) },
+    yCuello: { value: Y_CUELLO },
+  };
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, u);
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vObj;\nvarying vec3 vObjN;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvObj = position;\nvObjN = normal;");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", `#include <common>
+varying vec3 vObj;
+varying vec3 vObjN;
+uniform vec3 cBlanco, cNegro, cAzul, cSilicona, cDentro, cDentroNegro, cCremallera;
+uniform vec3 mA, mB, pA, pB;
+uniform float yCuello;
+float tramo(vec3 p, vec3 a, vec3 b) { vec3 ba = b - a; return dot(p - a, ba) / dot(ba, ba); }
+float rugosidad = 0.6;
+vec3 equipaje(vec3 p, vec3 n) {
+  vec3 q = vec3(abs(p.x), p.y, p.z);          // los dos lados son iguales
+  vec3 qn = vec3(sign(p.x) * n.x, n.y, n.z);
+  float w = fwidth(p.y) * 1.2 + 0.0008;
+  /* Corte blanco/negro de mono de contrarreloj: el negro sube por los
+     costados; delante el blanco baja en pico y detrás, en U */
+  float th = atan(p.x, p.z);
+  float at = abs(th);
+  float corte = at < 1.5708
+    ? 0.905 + 0.225 * pow(clamp(at / 1.5708, 0.0, 1.0), 0.85)
+    : 0.995 + 0.135 * pow(clamp((3.14159 - at) / 1.5708, 0.0, 1.0), 1.7);
+  float blanco = smoothstep(corte - w, corte + w, p.y);
+  /* Las mangas son siempre blancas */
+  float tm = tramo(q, mA, mB);
+  vec3 dm = normalize(mB - mA);
+  float rm = length((q - mA) - dm * dot(q - mA, dm));
+  float enManga = step(rm, 0.085) * step(0.25, tm) * step(tm, 1.004);
+  blanco = max(blanco, enManga);
+  vec3 c = mix(cNegro, cBlanco, blanco);
+  rugosidad = mix(0.4, 0.62, blanco);
+  /* Tejido: canalé fino en blanco (en horizontal el tronco, a lo largo en la manga) */
+  float canal = enManga > 0.5 ? sin(atan(qn.z, qn.x) * 90.0) : sin(p.y * 520.0);
+  c *= 1.0 - 0.018 * blanco * canal;
+  /* Detrás: la costura del bolsillo, justo encima del negro */
+  float costura = abs(p.y - 1.045) - 0.0012;
+  if (p.z < -0.05 && costura < w && p.y > corte + 0.02) c = mix(c, cCremallera, 0.8);
+  /* Cuello: tira negra y el hueco, por dentro */
+  c = mix(c, cNegro, smoothstep(yCuello - 0.011 - w, yCuello - 0.011 + w, p.y));
+  if (p.y > yCuello - 0.003 && n.y > 0.6) c = cDentro;
+  /* Cremallera escondida */
+  if (p.z > 0.0 && abs(p.x) < 0.0018 && p.y > corte + 0.01 && p.y < yCuello - 0.011) c = cCremallera;
+  /* Puño: ribete en Azul ANE y el hueco del brazo */
+  if (enManga > 0.5) {
+    c = mix(c, cAzul, smoothstep(0.93 - 0.004, 0.93 + 0.004, tm));
+    if (tm > 0.985 && dot(qn, dm) > 0.7) c = cDentro;
   }
+  /* Perneras: banda de silicona y el hueco */
+  float tp = tramo(q, pA, pB);
+  vec3 dp = normalize(pB - pA);
+  float rp = length((q - pA) - dp * dot(q - pA, dp));
+  if (rp < 0.12 && tp > 0.5 && tp < 1.004) {
+    c = mix(c, cSilicona, smoothstep(0.93 - 0.004, 0.93 + 0.004, tp));
+    if (tp > 0.99 && dot(qn, dp) > 0.7) { c = cDentroNegro; rugosidad = 1.0; }
+  }
+  return c;
+}`)
+      .replace("vec4 diffuseColor = vec4( diffuse, opacity );",
+               "vec4 diffuseColor = vec4( equipaje( vObj, normalize( vObjN ) ), opacity );")
+      .replace("float roughnessFactor = roughness;", "float roughnessFactor = rugosidad;");
+  };
+  return m;
+}
+
+/* ============================================================
+   4. Montaje
+   ============================================================ */
+
+export function creaMono(paso) {
+  const grupo = new Group();
+  const cuerpo = new Mesh(mallaMono(paso), materialEquipaje());
+  grupo.add(cuerpo);
 
   /* Sombra suave en el suelo, para que no flote en el vacío */
   const c = document.createElement("canvas");
   c.width = c.height = 128;
   const x = c.getContext("2d");
   const gr = x.createRadialGradient(64, 64, 4, 64, 64, 62);
-  gr.addColorStop(0, "rgba(25,25,25,.28)");
+  gr.addColorStop(0, "rgba(25,25,25,.26)");
   gr.addColorStop(1, "rgba(25,25,25,0)");
   x.fillStyle = gr;
   x.fillRect(0, 0, 128, 128);
-  const sombra = new Mesh(new PlaneGeometry(0.62, 0.3),
+  const sombra = new Mesh(new PlaneGeometry(0.6, 0.28),
     new MeshBasicMaterial({ map: new CanvasTexture(c), transparent: true, depthWrite: false }));
   sombra.rotation.x = -PI / 2;
-  sombra.position.set(0, 0.47, 0);
+  sombra.position.set(0, 0.46, 0);
   grupo.add(sombra);
 
-  return { grupo, cuerpo };
+  return { grupo, cuerpo: [cuerpo], malla: cuerpo };
 }
 
-/* ---------- Huecos ----------
-   torso: t = rango de θ, y = rango de alturas
-   manga / pierna: lado (+1 izquierda de quien lo lleva), s = tramo del tubo
-   (0 arriba, 1 abajo), t = rango de ángulo alrededor (0 = cara exterior)
-   mira: giro del mono (radianes) para dejar el hueco de frente
-   vertical: el texto va girado 90° */
+/* ============================================================
+   5. Huecos: dónde va cada calca
+   ------------------------------------------------------------
+   desde: punto de fuera desde el que se lanza un rayo hacia el cuerpo
+   hacia: dirección del rayo
+   tam:   ancho × alto de la calca (m)
+   mira:  giro del mono (radianes) para dejar el hueco de frente
+   vertical: el texto va girado 90°
+   ============================================================ */
+
+function haciaFuera(tubo, t, lado) {
+  const a = new Vector3(...tubo.a), b = new Vector3(...tubo.b);
+  const c = a.clone().lerp(b, t);
+  const eje = b.clone().sub(a).normalize();
+  const fuera = new Vector3(lado, 0, 0);
+  fuera.sub(eje.clone().multiplyScalar(fuera.dot(eje))).normalize();
+  return { desde: c.clone().add(fuera.clone().multiplyScalar(0.6)), hacia: fuera.negate() };
+}
+
 export const ZONAS = {
-  "pecho":        { parte: "torso", t: [-0.66, 0.66], y: [1.232, 1.345], mira: 0 },
-  "abdomen":      { parte: "torso", t: [-0.64, 0.64], y: [1.085, 1.195], mira: 0 },
-  "espalda-alta": { parte: "torso", t: [PI - 0.72, PI + 0.72], y: [1.245, 1.372], mira: PI },
-  "espalda-baja": { parte: "torso", t: [PI - 0.64, PI + 0.64], y: [1.08, 1.19], mira: PI },
-  "costado-izq":  { parte: "torso", t: [PI / 2 - 0.3, PI / 2 + 0.3], y: [1.02, 1.19], mira: -1.25, vertical: true },
-  "costado-der":  { parte: "torso", t: [3 * PI / 2 - 0.3, 3 * PI / 2 + 0.3], y: [1.02, 1.19], mira: 1.25, vertical: true },
-  "manga-izq":    { parte: "manga", lado: 1, s: [0.3, 0.88], t: [-0.95, 0.95], mira: -PI / 2 },
-  "manga-der":    { parte: "manga", lado: -1, s: [0.3, 0.88], t: [-0.95, 0.95], mira: PI / 2 },
-  "culote-izq":   { parte: "pierna", lado: 1, s: [0.16, 0.8], t: [-0.78, 0.78], mira: -PI / 2, vertical: true },
-  "culote-der":   { parte: "pierna", lado: -1, s: [0.16, 0.8], t: [-0.78, 0.78], mira: PI / 2, vertical: true },
+  "pecho":        { desde: [0, 1.300, 1], hacia: [0, 0, -1], tam: [0.23, 0.085], mira: 0 },
+  "abdomen":      { desde: [0, 1.150, 1], hacia: [0, 0, -1], tam: [0.20, 0.080], mira: 0 },
+  "espalda-alta": { desde: [0, 1.320, -1], hacia: [0, 0, 1], tam: [0.25, 0.095], mira: PI },
+  "espalda-baja": { desde: [0, 1.140, -1], hacia: [0, 0, 1], tam: [0.21, 0.080], mira: PI },
+  "costado-izq":  { desde: [1, 1.02, 0.005], hacia: [-1, 0, 0], tam: [0.08, 0.12], mira: -1.2, vertical: true },
+  "costado-der":  { desde: [-1, 1.02, 0.005], hacia: [1, 0, 0], tam: [0.08, 0.12], mira: 1.2, vertical: true },
+  "manga-izq":    { tubo: "manga", lado: 1, t: 0.52, tam: [0.10, 0.12], mira: -PI / 2 },
+  "manga-der":    { tubo: "manga", lado: -1, t: 0.52, tam: [0.10, 0.12], mira: PI / 2 },
+  "culote-izq":   { tubo: "pierna", lado: 1, t: 0.5, tam: [0.09, 0.22], mira: -PI / 2, vertical: true },
+  "culote-der":   { tubo: "pierna", lado: -1, t: 0.5, tam: [0.09, 0.22], mira: PI / 2, vertical: true },
 };
 
-/* Punto (u, v) del parche: u de izquierda a derecha según se mira, v de abajo arriba */
-function funcionParche(z) {
-  if (z.parte === "torso") {
-    const pos = (u, v) => tronco(lerp(z.t[0], z.t[1], u), lerp(z.y[0], z.y[1], v));
-    const nor = (u, v, p) => nTronco(lerp(z.t[0], z.t[1], u), lerp(z.y[0], z.y[1], v), p);
-    return { pos, nor };
-  }
-  const f = TUBOS[z.parte][z.lado], nf = nTubo(f);
-  const th = (u) => lerp(z.t[0], z.t[1], u);
-  const s = (v) => lerp(z.s[1], z.s[0], v);
-  return { pos: (u, v) => f(th(u), s(v)), nor: (u, v, p) => nf(th(u), s(v), p) };
-}
+/* ¿El hueco está sobre el negro del culotte? */
+export const sobreNegro = (zona) => ZONAS[zona].tubo === "pierna" || zona.startsWith("costado");
 
-/* Medidas reales del parche (ancho y alto por el centro), para no deformar el texto */
-function medidas(pos) {
-  let w = 0, h = 0;
-  for (let i = 0; i < 20; i++) {
-    w += pos(i / 20, 0.5).distanceTo(pos((i + 1) / 20, 0.5));
-    h += pos(0.5, i / 20).distanceTo(pos(0.5, (i + 1) / 20));
-  }
-  return { w, h };
-}
-
-/* ¿El hueco está sobre el negro del culote? */
-export const sobreNegro = (zona) => ZONAS[zona].parte === "pierna";
-
-export function creaParche(zona) {
+const rayo = new Raycaster();
+export function creaParche(zona, malla) {
   const z = ZONAS[zona];
-  const { pos, nor } = funcionParche(z);
-  const g = malla(pos, { nu: 24, nv: 16, normal: nor, desplaza: 0.0035 });
-  const { w, h } = medidas(pos);
-  const lienzo = document.createElement("canvas");
-  /* El lienzo sigue las proporciones del parche: el lado largo, 512 px */
-  if (w >= h) {
-    lienzo.width = 512;
-    lienzo.height = Math.round(Math.max(96, 512 * h / w));
+  let desde, hacia;
+  if (z.tubo) {
+    ({ desde, hacia } = haciaFuera(z.tubo === "manga" ? MANGAS[z.lado] : PIERNAS[z.lado], z.t, z.lado));
   } else {
-    lienzo.height = 512;
-    lienzo.width = Math.round(Math.max(96, 512 * w / h));
+    desde = new Vector3(...z.desde);
+    hacia = new Vector3(...z.hacia).normalize();
   }
+  malla.updateMatrixWorld(true);
+  rayo.set(malla.localToWorld(desde.clone()), hacia);   // el grupo aún no está girado
+  const toque = rayo.intersectObject(malla, false)[0];
+  if (!toque) return null;
+  const n = toque.face.normal.clone();
+  /* Orientación: +z de la calca = normal; «arriba» lo más vertical posible */
+  const ayuda = new Object3D();
+  ayuda.position.copy(toque.point);
+  ayuda.lookAt(toque.point.clone().add(n));
+  const geo = new DecalGeometry(malla, toque.point, new Euler().copy(ayuda.rotation), new Vector3(z.tam[0], z.tam[1], 0.07));
+  /* DecalGeometry trabaja en coordenadas del mundo: se pasan a las de la malla */
+  geo.applyMatrix4(malla.matrixWorld.clone().invert());
+  /* Un pelo por encima de la tela: se ve siempre y el ratón la encuentra antes que al cuerpo */
+  const pa = geo.attributes.position, na = geo.attributes.normal;
+  for (let i = 0; i < pa.count; i++) {
+    pa.setXYZ(i, pa.getX(i) + na.getX(i) * 0.0015, pa.getY(i) + na.getY(i) * 0.0015, pa.getZ(i) + na.getZ(i) * 0.0015);
+  }
+
+  const lienzo = document.createElement("canvas");
+  const [w, h] = z.tam;
+  if (w >= h) { lienzo.width = 512; lienzo.height = Math.round(Math.max(96, 512 * h / w)); }
+  else { lienzo.height = 512; lienzo.width = Math.round(Math.max(96, 512 * w / h)); }
   const tex = new CanvasTexture(lienzo);
   tex.colorSpace = SRGBColorSpace;
   tex.anisotropy = 4;
   const mat = new MeshStandardMaterial({
-    map: tex, roughness: 0.55, metalness: 0,
-    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    map: tex, roughness: 0.5, metalness: 0, transparent: true,
+    polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthWrite: false,
   });
-  const mesh = new Mesh(g, mat);
+  const mesh = new Mesh(geo, mat);
+  mesh.renderOrder = 2;
   mesh.userData = { zona, lienzo, tex, vertical: !!z.vertical, mira: z.mira };
   return mesh;
 }
 
-/* ---------- Lo que se pinta en cada parche ---------- */
+/* ============================================================
+   6. Lo que se pinta en cada calca
+   ============================================================ */
 
 function euros(n) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " €";
@@ -337,6 +472,16 @@ function linea(ctx, texto, x, y, ancho, tam, fuente) {
   return t;
 }
 
+function rectRedondo(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
 export function pintaParche(mesh, hueco, { elegido = false, encima = false } = {}) {
   const { lienzo, tex, vertical, zona } = mesh.userData;
   const ctx = lienzo.getContext("2d");
@@ -349,62 +494,68 @@ export function pintaParche(mesh, hueco, { elegido = false, encima = false } = {
     [W, H] = [H, W];
   }
   const negroDebajo = sobreNegro(zona);
-  let fondo, tinta, tinta2, arriba, abajo;
+  let fondo, tinta, tinta2, arriba, abajo, alfa = 1;
   switch (hueco.estado) {
     case "oferta":
       fondo = COLOR.azul; tinta = COLOR.blanco; tinta2 = COLOR.blanco;
       arriba = hueco.nombre; abajo = euros(hueco.maxima);
       break;
     case "adjudicado":
-      fondo = negroDebajo ? COLOR.blanco : COLOR.negro;
-      tinta = negroDebajo ? COLOR.negro : COLOR.blanco; tinta2 = tinta;
+      fondo = null; tinta = negroDebajo ? COLOR.blanco : COLOR.negro; tinta2 = tinta;
       arriba = hueco.adjudicado || "Adjudicado"; abajo = "";
       break;
     case "cerrado":
-      fondo = COLOR.linea; tinta = COLOR.negro; tinta2 = COLOR.gris;
+      fondo = COLOR.linea; tinta = COLOR.negro; tinta2 = COLOR.gris; alfa = 0.9;
       arriba = hueco.nombre; abajo = hueco.maxima ? euros(hueco.maxima) : "Cerrado";
       break;
     default:   // libre
-      fondo = COLOR.destello; tinta = COLOR.negro; tinta2 = COLOR.profundo;
-      arriba = hueco.nombre; abajo = "Desde " + euros(hueco.minimo);
+      fondo = negroDebajo ? "rgba(178,200,240,.92)" : "rgba(178,200,240,.78)";
+      tinta = COLOR.negro; tinta2 = COLOR.profundo;
+      arriba = hueco.nombre; abajo = hueco.minimo > 1 ? "Desde " + euros(hueco.minimo) : "Haz tu oferta";
   }
-  ctx.fillStyle = fondo;
-  ctx.fillRect(0, 0, W, H);
-
+  const r = Math.min(W, H) * 0.08;
+  const g = Math.round(Math.min(W, H) * 0.04);
+  ctx.globalAlpha = alfa;
+  if (fondo) {
+    ctx.fillStyle = fondo;
+    rectRedondo(ctx, 0, 0, W, H, r);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
   /* Marco: discontinuo si está libre, grueso si está elegido o bajo el ratón */
-  const g = Math.round(Math.min(W, H) * 0.045);
   if (elegido || encima) {
     ctx.lineWidth = g * (elegido ? 2.4 : 1.4);
-    ctx.strokeStyle = hueco.estado === "adjudicado" && !negroDebajo ? COLOR.azul : COLOR.negro;
-    if (hueco.estado === "oferta") ctx.strokeStyle = COLOR.negro;
-    ctx.strokeRect(ctx.lineWidth / 2, ctx.lineWidth / 2, W - ctx.lineWidth, H - ctx.lineWidth);
+    ctx.strokeStyle = negroDebajo && hueco.estado !== "libre" ? COLOR.blanco : COLOR.negro;
+    rectRedondo(ctx, ctx.lineWidth / 2, ctx.lineWidth / 2, W - ctx.lineWidth, H - ctx.lineWidth, r);
+    ctx.stroke();
   } else if (hueco.estado === "libre") {
     ctx.lineWidth = g;
     ctx.setLineDash([g * 2.2, g * 1.4]);
     ctx.strokeStyle = COLOR.enlace;
-    ctx.strokeRect(g, g, W - 2 * g, H - 2 * g);
+    rectRedondo(ctx, g, g, W - 2 * g, H - 2 * g, r * 0.7);
+    ctx.stroke();
     ctx.setLineDash([]);
   }
 
-  ctx.fillStyle = tinta;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const ancho = W * 0.84;
   const display = (t) => `italic 900 ${t}px Archivo, "Arial Narrow", sans-serif`;
   const texto = (t) => `700 ${t}px Inter, system-ui, sans-serif`;
-  /* En un parche alto y estrecho, cada palabra del nombre va en su línea */
+  /* En una calca alta y estrecha, cada palabra del nombre va en su línea */
   const alto = H > W * 1.15;
   const lineas = (alto ? arriba.toUpperCase().split(/\s+/) : [arriba.toUpperCase()])
     .map((t) => ({ t, f: display, color: tinta, peso: 1 }));
   if (abajo) lineas.push({ t: abajo.toUpperCase(), f: hueco.estado === "oferta" ? display : texto, color: tinta2, peso: 0.72 });
   if (lineas.length === 1) {
-    linea(ctx, lineas[0].t, W / 2, H * 0.53, ancho, Math.round(H * 0.46), display);
+    ctx.fillStyle = tinta;
+    linea(ctx, lineas[0].t, W / 2, H * 0.53, ancho, Math.round(H * 0.5), display);
   } else {
-    const hueco_ = (H * 0.8) / lineas.length;
-    const base = Math.min(hueco_ * 0.82, alto ? W * 0.3 : H * 0.34);
+    const hl = (H * 0.8) / lineas.length;
+    const base = Math.min(hl * 0.82, alto ? W * 0.3 : H * 0.34);
     lineas.forEach((l, i) => {
       ctx.fillStyle = l.color;
-      linea(ctx, l.t, W / 2, H * 0.1 + hueco_ * (i + 0.55), ancho, Math.round(base * l.peso), l.f);
+      linea(ctx, l.t, W / 2, H * 0.1 + hl * (i + 0.55), ancho, Math.round(base * l.peso), l.f);
     });
   }
   ctx.restore();

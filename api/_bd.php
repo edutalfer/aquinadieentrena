@@ -92,23 +92,36 @@ function ane_bd(): PDO
         );
         CREATE INDEX IF NOT EXISTS i_form_respuestas ON form_respuestas (form_id, reserva);
 
-        -- Huecos de patrocinio del mono (ver api/_maillot.php). La forma y
-        -- la posición de cada zona están en el código; aquí, el precio.
-        CREATE TABLE IF NOT EXISTS huecos (
-            zona        TEXT    PRIMARY KEY,
+        -- El mono: proyectos (carreras), sus huecos de patrocinio y las
+        -- ofertas (ver api/_maillot.php). La forma de cada zona está en el
+        -- código; aquí, el precio de cada hueco en cada proyecto.
+        CREATE TABLE IF NOT EXISTS mono_proyectos (
+            slug    TEXT    PRIMARY KEY,
+            nombre  TEXT    NOT NULL,
+            detalle TEXT    NOT NULL DEFAULT \'\',  -- «Marzo 2027 · Sudáfrica»
+            abierto INTEGER NOT NULL DEFAULT 1,    -- 1 = admite ofertas
+            activo  INTEGER NOT NULL DEFAULT 1,    -- 0 = no sale en la web
+            orden   INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS mono_huecos (
+            proyecto    TEXT    NOT NULL,
+            zona        TEXT    NOT NULL,
             nombre      TEXT    NOT NULL,
             descripcion TEXT    NOT NULL DEFAULT \'\',
-            activo      INTEGER NOT NULL DEFAULT 0,    -- 0 = no se ofrece
-            minimo      INTEGER NOT NULL DEFAULT 0,    -- euros
+            activo      INTEGER NOT NULL DEFAULT 1,    -- 0 = no se ofrece
+            minimo      INTEGER NOT NULL DEFAULT 0,    -- euros; 0 = sin mínimo
             incremento  INTEGER NOT NULL DEFAULT 50,   -- euros
             cierre      TEXT,                          -- UTC; NULL = sin fecha
             adjudicado  TEXT    NOT NULL DEFAULT \'\',   -- marca; se ve en la web
-            actualizado TEXT    NOT NULL
+            actualizado TEXT    NOT NULL,
+            PRIMARY KEY (proyecto, zona)
         );
 
-        -- Ofertas: datos de contacto de empresas. Se borran al cerrar la temporada.
-        CREATE TABLE IF NOT EXISTS pujas (
+        -- Ofertas: datos de contacto de empresas. Se borran al cerrar cada proyecto.
+        CREATE TABLE IF NOT EXISTS mono_pujas (
             id       INTEGER PRIMARY KEY,
+            proyecto TEXT    NOT NULL,
             zona     TEXT    NOT NULL,
             fecha    TEXT    NOT NULL,
             importe  INTEGER NOT NULL,
@@ -119,13 +132,19 @@ function ane_bd(): PDO
             mensaje  TEXT    NOT NULL DEFAULT \'\',
             estado   TEXT    NOT NULL DEFAULT \'valida\'  -- pendiente | valida | anulada
         );
-        CREATE INDEX IF NOT EXISTS i_pujas_zona ON pujas (zona, estado, importe);
+        CREATE INDEX IF NOT EXISTS i_mono_pujas ON mono_pujas (proyecto, zona, estado, importe);
 
         CREATE TABLE IF NOT EXISTS ajustes (
             clave TEXT PRIMARY KEY,
             valor TEXT NOT NULL
         );
     ');
+    /* Primera versión del mono (30/09/2026), sin proyectos: sus tablas se
+       retiran si no llegaron a guardar ninguna oferta */
+    $viejas = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'pujas'")->fetchColumn();
+    if ($viejas && !(int) $pdo->query('SELECT COUNT(*) FROM pujas')->fetchColumn()) {
+        $pdo->exec('DROP TABLE pujas; DROP TABLE IF EXISTS huecos');
+    }
     return $pdo;
 }
 

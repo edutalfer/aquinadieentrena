@@ -22,17 +22,23 @@ header('X-Frame-Options: DENY');
 $bd = ane_bd();
 $quiereJson = str_contains((string) ($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json');
 
+$proyectos = ane_maillot_proyectos($bd, true);
 $valores = [];
 $errores = [];
 $aviso = '';
+$proyecto = (string) ($_GET['p'] ?? '');
 $zonaElegida = (string) ($_GET['zona'] ?? '');
 
 function ane_maillot_json(PDO $bd, array $extra): void
 {
     header('Content-Type: application/json; charset=utf-8');
-    $huecos = array_map('ane_maillot_publico', ane_maillot_huecos($bd));
-    echo json_encode($extra + ['huecos' => array_values($huecos)], JSON_UNESCAPED_UNICODE);
+    echo json_encode($extra + ['proyectos' => ane_maillot_datos_publicos($bd)], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+function ane_maillot_url(string $proyecto, array $extra = []): string
+{
+    return '/maillot?' . http_build_query(['p' => $proyecto] + $extra);
 }
 
 /* ---------- Envío de una oferta ---------- */
@@ -40,6 +46,7 @@ function ane_maillot_json(PDO $bd, array $extra): void
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $sello = ane_form_comprueba_sello((string) ($_POST['_sello'] ?? ''), 'maillot');
     $zonaElegida = (string) ($_POST['zona'] ?? '');
+    $proyecto = (string) ($_POST['proyecto'] ?? '');
 
     /* Bots: campo trampa, sello falso o envío en menos de 3 s.
        Se les da la respuesta de siempre y no se guarda nada. */
@@ -47,11 +54,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         if ($quiereJson) {
             ane_maillot_json($bd, ['ok' => true, 'estado' => 'pendiente']);
         }
-        header('Location: /maillot?ok=pendiente#oferta', true, 303);
+        header('Location: ' . ane_maillot_url($proyecto, ['ok' => 'pendiente']) . '#oferta', true, 303);
         exit;
     }
 
-    [$valores, $errores] = ane_maillot_valida($_POST);
+    [$valores, $errores] = ane_maillot_valida($_POST, $proyectos);
     $motivo = '';
     if ($sello === 'caducado' && !$errores) {
         $aviso = 'La página llevaba mucho tiempo abierta y las cifras pueden haber cambiado. Revisa tu oferta y vuelve a enviarla.';
@@ -66,15 +73,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if ($quiereJson) {
                 ane_maillot_json($bd, ['ok' => true, 'estado' => $r['estado'], 'zona' => $valores['zona']]);
             }
-            header('Location: /maillot?ok=' . $r['estado'] . '&zona=' . rawurlencode($valores['zona']) . '#oferta', true, 303);
+            header('Location: ' . ane_maillot_url($proyecto, ['ok' => $r['estado'], 'zona' => $valores['zona']]) . '#oferta', true, 303);
             exit;
         }
         $motivo = $r['motivo'];
         switch ($motivo) {
             case 'bajo':
-                $h = ane_maillot_huecos($bd)[$valores['zona']];
                 $errores['importe'] = 'Ahora mismo la oferta mínima para este hueco es de '
-                    . ane_maillot_euros(ane_maillot_siguiente($h)) . '.';
+                    . ane_maillot_euros($r['siguiente']) . '.';
                 break;
             case 'cerrado':
                 $aviso = 'Este hueco ya no admite ofertas.';
@@ -97,9 +103,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 /* ---------- Datos para pintar ---------- */
 
 $ajustes = ane_maillot_ajustes($bd);
-$abierto = (bool) (int) $ajustes['abierto'];
-$huecos = array_filter(array_map('ane_maillot_publico', ane_maillot_huecos($bd)),
-                       fn($h) => $h['estado'] !== 'oculto');
+$datosProyectos = ane_maillot_datos_publicos($bd);
+if (!isset($proyectos[$proyecto])) {
+    $proyecto = (string) array_key_first($proyectos);
+}
+$actual = null;
+foreach ($datosProyectos as $dp) {
+    if ($dp['slug'] === $proyecto) {
+        $actual = $dp;
+    }
+}
+$abierto = $actual && $actual['abierto'];
+$algunoAbierto = (bool) array_filter($datosProyectos, fn($dp) => $dp['abierto']);
+$huecos = [];
+foreach ($actual['huecos'] ?? [] as $h) {
+    $huecos[$h['zona']] = $h;
+}
 $ofertables = array_filter($huecos, fn($h) => in_array($h['estado'], ['libre', 'oferta'], true));
 if (!isset($ofertables[$zonaElegida])) {
     $zonaElegida = '';
@@ -109,7 +128,7 @@ $ok = (string) ($_GET['ok'] ?? '');
 $ESTADOS = [
     'libre'      => 'Libre',
     'oferta'     => 'Con ofertas',
-    'cerrado'    => 'Plazo cerrado',
+    'cerrado'    => 'Cerrado',
     'adjudicado' => 'Adjudicado',
 ];
 
@@ -117,7 +136,7 @@ function ane_maillot_cifra_hueco(array $h): string
 {
     switch ($h['estado']) {
         case 'libre':
-            return 'Oferta mínima: <b>' . ane_maillot_euros($h['minimo']) . '</b>';
+            return $h['minimo'] > 1 ? 'Oferta mínima: <b>' . ane_maillot_euros($h['minimo']) . '</b>' : 'Sin ofertas todavía';
         case 'oferta':
             return 'Oferta más alta: <b>' . ane_maillot_euros($h['maxima']) . '</b>';
         case 'cerrado':
@@ -138,8 +157,8 @@ function ane_val(array $valores, string $campo): string
 }
 
 $datosJs = [
-    'abierto' => $abierto,
-    'huecos'  => array_values($huecos),
+    'actual'    => $proyecto,
+    'proyectos' => $datosProyectos,
 ];
 ?><!DOCTYPE html>
 <html lang="es">
@@ -147,7 +166,7 @@ $datosJs = [
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>El mono — Aquí Nadie Entrena</title>
-<?php if (!$abierto): ?><meta name="robots" content="noindex"><?php endif; ?>
+<?php if (!$algunoAbierto): ?><meta name="robots" content="noindex"><?php endif; ?>
 <meta name="description" content="Gira el mono de Aquí Nadie Entrena, elige un hueco libre y haz tu oferta para poner ahí tu marca.">
 <meta name="theme-color" content="#191919">
 <meta property="og:title" content="<?= ane_h($ajustes['titulo']) ?>">
@@ -172,7 +191,22 @@ $datosJs = [
   /* ---------- Mono + ficha ---------- */
   .taller { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); gap: 22px; align-items: start; }
   @media (max-width: 900px) { .taller { grid-template-columns: 1fr; } }
-  #escena, #oferta { scroll-margin-top: 100px; }
+  #escena, #oferta, #mono { scroll-margin-top: 100px; }
+  .seccion--mono { padding-top: 40px; }
+  .carreras { margin: 0 0 22px; }
+  .carreras__titulo { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--gris-medio); margin: 0 0 10px; }
+  .carreras__lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .carrera { display: block; background: var(--blanco); border: 2px solid var(--negro); padding: 13px 16px 12px; text-decoration: none; color: var(--negro); }
+  .carrera b { display: block; font: 900 italic 21px/1 var(--display); text-transform: uppercase; letter-spacing: -.01em; }
+  .carrera span { display: block; font-size: 13px; color: var(--gris-carbon); margin-top: 6px; }
+  .carrera small { display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--azul-enlace); }
+  .carrera:hover { border-color: var(--azul-enlace); }
+  .carrera--si { background: var(--negro); color: var(--blanco); }
+  .carrera--si span { color: #C7CAD1; }
+  .carrera--si small { color: var(--azul-destello); }
+  .form-proyecto { margin: 0 0 14px; font-size: 14px; color: var(--gris-carbon); }
+  @media (max-width: 600px) { .carreras__lista { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .carrera { padding: 10px 11px; } .carrera b { font-size: 13.5px; } .carrera span { font-size: 12px; } .carrera small { font-size: 10px; } }
   .escena { position: relative; background: var(--blanco); border: 2px solid var(--negro); }
   .escena__lienzo { height: min(78vh, 680px); min-height: 420px; touch-action: pan-y; cursor: grab; user-select: none; }
   .escena__lienzo:active { cursor: grabbing; }
@@ -281,15 +315,28 @@ $datosJs = [
       <h1 class="display"><?= ane_h($ajustes['titulo']) ?></h1>
       <div class="portada__sub intro-mono"><?= ane_form_texto($ajustes['intro']) ?></div>
       <div class="pasos">
-        <div><b>Elige un hueco</b>Gira el mono y pincha en cualquier hueco libre.</div>
+        <div><b>Elige carrera y hueco</b>Gira el mono y pincha en cualquier hueco libre.</div>
         <div><b>Haz tu oferta</b>Ves la oferta más alta y cuánto tienes que poner para superarla.</div>
         <div><b>Hablamos</b>Al cierre escribimos a la oferta más alta de cada hueco.</div>
       </div>
     </div>
   </section>
 
-  <section class="seccion seccion--humo">
+  <section class="seccion seccion--humo seccion--mono" id="mono">
     <div class="envoltorio">
+      <nav class="carreras" aria-label="Proyecto">
+        <p class="carreras__titulo">Elige el proyecto</p>
+        <div class="carreras__lista">
+          <?php foreach ($datosProyectos as $dp): ?>
+            <a class="carrera<?= $dp['slug'] === $proyecto ? ' carrera--si' : '' ?>" href="/maillot?p=<?= rawurlencode($dp['slug']) ?>#mono"
+               data-proyecto="<?= ane_h($dp['slug']) ?>"<?= $dp['slug'] === $proyecto ? ' aria-current="true"' : '' ?>>
+              <b><?= ane_h($dp['nombre']) ?></b>
+              <span><?= ane_h($dp['detalle']) ?></span>
+              <small><?= $dp['abierto'] ? 'Ofertas abiertas' : 'Ofertas cerradas' ?></small>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </nav>
       <div class="taller">
 
         <div class="escena" id="escena">
@@ -330,17 +377,17 @@ $datosJs = [
             <p class="ficha__desc">Pincha en un hueco del mono o elígelo en el desplegable.</p>
           </div>
 
-          <?php if (!$abierto): ?>
-            <div class="aviso aviso--info">Las ofertas abren muy pronto. Si no quieres esperar, escríbenos a
-              <a href="mailto:hola@aquinadieentrena.cc?subject=Hueco%20en%20el%20mono" style="color:inherit">hola@aquinadieentrena.cc</a>.</div>
-          <?php elseif (!$ofertables): ?>
-            <p class="ficha__vacia">Ahora mismo no queda ningún hueco abierto a ofertas.</p>
-          <?php else: ?>
+          <div class="aviso aviso--info" id="aviso-cerrado"<?= $abierto ? ' hidden' : '' ?>>Este proyecto no admite ofertas ahora mismo. Si te interesa, escríbenos a
+            <a href="mailto:hola@aquinadieentrena.cc?subject=Hueco%20en%20el%20mono" style="color:inherit">hola@aquinadieentrena.cc</a>.</div>
+
+          <?php if ($algunoAbierto): ?>
 
           <?php if ($aviso): ?><div class="aviso" role="alert" id="aviso-form"><?= ane_h($aviso) ?></div><?php endif; ?>
 
-          <form method="post" action="/maillot#oferta" id="form-oferta" novalidate>
+          <form method="post" action="/maillot#oferta" id="form-oferta" novalidate<?= $abierto ? '' : ' hidden' ?>>
             <input type="hidden" name="_sello" value="<?= ane_h(ane_form_sello('maillot')) ?>">
+            <input type="hidden" name="proyecto" id="proyecto" value="<?= ane_h($proyecto) ?>">
+            <p class="form-proyecto">Oferta para <b id="form-proyecto-nombre"><?= ane_h($actual['nombre'] ?? '') ?></b></p>
             <div class="trampa" aria-hidden="true">
               <label>No rellenes este campo <input type="text" name="web" tabindex="-1" autocomplete="off"></label>
             </div>
@@ -351,7 +398,7 @@ $datosJs = [
                 <option value="">Elige un hueco</option>
                 <?php foreach ($ofertables as $h): ?>
                   <option value="<?= ane_h($h['zona']) ?>"<?= $h['zona'] === $zonaElegida ? ' selected' : '' ?>
-                    ><?= ane_h($h['nombre']) ?> — desde <?= ane_maillot_euros($h['siguiente']) ?></option>
+                    ><?= ane_h($h['nombre']) ?><?= $h['siguiente'] > 1 ? ' — desde ' . ane_maillot_euros($h['siguiente']) : '' ?></option>
                 <?php endforeach; ?>
               </select>
               <?= ane_err($errores, 'zona') ?>
@@ -401,7 +448,7 @@ $datosJs = [
             <?= ane_err($errores, '_acepto') ?>
             <p class="datos-nota">Tus datos los trata Eduardo Talavera Fernández (Aquí Nadie Entrena) solo para
               gestionar esta oferta y contactarte sobre ella. En la web solo sale el importe, nunca quién lo ofrece.
-              Los borramos al cerrar el patrocinio de la temporada. Más en la <a href="/privacidad#patrocinio">política de privacidad</a>.</p>
+              Los borramos al cerrar el patrocinio de ese proyecto. Más en la <a href="/privacidad#patrocinio">política de privacidad</a>.</p>
 
             <button class="enviar" type="submit">Enviar mi oferta</button>
           </form>
@@ -415,7 +462,8 @@ $datosJs = [
 
   <section class="seccion">
     <div class="envoltorio">
-      <h2 class="display seccion__titulo" style="font-size:clamp(32px,5vw,54px);margin:0 0 24px">Todos los huecos</h2>
+      <h2 class="display seccion__titulo" style="font-size:clamp(32px,5vw,54px);margin:0 0 6px">Todos los huecos</h2>
+      <p style="margin:0 0 24px;color:var(--gris-carbon)">En <b id="lista-proyecto"><?= ane_h($actual['nombre'] ?? '') ?></b></p>
       <?php if (!$huecos): ?>
         <p>Estamos preparando los huecos del mono. Vuelve en unos días.</p>
       <?php else: ?>
@@ -430,7 +478,7 @@ $datosJs = [
               <p>Cierra el <?= ane_h($h['cierre']) ?></p>
             <?php endif; ?>
             <?php if ($abierto && in_array($h['estado'], ['libre', 'oferta'], true)): ?>
-              <a class="mando" href="/maillot?zona=<?= rawurlencode($h['zona']) ?>#oferta" data-elegir="<?= ane_h($h['zona']) ?>">Hacer oferta</a>
+              <a class="mando" href="<?= ane_h(ane_maillot_url($proyecto, ['zona' => $h['zona']])) ?>#oferta" data-elegir="<?= ane_h($h['zona']) ?>">Hacer oferta</a>
             <?php endif; ?>
           </li>
         <?php endforeach; ?>
@@ -457,7 +505,7 @@ $datosJs = [
 </footer>
 
 <script type="application/json" id="datos-maillot"><?= json_encode($datosJs, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
-<script type="module" src="/assets/js/maillot.min.js?v=20260930"></script>
+<script type="module" src="/assets/js/maillot.min.js?v=20261001"></script>
 <script src="/assets/js/stats.js?v=20260930"></script>
 </body>
 </html>
