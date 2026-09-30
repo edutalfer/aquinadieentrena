@@ -44,10 +44,10 @@ export const COLOR = {
 
 /* Tronco: y · medio ancho · medio fondo delante · medio fondo detrás */
 const PERFIL = [
-  [0.835, 0.105, 0.062, 0.070],
-  [0.880, 0.150, 0.090, 0.100],
-  [0.930, 0.160, 0.095, 0.110],
-  [0.990, 0.158, 0.092, 0.108],
+  [0.862, 0.080, 0.050, 0.058],
+  [0.900, 0.140, 0.084, 0.094],
+  [0.940, 0.156, 0.090, 0.102],
+  [0.990, 0.150, 0.090, 0.102],
   [1.050, 0.146, 0.090, 0.098],
   [1.100, 0.136, 0.092, 0.094],
   [1.170, 0.142, 0.101, 0.096],
@@ -64,7 +64,7 @@ const Y_CUELLO = 1.49;
 /* El escote baja por delante, como en los monos de crono */
 const ESCOTE = 0.03;
 const corteCuello = (z) => Y_CUELLO - ESCOTE * Math.min(1, Math.max(-0.35, z / 0.065));
-const Y_BASE = 0.838;
+const Y_BASE = 0.864;
 
 /* Tabla precalculada del perfil (Catmull-Rom), para no interpolar en cada punto */
 const TAB_N = 1024;
@@ -97,8 +97,10 @@ function tronco(x, y, z) {
   const a = TAB[s], b = z >= 0 ? TAB[s + 1] : TAB[s + 2];
   const q = Math.sqrt((x / a) * (x / a) + (z / b) * (z / b));
   let d = (q - 1) * Math.min(a, b);
-  d = Math.max(d, y - corteCuello(z), Y_BASE - y);
-  return d;
+  d = Math.max(d, y - corteCuello(z));
+  /* El fondo, redondeado: se funde con las piernas sin arista */
+  const h = Math.max(0.02 - Math.abs(d - (Y_BASE - y)), 0) / 0.02;
+  return Math.max(d, Y_BASE - y) + h * h * 0.005;
 }
 
 /* Cono redondeado (Íñigo Quílez), con el extremo b cortado en plano */
@@ -145,14 +147,14 @@ function smin(a, b, k) {
 export const MANGAS = {}, PIERNAS = {};
 const DELTOIDES = {}, GLUTEOS = {}, PECTORALES = {}, DORSALES = {}, CUADRICEPS = {}, ISQUIOS = {};
 for (const s of [1, -1]) {
-  MANGAS[s] = cono([0.186 * s, 1.392, -0.006], [0.228 * s, 1.062, 0.014], 0.06, 0.045);
-  PIERNAS[s] = cono([0.086 * s, 0.940, -0.012], [0.104 * s, 0.535, 0.012], 0.095, 0.068);
+  MANGAS[s] = cono([0.186 * s, 1.392, -0.006], [0.212 * s, 1.068, 0.016], 0.058, 0.046);
+  PIERNAS[s] = cono([0.094 * s, 0.945, -0.010], [0.106 * s, 0.535, 0.006], 0.080, 0.064);
   DELTOIDES[s] = elipsoide([0.174 * s, 1.384, -0.004], [0.058, 0.068, 0.066]);
   PECTORALES[s] = elipsoide([0.066 * s, 1.318, 0.078], [0.078, 0.056, 0.042]);
   DORSALES[s] = elipsoide([0.112 * s, 1.235, -0.035], [0.052, 0.105, 0.064]);
-  GLUTEOS[s] = elipsoide([0.066 * s, 0.962, -0.062], [0.088, 0.090, 0.071]);
-  CUADRICEPS[s] = elipsoide([0.092 * s, 0.770, 0.030], [0.074, 0.165, 0.068]);
-  ISQUIOS[s] = elipsoide([0.090 * s, 0.790, -0.032], [0.070, 0.150, 0.064]);
+  GLUTEOS[s] = elipsoide([0.068 * s, 0.950, -0.045], [0.078, 0.085, 0.066]);
+  CUADRICEPS[s] = elipsoide([0.100 * s, 0.760, 0.016], [0.062, 0.17, 0.066]);
+  ISQUIOS[s] = elipsoide([0.098 * s, 0.790, -0.022], [0.062, 0.15, 0.064]);
 }
 
 export function sdf(x, y, z) {
@@ -160,12 +162,12 @@ export function sdf(x, y, z) {
   let d = tronco(x, y, z);
   d = smin(d, PECTORALES[s](x, y, z), 0.025);
   d = smin(d, DORSALES[s](x, y, z), 0.035);
-  d = smin(d, GLUTEOS[s](x, y, z), 0.03);
+  d = smin(d, GLUTEOS[s](x, y, z), 0.045);
   d = smin(d, DELTOIDES[s](x, y, z), 0.03);
   d = smin(d, MANGAS[s](x, y, z), 0.02);
   /* Cada pierna, con sus músculos, se funde con la cadera; las dos piernas entre sí no */
-  const pierna = (t) => smin(smin(PIERNAS[t](x, y, z), CUADRICEPS[t](x, y, z), 0.03), ISQUIOS[t](x, y, z), 0.03);
-  d = smin(d, smin(pierna(1), pierna(-1), 0.012), 0.035);
+  const pierna = (t) => smin(smin(PIERNAS[t](x, y, z), CUADRICEPS[t](x, y, z), 0.04), ISQUIOS[t](x, y, z), 0.04);
+  d = smin(d, smin(pierna(1), pierna(-1), 0.02), 0.03);
   return d;
 }
 
@@ -296,12 +298,12 @@ export function mallaMono(paso = 0.008) {
 
 function materialEquipaje() {
   const m = new MeshPhysicalMaterial({
-    color: "#ffffff", roughness: 0.6, metalness: 0, sheen: 0.12, sheenRoughness: 0.5, sheenColor: "#ffffff",
+    color: "#ffffff", roughness: 0.8, metalness: 0, sheen: 0.08, sheenRoughness: 0.8, sheenColor: "#ffffff",
     envMapIntensity: 0.14,
   });
   const u = {
     cBlanco: { value: new Color("#DEE2E7") },
-    cNegro: { value: new Color("#121315") },
+    cNegro: { value: new Color("#161719") },
     cAzul: { value: new Color(COLOR.azul) },
     cSilicona: { value: new Color("#2A2C31") },
     cDentro: { value: new Color("#9CA3AD") },
@@ -313,7 +315,7 @@ function materialEquipaje() {
     escote: { value: ESCOTE },
     cuelloBajo: { value: new Vector4(...perfilEn(Y_CUELLO - ESCOTE), Y_CUELLO - ESCOTE) },
     cuelloAlto: { value: new Vector4(...perfilEn(Y_CUELLO + ESCOTE * 0.35), Y_CUELLO + ESCOTE * 0.35) },
-    cLateral: { value: new Color("#222429") },
+    cLateral: { value: new Color("#212226") },
     rMangaFin: { value: MANGAS[1].r2 }, rPiernaFin: { value: PIERNAS[1].r2 },
   };
   m.onBeforeCompile = (sh) => {
@@ -359,7 +361,7 @@ vec3 equipaje(vec3 p, vec3 n) {
   float enManga = step(m.y, 0.085) * step(0.22, m.x) * step(m.x, 1.03);
   blanco = max(blanco, enManga);
   vec3 c = mix(cNegro, cBlanco, blanco);
-  rugosidad = mix(0.42, 0.6, blanco);
+  rugosidad = mix(0.86, 0.72, blanco);
 
   /* Tejido: canalé fino (a lo largo en la manga, en horizontal en el tronco) */
   float canal = enManga > 0.5 ? sin(atan(rm.z, rm.x) * 110.0) : sin(p.y * 560.0);
@@ -482,8 +484,8 @@ export const ZONAS = {
   "abdomen":      { desde: [0, 1.150, 1], hacia: [0, 0, -1], tam: [0.20, 0.080], mira: 0 },
   "espalda-alta": { desde: [0, 1.320, -1], hacia: [0, 0, 1], tam: [0.25, 0.095], mira: PI },
   "espalda-baja": { desde: [0, 1.140, -1], hacia: [0, 0, 1], tam: [0.21, 0.080], mira: PI },
-  "costado-izq":  { desde: [1, 1.02, 0.005], hacia: [-1, 0, 0], tam: [0.08, 0.12], mira: -1.2, vertical: true },
-  "costado-der":  { desde: [-1, 1.02, 0.005], hacia: [1, 0, 0], tam: [0.08, 0.12], mira: 1.2, vertical: true },
+  "costado-izq":  { desde: [1, 0.995, 0.005], hacia: [-1, 0, 0], tam: [0.08, 0.12], mira: -1.2, vertical: true },
+  "costado-der":  { desde: [-1, 0.995, 0.005], hacia: [1, 0, 0], tam: [0.08, 0.12], mira: 1.2, vertical: true },
   "manga-izq":    { tubo: "manga", lado: 1, t: 0.52, tam: [0.10, 0.12], mira: -PI / 2 },
   "manga-der":    { tubo: "manga", lado: -1, t: 0.52, tam: [0.10, 0.12], mira: PI / 2 },
   "culote-izq":   { tubo: "pierna", lado: 1, t: 0.5, tam: [0.09, 0.22], mira: -PI / 2, vertical: true },
