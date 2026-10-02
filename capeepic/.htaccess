@@ -1,0 +1,11 @@
+# Cape Epic 2027 — carpeta privada con contraseña
+AuthType Basic
+AuthName "ANE Cape Epic 2027"
+AuthUserFile /home/u527801093/domains/aquinadieentrena.cc/.capeepic.htpasswd
+Require valid-user
+
+# Que nada protegido acabe en la caché del CDN ni en proxies
+<IfModule mod_headers.c>
+  Header set Cache-Control "private, no-cache"
+  Header set X-Robots-Tag "noindex, nofollow"
+</IfModule>
