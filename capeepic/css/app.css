@@ -203,3 +203,36 @@ fieldset.checks .chk{display:flex;align-items:center;gap:6px}
 .chainline.justo{border-color:var(--ocre);background:var(--ocre-soft)}
 .chainline.no{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 10%,transparent)}
 .btns.col{flex-direction:column;align-items:stretch}
+
+/* Mono del día */
+.mono-img{width:100%;max-height:340px;object-fit:cover;border-radius:3px;background:var(--bg)}
+.mono-name{font-family:var(--display);font-style:italic;font-weight:900;font-stretch:112%;text-transform:uppercase;font-size:34px;line-height:.95;color:var(--ocre-ink)}
+.mono-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mono-thumb{border:0;background:var(--bg);border-radius:3px;padding:0;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;text-align:left}
+.mono-thumb img,.mono-thumb .ph{width:100%;aspect-ratio:1;object-fit:cover;display:grid;place-items:center;background:var(--dust);font-family:var(--display);font-style:italic;font-weight:900;font-size:26px;color:var(--ocre-ink)}
+.mono-thumb .cap{font-size:11px;padding:4px 6px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:360px){.mono-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* Checklists */
+.chk-head,.chk-row{display:grid;grid-template-columns:1fr repeat(var(--cols),64px);gap:8px;align-items:center}
+.chk-head span{font-size:12px;font-weight:600;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chk-row{padding-block:6px;border-top:1px solid var(--line)}
+.edit.lft{text-align:left;color:var(--ink);font-weight:500;font-size:15px;padding:4px 0}
+.tick{height:40px;border:2px solid var(--line);background:var(--bg);border-radius:3px;font-size:20px;font-weight:900;color:var(--on-ocre);cursor:pointer}
+.tick[aria-pressed="true"]{background:var(--ocre);border-color:var(--ocre)}
+.strip-link{flex-direction:row;justify-content:space-between;align-items:center;border:0;text-align:left;cursor:pointer;width:100%;color:var(--ink);font:inherit}
+
+/* Equipo */
+.it.person .acts{align-items:baseline;gap:6px 12px}
+
+/* Tiempo y luz */
+.wx{display:flex;gap:16px;align-items:center}
+.wx-t b{font-family:var(--display);font-style:italic;font-weight:900;font-stretch:112%;font-size:40px;line-height:1}
+.wx-t span{color:var(--muted);font-weight:600;margin-left:6px;font-size:18px}
+.wx-d{min-width:0}
+.sunline{border-top:1px solid var(--line);padding-top:8px}
+.light-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.light{background:var(--bg);border-radius:3px;padding:10px 12px}
+.light-h{font-weight:700;margin-bottom:4px}
+.light-row{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding-block:3px}
+.light-row.gold b{color:var(--ocre-ink)}

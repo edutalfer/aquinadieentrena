@@ -9,6 +9,12 @@ import media from "./views/media.js";
 import mas from "./views/mas.js";
 import "./views/carrera.js";
 import "./views/fotos.js";
+import "./views/monos.js";
+import "./views/equipo.js";
+import "./views/tomas.js";
+import "./views/tiempo.js";
+import "./views/listas.js";
+import "./views/gastos.js";
 
 const views = {hoy,mapa,etapas,media,mas};
 const TABS = Object.keys(views);
