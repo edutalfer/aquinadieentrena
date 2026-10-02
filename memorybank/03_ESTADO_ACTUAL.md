@@ -106,8 +106,8 @@ Estilo Google Forms, pero cortan de verdad al llegar al límite (ver D18).
 tarjeta de marcas de la portada. Todo es HTML estático con estilos propios en la
 página (no toca `estilo.css`). **Fuente de las cifras: el Dossier ANE 2027.**
 
-- **Cifras actualizadas con Metricool el 25/09/2026** (datos reales de YouTube,
-  vídeo a vídeo). Qué vídeos forman cada proyecto, cómo se sacan y lo que queda
+- **Cifras actualizadas con Metricool el 02/10/2026** (datos reales de YouTube,
+  vídeo a vídeo; también las cuatro de portada, recalculadas con Metricool). Qué vídeos forman cada proyecto, cómo se sacan y lo que queda
   por aclarar (visualizaciones de ANE House): **`06_CIFRAS_PROYECTOS.md`**.
 - **Mantenimiento:** cuando termine un proyecto, se pasa de «Lo que viene» a
   «Lo que ya hemos hecho» con sus cifras reales, y si repite, se le pone el
