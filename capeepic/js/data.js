@@ -87,3 +87,17 @@ export const CHECK_DEFAULTS = {
 };
 
 export const SHOT_DEFAULTS = ["Salida desde dentro del pelotón","Plano del mono del día","Paso por la Tough Section","Avituallamiento","Llegada a meta y reacción","Entrevista corta post-etapa","Recuperación / masaje","Ambiente del race village"];
+
+/* Avituallamientos y Toyota Tough Sections leídos de los perfiles oficiales 2027 (km aproximado ±0,5).
+   [km, nombre oficial o null, referencia cercana] */
+export const WATER = {
+  "1":[[26.2,"Elim",null],[48.6,"R46",null],[65.0,null,"Waboomsberg"],[92.8,"Kaleo",null],[117.8,"Prince Alfred Hamlet",null]],
+  "2":[[21.7,"Eselfontein",null],[42.6,"Eselfontein",null],[57.0,null,"Pipeline"],[67.5,"Eselfontein",null],[88.9,"Loxtonia",null]],
+  "3":[[25.6,null,"Old Gydo"],[38.6,null,"Welgemeen"],[62.9,"Die Eike",null],[73.0,null,"Wagon Trail"],[82.9,"Kruisvallei Rd",null]],
+  "4":[[17.2,null,"Daan se Baan"],[33.8,"Theuniskraal",null],[58.0,null,"The Meadows"],[80.2,null,"Schalkenbosch"],[88.9,"Church Street",null]],
+  "5":[[27.3,null,"Historic Bridge"],[50.9,"Riebeek Kasteel",null],[75.3,"Porselein Berg Road",null],[94.3,"Kufefi Coffee R44",null],[104.9,null,"Wellington"]],
+  "6":[[30.1,null,"Cool Runnings"],[39.3,null,"DNF"],[52.2,null,"Full Monty"],[65.5,null,"Golden Mile"]],
+  "7":[[22.0,null,"Roller Coaster"],[36.3,null,"Happy Hog"],[46.2,null,"True Grit"],[56.3,null,"Doolhof"]]
+};
+export const TTS = {"1":[68,75.7,"Mast Drop"],"2":[58,62.7,"Pipeline"],"3":[74,80.2,"Wagon Trail"],"4":[64.4,68.2,"Bone Trail"],"5":[56.9,59.3,"Riebeekberg"],"6":[42.9,45.3,"The Cliffhanger"],"7":[49.4,51.3,"Blazing Saddles"]};
+export function waterOf(id){ return (WATER[id]||[]).map(([km,nombre,cerca],i)=>({n:i+1,km,nombre,cerca,label:nombre||("cerca de "+cerca)})); }

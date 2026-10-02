@@ -7,7 +7,7 @@ const APP = [
   "./","./index.html","./manifest.webmanifest","./icon.svg","./icon-180.png","./icon-512.png",
   "./css/app.css?v=20261002b","./js/app.js?v=20261002b",
   "./js/data.js","./js/util.js","./js/store.js","./js/ui.js",
-  "./js/views/hoy.js","./js/views/casas.js","./js/views/etapas.js","./js/views/mas.js","./js/views/mapa.js","./js/views/media.js","./js/views/carrera.js","./js/views/fotos.js","./js/views/monos.js","./js/views/equipo.js","./js/views/listas.js","./js/views/tomas.js","./js/views/tiempo.js","./js/views/gastos.js","./vendor/leaflet/leaflet.js","./vendor/leaflet/leaflet.css"
+  "./js/views/hoy.js","./js/views/casas.js","./js/views/etapas.js","./js/views/mas.js","./js/views/mapa.js","./js/views/media.js","./js/views/carrera.js","./js/views/fotos.js","./js/views/tracks.js","./tracks/P.json","./tracks/1.json","./tracks/2.json","./tracks/3.json","./tracks/4.json","./tracks/5.json","./tracks/6.json","./tracks/7.json","./js/views/monos.js","./js/views/equipo.js","./js/views/listas.js","./js/views/tomas.js","./js/views/tiempo.js","./js/views/gastos.js","./vendor/leaflet/leaflet.js","./vendor/leaflet/leaflet.css"
 ];
 const TILES = "ane-ce2-tiles";
 const TILE_HOSTS = ["tile.openstreetmap.org","tile.opentopomap.org"];

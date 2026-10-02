@@ -58,7 +58,6 @@ export default {
       <ul class="sectors">${s.sectors.map(x=>`<li class="${x===s.tts?"tts":""}">${esc(x)}${x===s.tts?" · Tough Section":""}</li>`).join("")}</ul>
       <div class="btns"><a class="btn" target="_blank" rel="noopener" href="${dirUrl(PLACES[s.from].q)}">Cómo llegar a la salida</a>${s.from!==s.to?`<a class="btn ghost" target="_blank" rel="noopener" href="${dirUrl(PLACES[s.to].q)}">Cómo llegar a meta</a>`:""}<button class="btn ghost" data-act="ver-mapa">Ver en el mapa</button></div></div>`;
     for(const x of extraSections){ try{ html+=x.html?.(s,c,nav)||""; }catch(err){console.error(err);} }
-    html+=`<div class="panel"><h3>Avituallamientos</h3><div class="pending">Los water points con su kilómetro salen con el Rider Manual, normalmente en febrero. Se añadirán aquí y en el mapa con su hora de paso.</div></div>`;
     el.innerHTML=html;
   }
 };

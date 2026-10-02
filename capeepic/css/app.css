@@ -236,3 +236,4 @@ fieldset.checks .chk{display:flex;align-items:center;gap:6px}
 .light-h{font-weight:700;margin-bottom:4px}
 .light-row{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding-block:3px}
 .light-row.gold b{color:var(--ocre-ink)}
+.mk.water span{background:#2A5CB8;color:#fff;border-color:#fff}
