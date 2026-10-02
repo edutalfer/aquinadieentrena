@@ -167,18 +167,23 @@ Eduardo lo diga).
 
 ---
 
-## 🏔️ App Cape Epic 2027: /capeepic (2026-10-02)
+## 🏔️ App Cape Epic 2027: /capeepic (actualizado 2026-10-02)
 
-App web privada para Eduardo, Cristóbal y 2–3 acompañantes durante la Cape Epic (21–28 mar 2027).
+App web privada (PWA, funciona sin cobertura) para Eduardo, Cristóbal, acompañantes, fotógrafos y videógrafos (21–28 mar 2027).
 
-- **Acceso:** toda la carpeta con contraseña (Basic Auth en `capeepic/.htaccess`).
-  Usuario `ane`. El fichero de claves está en `~/domains/aquinadieentrena.cc/.capeepic.htpasswd`
-  (fuera de public_html y del repo). OJO: en `~/datos/` NO funciona, el servidor web no puede leerlo.
+- **Acceso:** toda la carpeta con contraseña (Basic Auth en `capeepic/.htaccess`). Usuario `ane`.
+  Fichero de claves: `~/domains/aquinadieentrena.cc/.capeepic.htpasswd` (fuera de public_html y del repo).
+  OJO: en `~/datos/` NO funciona, el servidor web no puede leerlo.
   Cambiar clave: `printf 'ane:%s\n' "$(openssl passwd -apr1 'NUEVA')" > ~/domains/aquinadieentrena.cc/.capeepic.htpasswd`
-- **Pestañas:** Hoy (cuenta atrás / etapa del día), Etapas (8 fichas con datos oficiales), Casas, Info.
-- **Casas compartidas:** `capeepic/api.php` guarda en `~/datos/capeepic_casas.json` (GET lista, POST guardar/borrar).
-- **Offline:** `sw.js` cachea la página; las casas se guardan también en localStorage del móvil.
-- **Pendiente:** tracks reconstruidos desde los mapas oficiales, avituallamientos y calculadora de paso (Rider Manual, feb 2027).
+- **Código (ES modules, sin build):** `index.html`, `css/app.css`, `js/app.js` (router), `js/store.js` (sincronización + cola sin conexión),
+  `js/data.js` (etapas, días, avituallamientos con km oficial), `js/views/*.js` (un módulo por función, se registran solos en las vistas).
+  Leaflet en `vendor/leaflet/` (servido desde aquí para el modo sin cobertura).
+- **Datos compartidos:** `api.php` → `~/datos/capeepic/<coleccion>.json` (casas, plan, ajustes, equipo, checkins, spots, monos, listas, hechos, tomas, marcas, gastos).
+  Fotos de monos: `upload.php` → `capeepic/media/` (fuera del repo por .gitignore; .htaccess impide ejecutar nada).
+- **Tracks:** `capeepic/tracks/<etapa>.json` son ORIENTATIVOS, generados con `capeepic/_build_tracks.php` (BRouter MTB por puntos leídos en los mapas oficiales; tramos sin camino en OSM van en línea recta).
+  Etapas 1, 3 y 4 salen cerca del km oficial; 2, 5, 6 y 7 bastante más cortas (sendas que no están en OSM). Sustituir por los GPX oficiales cuando salgan: mismo formato `{oficial_km, puntos:[[lat,lon,ele]]}`.
+- **Avituallamientos:** km leídos de los perfiles oficiales (±0,5 km), en `WATER` de `js/data.js`. Revisar con el Rider Manual (feb 2027).
+- **Service worker:** al cambiar ficheros, subir la versión `V` en `sw.js` (y `?v=` de app.css/app.js en index.html).
 
 ---
 

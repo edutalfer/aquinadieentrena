@@ -2,9 +2,9 @@
    App: de la red si hay conexión, de la copia si no.
    Mapas (teselas): de la copia si ya se vieron; se guardan al verlas.
    Los datos (api.php) no pasan por aquí: la app guarda su propia copia. */
-const V = "ane-ce2-20261002b";
+const V = "ane-ce2-20261002c";
 const APP = [
-  "./","./index.html","./manifest.webmanifest","./icon.svg","./icon-180.png","./icon-512.png",
+  "./","./manifest.webmanifest","./icon.svg","./icon-180.png","./icon-512.png",
   "./css/app.css?v=20261002b","./js/app.js?v=20261002b",
   "./js/data.js","./js/util.js","./js/store.js","./js/ui.js",
   "./js/views/hoy.js","./js/views/casas.js","./js/views/etapas.js","./js/views/mas.js","./js/views/mapa.js","./js/views/media.js","./js/views/carrera.js","./js/views/fotos.js","./js/views/tracks.js","./tracks/P.json","./tracks/1.json","./tracks/2.json","./tracks/3.json","./tracks/4.json","./tracks/5.json","./tracks/6.json","./tracks/7.json","./js/views/monos.js","./js/views/equipo.js","./js/views/listas.js","./js/views/tomas.js","./js/views/tiempo.js","./js/views/gastos.js","./vendor/leaflet/leaflet.js","./vendor/leaflet/leaflet.css"
@@ -35,6 +35,6 @@ self.addEventListener("fetch",e=>{
   if(url.origin!==location.origin&&!isFont) return;
   e.respondWith(
     fetch(req).then(res=>{ if(res.ok||res.type==="opaque"){const cp=res.clone();caches.open(V).then(c=>c.put(req,cp));} return res; })
-      .catch(()=>caches.match(req,{ignoreSearch:false}).then(r=>r||caches.match(req,{ignoreSearch:true})).then(r=>r||(req.mode==="navigate"?caches.match("./index.html"):undefined)))
+      .catch(()=>caches.match(req,{ignoreSearch:false}).then(r=>r||caches.match(req,{ignoreSearch:true})).then(r=>r||(req.mode==="navigate"?caches.match("./"):undefined)))
   );
 });
