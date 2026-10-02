@@ -182,8 +182,7 @@ App web privada (PWA, funciona sin cobertura) para Eduardo, Cristóbal y acompa�
   `js/data.js` (etapas, días, avituallamientos con km oficial), `js/views/*.js` (un módulo por función, se registran solos en las vistas).
   Leaflet en `vendor/leaflet/` (servido desde aquí para el modo sin cobertura).
 - **Datos compartidos:** `api.php` → `~/datos/capeepic/<coleccion>.json` (casas, plan, ajustes, equipo, checkins, spots, monos, listas, hechos, tomas, marcas, gastos).
-- **Tracks:** `capeepic/tracks/<etapa>.json` son ORIENTATIVOS, generados con `capeepic/_build_tracks.php` (BRouter MTB por puntos leídos en los mapas oficiales; tramos sin camino en OSM van en línea recta).
-  Etapas 1, 3 y 4 salen cerca del km oficial; 2, 5, 6 y 7 bastante más cortas (sendas que no están en OSM). Sustituir por los GPX oficiales cuando salgan: mismo formato `{oficial_km, puntos:[[lat,lon,ele]]}`.
+- **Tracks:** eliminados (los orientativos salían mal y confundían). Cuando salgan los GPX oficiales se pueden volver a añadir al mapa.
 - **Avituallamientos:** km leídos de los perfiles oficiales (±0,5 km), en `WATER` de `js/data.js`. Revisar con el Rider Manual (feb 2027).
 - **Service worker:** al cambiar ficheros, subir la versión `V` en `sw.js` (y `?v=` de app.css/app.js en index.html).
 
