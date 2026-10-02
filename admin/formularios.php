@@ -104,6 +104,24 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                ->execute([(int) ($_POST['respuesta'] ?? 0), $id]);
             ane_vuelve('respuestas=' . $id . '&ok=respuesta_borrada');
 
+        case 'cerrar':
+        case 'abrir':
+            $f = ane_form_por_id($bd, $id);
+            if ($f) {
+                if ($accion === 'cerrar') {
+                    $bd->prepare('UPDATE formularios SET abierto = 0, actualizado = ? WHERE id = ?')->execute([$ahora, $id]);
+                } else {
+                    /* Reabrir: si la fecha de cierre ya pasó, se quita; si no, se
+                       volvería a cerrar solo al instante */
+                    $cierre = ($f['cierre'] && $f['cierre'] <= $ahora) ? null : $f['cierre'];
+                    $bd->prepare('UPDATE formularios SET abierto = 1, cierre = ?, actualizado = ? WHERE id = ?')
+                       ->execute([$cierre, $ahora, $id]);
+                }
+            }
+            $ok = $accion === 'cerrar' ? 'cerrado' : 'abierto';
+            $volver = (string) ($_POST['volver'] ?? '');
+            ane_vuelve(in_array($volver, ['editar', 'respuestas'], true) ? $volver . '=' . $id . '&ok=' . $ok : 'ok=' . $ok);
+
         case 'confirmar_reserva':
             $bd->prepare('UPDATE form_respuestas SET reserva = 0 WHERE id = ? AND form_id = ?')
                ->execute([(int) ($_POST['respuesta'] ?? 0), $id]);
@@ -171,6 +189,8 @@ $mensajes = [
     'guardado' => 'Cambios guardados.', 'duplicado' => 'Formulario duplicado. Cambia el título, las fechas y guarda.',
     'borrado' => 'Formulario borrado, con todas sus respuestas.', 'vaciado' => 'Respuestas borradas.',
     'respuesta_borrada' => 'Inscripción borrada.', 'reserva_confirmada' => 'Reserva pasada a confirmada.',
+    'cerrado' => 'Formulario cerrado: ya no acepta inscripciones. Quien abra el enlace verá «Inscripciones cerradas».',
+    'abierto' => 'Formulario abierto otra vez: vuelve a aceptar inscripciones.',
 ];
 $ok = $mensajes[(string) ($_GET['ok'] ?? '')] ?? '';
 
@@ -179,6 +199,24 @@ function ane_etiqueta_estado(array $e): string
     $t = ['abierto' => ['Abierto', 'si'], 'espera' => ['Lista de espera', 'medio'], 'completo' => ['Completo', 'no'],
           'cerrado' => ['Cerrado', 'no'], 'caducado' => ['Cerrado por fecha', 'no']][$e['estado']];
     return '<span class="estado estado--' . $t[1] . '">' . $t[0] . '</span>';
+}
+
+/* Botón para cerrar o reabrir a mano. «Cerrar» mientras esté marcado como
+   abierto y no haya caducado; si no, «Reabrir». */
+function ane_boton_abrir_cerrar(array $f, array $e, string $volver = '', string $tam = ''): string
+{
+    $cerrar = (int) $f['abierto'] && $e['estado'] !== 'caducado';
+    $aviso = $cerrar
+        ? '¿Cerrar «' . $f['titulo'] . '»? Dejará de aceptar inscripciones. Las que ya hay se conservan y puedes reabrirlo cuando quieras.'
+        : '¿Reabrir «' . $f['titulo'] . '»? Volverá a aceptar inscripciones'
+          . ($e['estado'] === 'caducado' ? ' y se quitará la fecha de cierre, que ya pasó.' : '.');
+    return '<form class="linea" method="post" onsubmit="return confirm(' . ane_h(json_encode($aviso, JSON_UNESCAPED_UNICODE)) . ')">'
+         . ane_csrf_campo()
+         . '<input type="hidden" name="accion" value="' . ($cerrar ? 'cerrar' : 'abrir') . '">'
+         . '<input type="hidden" name="id" value="' . (int) $f['id'] . '">'
+         . ($volver ? '<input type="hidden" name="volver" value="' . ane_h($volver) . '">' : '')
+         . '<button class="boton ' . ($cerrar ? 'boton--peligro' : '') . ' ' . $tam . '" type="submit">'
+         . ($cerrar ? 'Cerrar inscripciones' : 'Reabrir inscripciones') . '</button></form>';
 }
 
 ?><!DOCTYPE html>
@@ -276,6 +314,7 @@ function ane_etiqueta_estado(array $e): string
     <div class="acciones">
       <a class="boton boton--claro" href="?respuestas=<?= (int) $f['id'] ?>">Respuestas (<?= $total ?>)</a>
       <a class="boton boton--claro" href="/f/<?= ane_h($f['token']) ?>?previa=1" target="_blank" rel="noopener">Vista previa</a>
+      <?= ane_boton_abrir_cerrar($f, $e, 'editar') ?>
     </div>
   </div>
 
@@ -488,6 +527,7 @@ function ane_etiqueta_estado(array $e): string
     <h2 class="display"><?= ane_h($f['titulo']) ?></h2>
     <div class="acciones">
       <a class="boton boton--claro" href="?editar=<?= (int) $f['id'] ?>">Editar</a>
+      <?= ane_boton_abrir_cerrar($f, $e, 'respuestas') ?>
       <?php if ($filas): ?><a class="boton" href="?csv=<?= (int) $f['id'] ?>">Descargar CSV</a><?php endif; ?>
     </div>
   </div>
@@ -593,6 +633,7 @@ function ane_etiqueta_estado(array $e): string
             <td><div class="acciones">
               <a class="boton boton--peq boton--claro" href="?editar=<?= (int) $f['id'] ?>">Editar</a>
               <a class="boton boton--peq" href="?respuestas=<?= (int) $f['id'] ?>">Respuestas</a>
+              <?= ane_boton_abrir_cerrar($f, $e, '', 'boton--peq') ?>
             </div></td>
           </tr>
         <?php endforeach; ?>
