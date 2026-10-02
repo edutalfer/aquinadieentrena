@@ -2,7 +2,7 @@
    App: de la red si hay conexión, de la copia si no.
    Mapas (teselas): de la copia si ya se vieron; se guardan al verlas.
    Los datos (api.php) no pasan por aquí: la app guarda su propia copia. */
-const V = "ane-ce2-20261002d";
+const V = "ane-ce2-20261002e";
 const APP = [
   "./","./manifest.webmanifest","./icon.svg","./icon-180.png","./icon-512.png",
   "./css/app.css?v=20261002b","./js/app.js?v=20261002b",

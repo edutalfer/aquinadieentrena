@@ -5,6 +5,7 @@ export const PLACES = {
   saronsberg:{name:"Saronsberg",town:"Tulbagh",lat:-33.2551,lon:19.1383,q:"Saronsberg Wine Cellar, Tulbagh"},
   riebeek:{name:"Riebeek Kasteel",town:"Riebeek Kasteel",lat:-33.3833,lon:18.8963,q:"Riebeek Kasteel"},
   imbuko:{name:"Imbuko Wines",town:"Wellington",lat:-33.6120,lon:19.0040,q:"Imbuko Wines, Wellington"},
+  stellenbosch:{name:"Stellenbosch",town:"Stellenbosch",lat:-33.9346,lon:18.8602,q:"Stellenbosch"},
   cpt:{name:"Aeropuerto de Ciudad del Cabo",town:"Aeropuerto",lat:-33.9690,lon:18.6020,q:"Cape Town International Airport"}
 };
 export const VENUES = ["lourensford","ceres","saronsberg","imbuko"];
@@ -37,9 +38,14 @@ export const STAGES = [
 ];
 
 /* Días del viaje y base donde se duerme esa noche.
-   Del 21 al 29 dormimos en la Casa de campo Twyfeling (Wellington) */
+   Del 15 al 21: Stellenbosch (semana previa). Del 21 al 29: Casa de campo Twyfeling (Wellington) */
 export const DAYS = [
-  {date:"2027-03-20",base:"Somerset West",place:"lourensford",label:"Víspera"},
+  {date:"2027-03-15",base:"Stellenbosch",place:"stellenbosch",label:"Llegada a Stellenbosch"},
+  {date:"2027-03-16",base:"Stellenbosch",place:"stellenbosch",label:"Semana previa"},
+  {date:"2027-03-17",base:"Stellenbosch",place:"stellenbosch",label:"Semana previa"},
+  {date:"2027-03-18",base:"Stellenbosch",place:"stellenbosch",label:"Semana previa"},
+  {date:"2027-03-19",base:"Stellenbosch",place:"stellenbosch",label:"Semana previa"},
+  {date:"2027-03-20",base:"Stellenbosch",place:"stellenbosch",label:"Víspera · recogida de dorsales"},
   {date:"2027-03-21",base:"Wellington",place:"imbuko",label:"Prólogo y llegada a la casa"},
   {date:"2027-03-22",base:"Wellington",place:"imbuko",label:"Etapa 1"},
   {date:"2027-03-23",base:"Wellington",place:"imbuko",label:"Etapa 2"},
@@ -53,11 +59,12 @@ export const DAYS = [
 /* La casa: Casa de campo Twyfeling, Wellington (coordenadas aproximadas del pueblo hasta tener la dirección exacta) */
 export const HOME = {name:"Casa Twyfeling",town:"Wellington",lat:-33.6390,lon:19.0110};
 /* Coche desde la casa hasta la salida de cada etapa (OSRM, sin tráfico) */
-export const DRIVE = {P:{min:60,km:65},"1":{min:54,km:53},"2":{min:54,km:53},"3":{min:54,km:53},"4":{min:66,km:57},"5":{min:66,km:57},"6":{min:11,km:4},"7":{min:11,km:4}};
+export const DRIVE = {P:{min:26,km:23,desde:"Stellenbosch"},"1":{min:54,km:53},"2":{min:54,km:53},"3":{min:54,km:53},"4":{min:66,km:57},"5":{min:66,km:57},"6":{min:11,km:4},"7":{min:11,km:4}};
 
 export const TRANSFERS = [
-  {from:"cpt",to:"imbuko",t:"≈ 1 h · 69 km"},
-  {from:"imbuko",to:"lourensford",t:"≈ 1 h · 65 km",nota:"Prólogo"},
+  {from:"cpt",to:"stellenbosch",t:"≈ 35 min · 35 km",nota:"Llegada, 15 de marzo"},
+  {from:"stellenbosch",to:"lourensford",t:"≈ 25 min · 23 km",nota:"Prólogo, 21 de marzo"},
+  {from:"lourensford",to:"imbuko",t:"≈ 1 h · 65 km",nota:"Después del prólogo, a la casa"},
   {from:"imbuko",to:"ceres",t:"≈ 55 min · 53 km",nota:"Etapas 1, 2 y 3 (por Bainskloof)"},
   {from:"imbuko",to:"saronsberg",t:"≈ 1 h 05 · 57 km",nota:"Etapas 4 y 5"},
   {from:"imbuko",to:"cpt",t:"≈ 1 h · 69 km",nota:"Vuelta"}
@@ -78,7 +85,7 @@ export function planTemplate(stage){
   return [
     {hora:t(-drive-90),texto:"Despertador"},
     {hora:t(-drive-60),texto:"Desayuno"},
-    {hora:t(-drive),texto:"Salir de casa hacia la salida",notas:`${DRIVE[stage.id]?.min||"?"} min de coche desde Wellington`},
+    {hora:t(-drive),texto:"Salir de casa hacia la salida",notas:`${DRIVE[stage.id]?.min||"?"} min de coche desde ${DRIVE[stage.id]?.desde||"Wellington"}`},
     {hora:t(0),texto:"Salida "+(stage.id==="P"?"del prólogo":"etapa "+stage.id)},
     {hora:t(dur),texto:"Llegada prevista a meta"},
     {hora:t(dur+60),texto:"Comida y recuperación"},
