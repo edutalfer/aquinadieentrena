@@ -4,7 +4,6 @@ import {esc,saToday,dayLabel} from "../util.js";
 import {DAYS,CHECK_DEFAULTS} from "../data.js";
 import {sheet,dayStrip,toast} from "../ui.js";
 import {addSection} from "./mas.js";
-import {addMediaSection} from "./media.js";
 import {extraCards} from "./hoy.js";
 
 let day=(()=>{const t=saToday();return DAYS.some(d=>d.date===t)?t:DAYS[0].date;})();
@@ -57,7 +56,6 @@ async function onClick(a,b){
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-lday]"); if(!b) return; day=b.dataset.lday; window.__nav?.go(window.__nav.tab); },true);
 
 addSection({id:"material",label:"Material",html:()=>listHtml("corredor","Material de carrera"),onClick});
-addMediaSection({id:"material",label:"Material",perStage:false,html:()=>listHtml("media","Material de foto y vídeo"),onClick:(a,b)=>onClick(a,b)});
 
 /* Resumen en Hoy */
 extraCards.push({html:(d,st)=>{

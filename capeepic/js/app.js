@@ -5,19 +5,16 @@ import {sheet} from "./ui.js";
 import hoy from "./views/hoy.js";
 import mapa from "./views/mapa.js";
 import etapas from "./views/etapas.js";
-import media from "./views/media.js";
 import mas from "./views/mas.js";
 import "./views/carrera.js";
-import "./views/fotos.js";
 import "./views/tracks.js";
-import "./views/monos.js";
+import "./views/puntos.js";
 import "./views/equipo.js";
-import "./views/tomas.js";
 import "./views/tiempo.js";
 import "./views/listas.js";
 import "./views/gastos.js";
 
-const views = {hoy,mapa,etapas,media,mas};
+const views = {hoy,mapa,etapas,mas};
 const TABS = Object.keys(views);
 
 /* Estado de navegación compartido entre vistas */

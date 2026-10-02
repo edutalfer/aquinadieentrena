@@ -171,7 +171,8 @@ Eduardo lo diga).
 
 ## 🏔️ App Cape Epic 2027: /capeepic (actualizado 2026-10-02)
 
-App web privada (PWA, funciona sin cobertura) para Eduardo, Cristóbal, acompañantes, fotógrafos y videógrafos (21–28 mar 2027).
+App web privada (PWA, funciona sin cobertura) para Eduardo, Cristóbal y acompañantes (15–28 mar 2027: semana previa en Stellenbosch, casa Twyfeling en Wellington del 21 al 29).
+- **Simplificada (2026-10-02):** fuera Estamos aquí/posiciones (van con WhatsApp y GPS oficial) y todo lo de foto/vídeo. Pestañas: Hoy, Mapa, Etapas, Más. En Etapas: horario, avituallamientos y Puntos de interés (colección spots: nombre, tipo, enlace de Google Maps, km, notas).
 
 - **Acceso:** toda la carpeta con contraseña (Basic Auth en `capeepic/.htaccess`). Usuario `ane`.
   Fichero de claves: `~/domains/aquinadieentrena.cc/.capeepic.htpasswd` (fuera de public_html y del repo).
@@ -181,7 +182,6 @@ App web privada (PWA, funciona sin cobertura) para Eduardo, Cristóbal, acompañ
   `js/data.js` (etapas, días, avituallamientos con km oficial), `js/views/*.js` (un módulo por función, se registran solos en las vistas).
   Leaflet en `vendor/leaflet/` (servido desde aquí para el modo sin cobertura).
 - **Datos compartidos:** `api.php` → `~/datos/capeepic/<coleccion>.json` (casas, plan, ajustes, equipo, checkins, spots, monos, listas, hechos, tomas, marcas, gastos).
-  Fotos de monos: `upload.php` → `capeepic/media/` (fuera del repo por .gitignore; .htaccess impide ejecutar nada).
 - **Tracks:** `capeepic/tracks/<etapa>.json` son ORIENTATIVOS, generados con `capeepic/_build_tracks.php` (BRouter MTB por puntos leídos en los mapas oficiales; tramos sin camino en OSM van en línea recta).
   Etapas 1, 3 y 4 salen cerca del km oficial; 2, 5, 6 y 7 bastante más cortas (sendas que no están en OSM). Sustituir por los GPX oficiales cuando salgan: mismo formato `{oficial_km, puntos:[[lat,lon,ele]]}`.
 - **Avituallamientos:** km leídos de los perfiles oficiales (±0,5 km), en `WATER` de `js/data.js`. Revisar con el Rider Manual (feb 2027).

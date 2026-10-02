@@ -2,7 +2,6 @@
 import {esc,saHM,saToday,daysBetween,stageLabel} from "../util.js";
 import {PLACES,STAGES,DAYS} from "../data.js";
 import {extraCards} from "./hoy.js";
-import {addMediaSection} from "./media.js";
 
 /* ---- Sol (método de SunCalc, precisión de un par de minutos) ---- */
 export function sunTimes(date,lat,lon){
@@ -79,12 +78,4 @@ extraCards.push({html:(d)=>{
   return `<div class="panel"><div class="panel-h"><h3>Tiempo y luz</h3><span class="tag">${esc(PLACES[pl].town)}</span></div>
     ${weatherBlock(d.date,pl)}
     <div class="sunline small num">Amanecer <b>${saHM(t.rise)}</b> · Atardecer <b>${saHM(t.set)}</b> · Hora dorada <b>${saHM(t.goldPmStart)}</b></div></div>`;
-}});
-
-addMediaSection({id:"luz",label:"Luz y tiempo",html:s=>{
-  const places=[...new Set([s.from,s.via,s.to].filter(Boolean))];
-  return `<div class="panel"><div class="panel-h"><h3>Luz</h3><span class="tag">${stageLabel(s)}</span></div>
-    <div class="light-grid">${places.map(p=>lightHtml(s.date,p,p===s.from?"Salida · "+PLACES[p].town:p===s.to?"Meta · "+PLACES[p].town:PLACES[p].town)).join("")}</div>
-    <p class="small muted" style="margin:0">Calculado para cada sede. En valles y con montañas al oeste el sol desaparece antes.</p></div>
-    <div class="panel"><div class="panel-h"><h3>Tiempo</h3><span class="tag">${esc(PLACES[s.from].town)}</span></div>${weatherBlock(s.date,s.from)}</div>`;
 }});

@@ -4,7 +4,7 @@ import {esc} from "../util.js";
 import {sheet,toast} from "../ui.js";
 import {addSection} from "./mas.js";
 
-const ROLES=[["corredor","Corredor"],["acompañante","Acompañante"],["foto","Fotógrafo"],["video","Videógrafo"],["otro","Otro"]];
+const ROLES=[["corredor","Corredor"],["acompañante","Acompañante"],["otro","Otro"]];
 const rolTxt=r=>(ROLES.find(x=>x[0]===r)||["","—"])[1];
 const tidy=t=>String(t||"").replace(/[^\d+]/g,"");
 
@@ -28,7 +28,7 @@ function html(){
   <div class="panel"><h3>Equipo</h3>${ps.length?`<div class="list">${ps.map(p=>`<div class="it person">
       <span><b>${esc(p.nombre)}</b> <span class="tag">${rolTxt(p.rol)}</span>${p.coche?`<br><span class="small">Conduce: ${esc(p.coche)}</span>`:""}${p.notas?`<br><span class="small muted">${esc(p.notas)}</span>`:""}</span>
       <span class="acts">${p.tel?`<span class="num">${esc(p.tel)}</span><button class="copy" data-act="eq-copy" data-v="${esc(p.tel)}">Copiar</button><a href="https://wa.me/${tidy(p.tel).replace(/^\+/,"")}" target="_blank" rel="noopener">WhatsApp</a>`:""}<button class="copy" data-act="eq-edit" data-id="${p.id}">Editar</button></span>
-    </div>`).join("")}</div>`:`<p class="empty">Añadid a todos los que vais: corredores, acompañantes, fotógrafos y videógrafos. Los nombres sirven para "¿Quién eres?", las listas y los gastos.</p>`}</div>
+    </div>`).join("")}</div>`:`<p class="empty">Añadid a todos los que vais: corredores y acompañantes. Los nombres sirven para "¿Quién eres?", las listas y los gastos.</p>`}</div>
   ${coches.length?`<div class="panel"><h3>Coches</h3><div class="list">${coches.map(p=>`<div class="it"><span>${esc(p.coche)}</span><b>${esc(p.nombre)}</b></div>`).join("")}</div></div>`:""}`;
 }
 
