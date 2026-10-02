@@ -1,20 +1,27 @@
 <?php
 /* ============================================================
-   Cape Epic 2027 — casas compartidas
+   Cape Epic 2027 — datos compartidos de la app
    ------------------------------------------------------------
    Toda la carpeta /capeepic va con contraseña (.htaccess).
    Los datos viven FUERA del docroot y del repo:
-     ~/datos/capeepic_casas.json
-   GET  -> {casas:[...]}
-   POST {accion:"guardar", casa:{...}} | {accion:"borrar", id}
+     ~/datos/capeepic/<coleccion>.json   (un mapa id -> documento)
+   GET               -> {cols:{coleccion:[docs]}, ahora}
+   POST {accion:"guardar", c, doc} | {accion:"borrar", c, id}
    ============================================================ */
 
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: private, no-store');
 
-$dir = dirname(__DIR__, 4) . '/datos';
-$fichero = $dir . '/capeepic_casas.json';
+/* Colecciones permitidas y máximo de documentos */
+const COLECCIONES = [
+    'casas' => 200, 'plan' => 1000, 'ajustes' => 50, 'equipo' => 60,
+    'checkins' => 3000, 'spots' => 500, 'monos' => 30,
+    'listas' => 200, 'hechos' => 5000, 'tomas' => 1000,
+    'marcas' => 5000, 'gastos' => 1000,
+];
+
+$dir = getenv('CE_DATOS') ?: dirname(__DIR__, 4) . '/datos/capeepic';
 
 function salir(int $codigo, array $datos): void
 {
@@ -27,71 +34,81 @@ if (!is_dir($dir) && !mkdir($dir, 0700, true)) {
     salir(500, ['error' => 'No se puede crear la carpeta de datos']);
 }
 
-$fp = fopen($fichero, 'c+');
-if (!$fp) {
-    salir(500, ['error' => 'No se puede abrir el fichero de casas']);
+/* Limpia un valor: solo texto, números, booleanos, null y listas/objetos pequeños */
+function limpiar($v, int $nivel = 0)
+{
+    if (is_string($v)) return mb_substr($v, 0, 4000);
+    if (is_int($v) || is_float($v) || is_bool($v) || $v === null) return $v;
+    if (is_array($v) && $nivel < 3) {
+        $out = [];
+        $n = 0;
+        foreach ($v as $k => $x) {
+            if (++$n > 200) break;
+            $out[is_int($k) ? $k : mb_substr((string)$k, 0, 64)] = limpiar($x, $nivel + 1);
+        }
+        return $out;
+    }
+    return null;
+}
+
+function leer(string $f): array
+{
+    if (!is_file($f)) return [];
+    $fp = fopen($f, 'r');
+    flock($fp, LOCK_SH);
+    $j = json_decode(stream_get_contents($fp) ?: '', true);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+    return is_array($j) ? $j : [];
 }
 
 $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-flock($fp, $metodo === 'GET' ? LOCK_SH : LOCK_EX);
-$crudo = stream_get_contents($fp);
-$casas = $crudo ? (json_decode($crudo, true) ?: []) : [];
 
 if ($metodo === 'GET') {
-    flock($fp, LOCK_UN);
-    salir(200, ['casas' => array_values($casas)]);
+    $cols = [];
+    foreach (array_keys(COLECCIONES) as $c) {
+        $cols[$c] = array_values(leer("$dir/$c.json"));
+    }
+    salir(200, ['cols' => $cols, 'ahora' => gmdate('c')]);
 }
 
-if ($metodo !== 'POST') {
-    salir(405, ['error' => 'Método no permitido']);
-}
+if ($metodo !== 'POST') salir(405, ['error' => 'Método no permitido']);
 
-$entrada = json_decode(file_get_contents('php://input') ?: '', true);
-if (!is_array($entrada)) {
-    salir(400, ['error' => 'Petición no válida']);
-}
+$crudo = file_get_contents('php://input') ?: '';
+if (strlen($crudo) > 64000) salir(413, ['error' => 'Demasiado grande']);
+$e = json_decode($crudo, true);
+if (!is_array($e)) salir(400, ['error' => 'Petición no válida']);
 
-$fecha = '/^\d{4}-\d{2}-\d{2}$/';
-$accion = $entrada['accion'] ?? '';
+$c = (string)($e['c'] ?? '');
+if (!isset(COLECCIONES[$c])) salir(400, ['error' => 'Colección desconocida']);
 
+$fp = fopen("$dir/$c.json", 'c+');
+if (!$fp) salir(500, ['error' => 'No se puede abrir el fichero']);
+flock($fp, LOCK_EX);
+$docs = json_decode(stream_get_contents($fp) ?: '', true);
+if (!is_array($docs)) $docs = [];
+
+$accion = $e['accion'] ?? '';
 if ($accion === 'guardar') {
-    $c = $entrada['casa'] ?? [];
-    $txt = fn(string $k, int $max) => mb_substr(trim((string)($c[$k] ?? '')), 0, $max);
-    $casa = [
-        'nombre'    => $txt('nombre', 120),
-        'direccion' => $txt('direccion', 300),
-        'desde'     => $txt('desde', 10),
-        'hasta'     => $txt('hasta', 10),
-        'checkin'   => $txt('checkin', 40),
-        'contacto'  => $txt('contacto', 200),
-        'notas'     => $txt('notas', 2000),
-    ];
-    if ($casa['nombre'] === '' || !preg_match($fecha, $casa['desde']) || !preg_match($fecha, $casa['hasta'])) {
-        salir(400, ['error' => 'Faltan nombre, entrada o salida']);
-    }
-    if ($casa['hasta'] <= $casa['desde']) {
-        salir(400, ['error' => 'La salida tiene que ser después de la entrada']);
-    }
-    $id = (string)($c['id'] ?? '');
-    if (!preg_match('/^[a-f0-9]{12}$/', $id)) {
-        if (count($casas) >= 100) {
-            salir(400, ['error' => 'Demasiadas casas']);
-        }
-        $id = bin2hex(random_bytes(6));
-    }
-    $casa['id'] = $id;
-    $casa['actualizada'] = gmdate('Y-m-d H:i:s');
-    $casas[$id] = $casa;
+    $doc = $e['doc'] ?? null;
+    if (!is_array($doc)) salir(400, ['error' => 'Falta el documento']);
+    $id = (string)($doc['id'] ?? '');
+    if (!preg_match('/^[A-Za-z0-9_\-]{1,80}$/', $id)) salir(400, ['error' => 'Identificador no válido']);
+    if (!isset($docs[$id]) && count($docs) >= COLECCIONES[$c]) salir(400, ['error' => 'Se ha llegado al máximo de elementos']);
+    $doc = limpiar($doc);
+    $doc['id'] = $id;
+    $doc['actualizado'] = gmdate('c');
+    $docs[$id] = $doc;
 } elseif ($accion === 'borrar') {
-    unset($casas[(string)($entrada['id'] ?? '')]);
+    unset($docs[(string)($e['id'] ?? '')]);
 } else {
     salir(400, ['error' => 'Acción desconocida']);
 }
 
 ftruncate($fp, 0);
 rewind($fp);
-fwrite($fp, json_encode($casas, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+fwrite($fp, json_encode($docs, JSON_UNESCAPED_UNICODE));
 fflush($fp);
 flock($fp, LOCK_UN);
 fclose($fp);
-salir(200, ['ok' => true, 'casas' => array_values($casas)]);
+salir(200, ['ok' => true]);

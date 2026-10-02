@@ -18,3 +18,7 @@ _borrador*
 pipeline/tmp/
 __pycache__/
 *.pyc
+
+# Fotos subidas desde la app Cape Epic (no van al repo)
+capeepic/media/*
+!capeepic/media/.htaccess

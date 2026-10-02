@@ -1,0 +1,4 @@
+# Solo imágenes: nada ejecutable
+<FilesMatch "\.(php|phtml|phar|pl|py|cgi|html?|js|svg)$">
+  Require all denied
+</FilesMatch>
