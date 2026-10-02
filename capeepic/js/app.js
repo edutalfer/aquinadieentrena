@@ -7,6 +7,8 @@ import mapa from "./views/mapa.js";
 import etapas from "./views/etapas.js";
 import media from "./views/media.js";
 import mas from "./views/mas.js";
+import "./views/carrera.js";
+import "./views/fotos.js";
 
 const views = {hoy,mapa,etapas,media,mas};
 const TABS = Object.keys(views);

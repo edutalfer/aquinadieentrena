@@ -2,12 +2,12 @@
    App: de la red si hay conexión, de la copia si no.
    Mapas (teselas): de la copia si ya se vieron; se guardan al verlas.
    Los datos (api.php) no pasan por aquí: la app guarda su propia copia. */
-const V = "ane-ce2-20261002a";
+const V = "ane-ce2-20261002b";
 const APP = [
   "./","./index.html","./manifest.webmanifest","./icon.svg","./icon-180.png","./icon-512.png",
-  "./css/app.css?v=20261002a","./js/app.js?v=20261002a",
+  "./css/app.css?v=20261002b","./js/app.js?v=20261002b",
   "./js/data.js","./js/util.js","./js/store.js","./js/ui.js",
-  "./js/views/hoy.js","./js/views/casas.js","./js/views/etapas.js","./js/views/mas.js","./js/views/mapa.js","./js/views/media.js"
+  "./js/views/hoy.js","./js/views/casas.js","./js/views/etapas.js","./js/views/mas.js","./js/views/mapa.js","./js/views/media.js","./js/views/carrera.js","./js/views/fotos.js","./vendor/leaflet/leaflet.js","./vendor/leaflet/leaflet.css"
 ];
 const TILES = "ane-ce2-tiles";
 const TILE_HOSTS = ["tile.openstreetmap.org","tile.opentopomap.org"];

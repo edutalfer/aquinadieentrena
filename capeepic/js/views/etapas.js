@@ -62,4 +62,4 @@ export default {
     el.innerHTML=html;
   }
 };
-extraSections.push({onClick(a,b,s,nav){ if(a==="ver-mapa") nav.go("mapa",{stage:s.id}); }});
+extraSections.push({onClick(a,b,s,nav){ if(a==="ver-mapa") nav.go("mapa",{mapStage:s.id,_fit:true}); }});
