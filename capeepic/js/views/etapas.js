@@ -1,6 +1,6 @@
 import * as store from "../store.js";
 import {esc,saToday,dayLabel,stageLabel,splitTitle,starsHtml,dirUrl,hmToMin,minToHM,saMs,saHM} from "../util.js";
-import {STAGES,PLACES} from "../data.js";
+import {STAGES,PLACES,DRIVE} from "../data.js";
 import {sheet} from "../ui.js";
 
 /* Salida y tiempo objetivo de cada etapa: datos por defecto + lo que hayáis ajustado */
@@ -50,6 +50,7 @@ export default {
       <div class="rank-row"><span>Salida</span><b class="num">${c.salida}</b></div>
       <div class="rank-row"><span>Tiempo objetivo</span><b class="num">${c.objetivo} h</b></div>
       <div class="rank-row"><span>Llegada prevista</span><b class="num">${saHM(c.startMs+c.durMin*60e3)}</b></div>
+      ${DRIVE[s.id]?`<div class="rank-row"><span>Salir de casa <span class="small muted">(${DRIVE[s.id].min} min de coche + 30 de margen)</span></span><b class="num">${saHM(c.startMs-(DRIVE[s.id].min+30)*60e3)}</b></div>`:""}
       <p class="small muted" style="margin:0">${c.ajustado?"Ajustado por vosotros.":"Valores de ejemplo: cambiadlos con vuestro objetivo."} Ritmo medio ${(60/c.minPerKm).toFixed(1).replace(".",",")} km/h.</p></div>`;
     html+=`<div class="panel"><div class="small muted">Puesto entre las 8 etapas (1.ª = la más larga o la de más desnivel)</div>
       <div class="rank-row"><span>Distancia</span><span><b class="rank num">${rk("km")}.ª</b> <span class="muted">de 8 · ${s.km} km</span></span></div>

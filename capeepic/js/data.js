@@ -21,13 +21,13 @@ export const STAGES = [
    note:"Tres bucles en Eselfontein, al este de Ceres."},
   {id:"3",date:"2027-03-24",name:"The Rhythm",km:87,dplus:2250,stars:4,from:"ceres",to:"saronsberg",salida:"07:00",objetivo:"5:00",
    sectors:["Old Gydo Pass","Bokkeveld","Skurfberg","Die Eike","Witzenberg Ridge","Wagon Trail"],tts:"Wagon Trail",
-   note:"Traslado de base: de Ceres al nuevo race village de Saronsberg."},
+   note:"Sale de Ceres y termina en el nuevo race village de Saronsberg (Tulbagh): algo más de 1 h de vuelta a la casa."},
   {id:"4",date:"2027-03-25",name:"The Turning Point",km:96,dplus:2550,stars:4.5,from:"saronsberg",to:"saronsberg",salida:"07:00",objetivo:"5:45",
    sectors:["Oakhurst","God's Window","Kilprivier","Schoonderzicht","Bone Trail"],tts:null,
    note:"Cinco subidas y bajadas por el valle de Tulbagh."},
   {id:"5",date:"2027-03-26",name:"The Crossing",km:114,dplus:2350,stars:3.5,from:"saronsberg",to:"imbuko",via:"riebeek",salida:"07:00",objetivo:"5:30",
    sectors:["Swartland","Riebeek Kasteel","Kasteelberg","Eight Feet","Riebeekberg","Patatskloof"],tts:"Riebeekberg",
-   note:"Pista abierta y viento en el Swartland. Día de ir a rueda. Traslado de base a Wellington."},
+   note:"Pista abierta y viento en el Swartland. Día de ir a rueda. Termina en Imbuko, a 10 min de la casa."},
   {id:"6",date:"2027-03-27",name:"The Cliffhanger",km:83,dplus:3100,stars:5,from:"imbuko",to:"imbuko",salida:"07:00",objetivo:"6:00",
    sectors:["Hawequa","Seven Peaks","Aap d'Huez","Angel's Tears","DNF","Brandslangnek","The Cliffhanger","Full Monty","Route 66","Unhappy Hog","Golden Mile"],tts:null,
    note:"Etapa reina. The Cliffhanger está en Canetsfontein Wine Estate."},
@@ -36,25 +36,31 @@ export const STAGES = [
    note:"La más suave sobre el papel. Doolhof es buen sitio para animar."}
 ];
 
-/* Días del viaje y base donde se duerme esa noche */
+/* Días del viaje y base donde se duerme esa noche.
+   Del 21 al 29 dormimos en la Casa de campo Twyfeling (Wellington) */
 export const DAYS = [
   {date:"2027-03-20",base:"Somerset West",place:"lourensford",label:"Víspera"},
-  {date:"2027-03-21",base:"Ceres",place:"ceres",label:"Prólogo y traslado"},
-  {date:"2027-03-22",base:"Ceres",place:"ceres",label:"Etapa 1"},
-  {date:"2027-03-23",base:"Ceres",place:"ceres",label:"Etapa 2"},
-  {date:"2027-03-24",base:"Tulbagh",place:"saronsberg",label:"Etapa 3 y traslado"},
-  {date:"2027-03-25",base:"Tulbagh",place:"saronsberg",label:"Etapa 4"},
-  {date:"2027-03-26",base:"Wellington",place:"imbuko",label:"Etapa 5 y traslado"},
+  {date:"2027-03-21",base:"Wellington",place:"imbuko",label:"Prólogo y llegada a la casa"},
+  {date:"2027-03-22",base:"Wellington",place:"imbuko",label:"Etapa 1"},
+  {date:"2027-03-23",base:"Wellington",place:"imbuko",label:"Etapa 2"},
+  {date:"2027-03-24",base:"Wellington",place:"imbuko",label:"Etapa 3"},
+  {date:"2027-03-25",base:"Wellington",place:"imbuko",label:"Etapa 4"},
+  {date:"2027-03-26",base:"Wellington",place:"imbuko",label:"Etapa 5"},
   {date:"2027-03-27",base:"Wellington",place:"imbuko",label:"Etapa 6"},
-  {date:"2027-03-28",base:"Libre",place:"imbuko",label:"Etapa 7 y meta"}
+  {date:"2027-03-28",base:"Wellington",place:"imbuko",label:"Etapa 7 y meta"}
 ];
 
+/* La casa: Casa de campo Twyfeling, Wellington (coordenadas aproximadas del pueblo hasta tener la dirección exacta) */
+export const HOME = {name:"Casa Twyfeling",town:"Wellington",lat:-33.6390,lon:19.0110};
+/* Coche desde la casa hasta la salida de cada etapa (OSRM, sin tráfico) */
+export const DRIVE = {P:{min:60,km:65},"1":{min:54,km:53},"2":{min:54,km:53},"3":{min:54,km:53},"4":{min:66,km:57},"5":{min:66,km:57},"6":{min:11,km:4},"7":{min:11,km:4}};
+
 export const TRANSFERS = [
-  {from:"cpt",to:"lourensford",t:"≈ 30 min · 35 km"},
-  {from:"lourensford",to:"ceres",t:"≈ 1 h 45 · 130 km"},
-  {from:"ceres",to:"saronsberg",t:"≈ 45 min · 50 km"},
-  {from:"saronsberg",to:"imbuko",t:"≈ 1 h 10 · 85 km"},
-  {from:"imbuko",to:"cpt",t:"≈ 55 min · 70 km"}
+  {from:"cpt",to:"imbuko",t:"≈ 1 h · 69 km"},
+  {from:"imbuko",to:"lourensford",t:"≈ 1 h · 65 km",nota:"Prólogo"},
+  {from:"imbuko",to:"ceres",t:"≈ 55 min · 53 km",nota:"Etapas 1, 2 y 3 (por Bainskloof)"},
+  {from:"imbuko",to:"saronsberg",t:"≈ 1 h 05 · 57 km",nota:"Etapas 4 y 5"},
+  {from:"imbuko",to:"cpt",t:"≈ 1 h · 69 km",nota:"Vuelta"}
 ];
 
 /* Plantilla de plan para un día de carrera (se usa para rellenar un día vacío) */
@@ -66,16 +72,18 @@ export function planTemplate(stage){
     {hora:"20:00",texto:"Cena"}
   ];
   const [h,m]=stage.salida.split(":").map(Number);
-  const t=(min)=>{const x=h*60+m+min;return String(Math.floor(((x%1440)+1440)%1440/60)).padStart(2,"0")+":"+String(((x%60)+60)%60).padStart(2,"0");};
+  const t=(min)=>{const x=Math.floor((h*60+m+min)/5)*5;return String(Math.floor(((x%1440)+1440)%1440/60)).padStart(2,"0")+":"+String(((x%60)+60)%60).padStart(2,"0");};
   const [oh,om]=stage.objetivo.split(":").map(Number), dur=oh*60+om;
+  const drive=(DRIVE[stage.id]?.min||30)+30; // coche + margen para aparcar y calentar
   return [
-    {hora:t(-150),texto:"Despertador"},
-    {hora:t(-120),texto:"Desayuno"},
-    {hora:t(-45),texto:"Salir hacia la salida"},
+    {hora:t(-drive-90),texto:"Despertador"},
+    {hora:t(-drive-60),texto:"Desayuno"},
+    {hora:t(-drive),texto:"Salir de casa hacia la salida",notas:`${DRIVE[stage.id]?.min||"?"} min de coche desde Wellington`},
     {hora:t(0),texto:"Salida "+(stage.id==="P"?"del prólogo":"etapa "+stage.id)},
     {hora:t(dur),texto:"Llegada prevista a meta"},
     {hora:t(dur+60),texto:"Comida y recuperación"},
     {hora:t(dur+150),texto:"Masaje / mecánico"},
+    {hora:t(dur+210),texto:"Vuelta a casa"},
     {hora:"19:00",texto:"Cena"},
     {hora:"21:30",texto:"A dormir"}
   ];

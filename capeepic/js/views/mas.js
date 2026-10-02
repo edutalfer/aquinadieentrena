@@ -8,7 +8,7 @@ export const sections = [
   {id:"casas",label:"Casas",html:()=>casasPanel(),onClick(a,b){ if(a==="casa-add") casaSheet({desde:b.dataset.date}); if(a==="casa-edit") casaSheet(store.one("casas",b.dataset.id)||{}); }},
 ];
 const infoSection = {id:"info",label:"Info",html:()=>`
-  <div class="panel"><h3>Traslados en coche</h3><div class="list">${TRANSFERS.map(t=>`<div class="it"><span>${PLACES[t.from].town} → ${PLACES[t.to].town}</span><b class="num">${t.t}</b></div>`).join("")}</div><div class="small muted">Tiempos aproximados sin tráfico. Se conduce por la izquierda.</div></div>
+  <div class="panel"><h3>Coche desde la casa</h3><div class="list">${TRANSFERS.map(t=>`<div class="it"><span>${t.from==="imbuko"?"Casa (Wellington)":PLACES[t.from].town} → ${t.to==="imbuko"?"Casa (Wellington)":PLACES[t.to].town}${t.nota?`<br><span class="small muted">${t.nota}</span>`:""}</span><b class="num">${t.t}</b></div>`).join("")}</div><div class="small muted">Tiempos aproximados sin tráfico. Se conduce por la izquierda. Bainskloof es un puerto estrecho: con niebla o de noche, mejor ir con margen.</div></div>
   <div class="panel"><h3>Sedes</h3><div class="list">${VENUES.map(id=>`<div class="it"><span>${PLACES[id].name}<br><span class="small muted">${PLACES[id].town}</span></span><a target="_blank" rel="noopener" href="${mapsUrl(PLACES[id].q)}">Abrir en Maps</a></div>`).join("")}</div></div>
   <div class="panel"><h3>Emergencias en Sudáfrica</h3><div class="list">
     <div class="it"><span>Desde el móvil</span><span><b>112</b> <button class="copy" data-act="copy" data-v="112">Copiar</button></span></div>
