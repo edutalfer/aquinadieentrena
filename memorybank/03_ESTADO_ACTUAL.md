@@ -1,6 +1,6 @@
 # 📍 ESTADO ACTUAL — Léeme primero
 
-> **Actualizado:** 2026-09-23
+> **Actualizado:** 2026-10-02
 > Punto de partida para cualquier chat nuevo sobre la web de ANE.
 
 ---
@@ -164,6 +164,21 @@ Eduardo lo diga).
   de empresas) y `ajustes`, en `~/datos/ane.db`. En `privacidad.html` (#patrocinio).
 - **Probado en local** (Playwright + SwiftShader): selector, clic en calcas,
   ofertas, proyecto cerrado, panel completo.
+
+---
+
+## 🏔️ App Cape Epic 2027: /capeepic (2026-10-02)
+
+App web privada para Eduardo, Cristóbal y 2–3 acompañantes durante la Cape Epic (21–28 mar 2027).
+
+- **Acceso:** toda la carpeta con contraseña (Basic Auth en `capeepic/.htaccess`).
+  Usuario `ane`. El fichero de claves está en `~/domains/aquinadieentrena.cc/.capeepic.htpasswd`
+  (fuera de public_html y del repo). OJO: en `~/datos/` NO funciona, el servidor web no puede leerlo.
+  Cambiar clave: `printf 'ane:%s\n' "$(openssl passwd -apr1 'NUEVA')" > ~/domains/aquinadieentrena.cc/.capeepic.htpasswd`
+- **Pestañas:** Hoy (cuenta atrás / etapa del día), Etapas (8 fichas con datos oficiales), Casas, Info.
+- **Casas compartidas:** `capeepic/api.php` guarda en `~/datos/capeepic_casas.json` (GET lista, POST guardar/borrar).
+- **Offline:** `sw.js` cachea la página; las casas se guardan también en localStorage del móvil.
+- **Pendiente:** tracks reconstruidos desde los mapas oficiales, avituallamientos y calculadora de paso (Rider Manual, feb 2027).
 
 ---
 
