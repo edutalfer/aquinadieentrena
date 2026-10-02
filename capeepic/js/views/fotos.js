@@ -78,7 +78,7 @@ function addSpot(s,nav){
 function spotsHtml(s){
   const rows=chain(s), e=eta(s);
   return `<div class="panel"><div class="panel-h"><h3>Puntos de foto</h3><button class="btn small" data-act="spot-add">Añadir punto</button></div>
-    <p class="small muted" style="margin:0">Horas con ${e.real?"el ritmo real de hoy":"el tiempo objetivo de la etapa"}. El tiempo en coche es una estimación en línea recta; compruébalo en Google Maps.</p>
+    <p class="small muted" style="margin:0">Horas calculadas con la salida y el tiempo objetivo de la etapa (cámbialos en Etapas → Horario). El tiempo en coche es una estimación en línea recta; compruébalo en Google Maps.</p>
     ${rows.length?rows.map(r=>spotRow(r)).join(""):`<p class="empty">Aún no hay puntos para esta etapa. Añadid los sitios donde queréis grabar.</p>`}
     <div class="spot"><div class="spot-km num">km ${s.km}</div><div class="spot-b"><div class="name">Meta · ${esc(PLACES[s.to].name)}</div><div class="small">${e.done?"Llegaron":"Llegan ≈"} <b>${saHM(e.finish)}</b></div></div></div>
   </div>`;

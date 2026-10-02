@@ -4,7 +4,7 @@ import {esc,saHM,haversine,dirLL,stageLabel} from "../util.js";
 import {STAGES,TTS,waterOf} from "../data.js";
 import {extraSections} from "./etapas.js";
 import {registerLayer,mapIcon} from "./mapa.js";
-import {eta,kmFinder,checkinSheet} from "./carrera.js";
+import {eta,kmFinder} from "./carrera.js";
 
 const tracks={};   // id -> {pts:[[lat,lon,ele]], cum:[km], scale}
 let loading=null;
@@ -44,15 +44,13 @@ function waterHtml(s){
     return `<div class="spot"><div class="spot-km num">km ${String(w.km).replace(".",",")}</div><div class="spot-b">
       <div class="name">Avituallamiento ${w.n} · ${esc(w.label)}</div>
       <div class="small">${at.pasado?"Pasaron ≈ ":"Pasan ≈ <b>"}${saHM(at.t)}${at.pasado?"":"</b>"}</div>
-      <div class="acts">${p?`<a class="btn quiet" href="${dirLL(p.lat.toFixed(5),p.lon.toFixed(5))}" target="_blank" rel="noopener">Cómo llegar (aprox.)</a>`:""}<button class="btn quiet" data-act="wp-check" data-km="${w.km}" data-label="Avituallamiento ${w.n}">Pasamos por aquí</button></div></div></div>`;}).join("");
+      <div class="acts">${p?`<a class="btn quiet" href="${dirLL(p.lat.toFixed(5),p.lon.toFixed(5))}" target="_blank" rel="noopener">Cómo llegar (aprox.)</a>`:""}</div></div></div>`;}).join("");
   const ttsRow=tts?`<div class="spot"><div class="spot-km num">km ${String(tts[0]).replace(".",",")}</div><div class="spot-b"><div class="name">Toyota Tough Section · ${esc(tts[2])}</div><div class="small">Hasta el km ${String(tts[1]).replace(".",",")} · pasan ≈ <b>${saHM(e.at(tts[0]).t)}</b></div></div></div>`:"";
   return `<div class="panel"><div class="panel-h"><h3>Avituallamientos</h3><span class="tag">${ws.length?ws.length+" en carrera":"Sin avituallamientos"}</span></div>
     ${ws.length?`<p class="small muted" style="margin:0">Kilómetros leídos de los perfiles oficiales (±0,5 km). La ubicación sale del trazado orientativo: confirmad el acceso con el Rider Manual.</p>${rows}`:`<p class="small muted" style="margin:0">El prólogo no tiene avituallamientos en el perfil oficial.</p>`}${ttsRow}</div>`;
 }
 
-extraSections.push({html:s=>waterHtml(s),onClick:(a,b,s)=>{
-  if(a==="wp-check") checkinSheet(s,{km:+b.dataset.km,lugar:b.dataset.label});
-}});
+extraSections.push({html:s=>waterHtml(s)});
 
 registerLayer({id:"tracks",label:"Tracks",draw(g,ctx){
   const L=window.L;
