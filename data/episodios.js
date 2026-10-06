@@ -16,6 +16,20 @@
 
 window.ANE_EPISODIOS = [
   {
+    titulo: "Las ruedas que eligió Tom Pidcock para el mundial y la respuesta de Cristóbal a Decathlon",
+    fecha: "2026-10-04",
+    duracion: 4764,
+    youtubeId: "eEsa6d9Hsmg",
+    temas: [
+      { t: 0,     titulo: "Intro" },
+      { t: 335,   titulo: "Todo sobre el mundial y por qué Pidcock cambia de ruedas" },
+      { t: 2140,  titulo: "Desde Madeinn sacamos nuestra bici 2x1 gravel y carretera" },
+      { t: 3655,  titulo: "Hacemos una previa del Europeo de ciclismo 2026" },
+      { t: 3966,  titulo: "¡Nos hemos apuntado a una carrera de ciclocross!" },
+      { t: 4160,  titulo: "¿Bici o cepo?" }
+    ]
+  },
+  {
     titulo: "EPISODIO ESPECIAL | Charla con expertos, el futuro de la industria desde Sea Otter 2026",
     fecha: "2026-09-20",
     duracion: 6802,
