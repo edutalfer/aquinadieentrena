@@ -30,7 +30,11 @@
     "tracas": "Trakas",
     "siotter": "Sea Otter",
     "seoter": "Sea Otter",
-    "seotter": "Sea Otter"
+    "seotter": "Sea Otter",
+    "van risel": "Van Rysel",
+    "vanisel": "Van Rysel",
+    "decatlón": "Decathlon",
+    "decatlon": "Decathlon"
   },
   "_nota_traca": "traca -> Traka se anadio tras auditar las 148 apariciones del corpus: TODAS son la carrera La Traka, ni una sola usa la expresion 'la traca final'. Si algun dia aparece ese uso idiomatico, revisar esta regla."
 }
