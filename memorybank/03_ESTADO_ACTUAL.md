@@ -183,15 +183,19 @@ pestañas). Organiza la grabación y comparte el guión con el editor de vídeo 
 enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
 
 - **Dos roles.** *Socio* (Eduardo y Cristóbal): episodios, guiones, imágenes,
-  menciones, proyectos, presupuestos y accesos. En su listado, cada episodio
-  dice **qué marcas lo patrocinan** y cuántas menciones quedan por hacer; al
-  editor eso ni se le consulta. *Editor de vídeo*: solo el
-  guión de los episodios que se le marquen, **en lectura**. No hay rol de
-  invitado: no lo necesitan.
+  cuñas, proyectos, presupuestos y accesos. En su listado, cada episodio dice
+  **qué marcas lo patrocinan** y cuántas cuñas quedan por hacer. *Editor de
+  vídeo*: solo el **guión definitivo** de los episodios que se le marquen, **en
+  lectura**, **cuñas de patrocinio incluidas** en su sitio (las tiene que
+  montar; corregido el 21/10/2026, D23). No puede escribir nada, ni su propia
+  contraseña. No hay rol de invitado: no lo necesitan.
 - **La frontera es de datos, no de CSS.** Con el editor delante, los temas
-  marcados «internos» y las menciones **no se consultan**, los ficheros de un
-  tema interno devuelven 404, y `episodio.php`, `proyectos.php`, `marcas.php` y
-  `accesos.php` responden 403. Si tocas `guion.php` o `fichero.php`, no rompas eso.
+  marcados «internos», las notas, la agenda de marcas y los proyectos **no se
+  consultan**, los ficheros de un tema interno devuelven 404, y `episodio.php`,
+  `proyectos.php`, `proyecto.php`, `marcas.php` y `accesos.php` responden 403
+  (también a sus POST, aunque lleven un token válido). De cada cuña ve marca,
+  tipo, texto y si está hecha: ni contactos ni dinero. Si tocas `guion.php` o
+  `fichero.php`, no rompas eso.
 - **Un episodio** es número, título (**opcional**: con el número basta para
   crearlo, y entonces se le llama «Episodio 49»), fecha, duración y sitio, más
   **temas en orden**; cada tema con **los enlaces** y **las imágenes y archivos** que

@@ -107,9 +107,11 @@ personales**), las credenciales del panel
 
 **`/estudio` es el gestor del podcast** (episodios, guiones, proyectos y
 patrocinadores), con entrada propia y dos roles: socio lo ve todo, el editor de
-vídeo solo el guión de los episodios que se le marquen. Esa frontera es de
-datos, no de CSS: con el editor delante no se leen ni las menciones ni los
-temas internos, y sus ficheros dan 404. **Las imágenes y los archivos del
+vídeo solo el **guión definitivo** de los episodios que se le marquen, en
+lectura, **cuñas de patrocinio incluidas** (las tiene que montar). Lo que no ve
+nunca: proyectos, la agenda de patrocinadores, accesos, notas ni temas
+internos. Esa frontera es de datos, no de CSS: con el editor delante eso no se
+lee de la base, sus pantallas dan 403 y los ficheros de un tema interno, 404. **Las imágenes y los archivos del
 guión viven en `~/datos/estudio/imagenes/`**, fuera del repo, y solo salen por
 `estudio/fichero.php`. Antes de tocarlo, `estudio/LEEME.md`.
 

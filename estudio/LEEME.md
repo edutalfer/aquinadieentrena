@@ -2,8 +2,8 @@
 
 Área privada en `/estudio`. Organiza la grabación del podcast (fechas, temas,
 guión, imágenes, menciones de patrocinio) y los proyectos con sus
-patrocinadores y su presupuesto. Y permite **compartir el guión de un episodio
-con el editor de vídeo** sin enseñarle nada más.
+patrocinadores y su presupuesto. Y permite **compartir el guión definitivo de
+un episodio con el editor de vídeo**, en lectura, sin enseñarle nada más.
 
 No está enlazada desde la web pública y va con `noindex`.
 
@@ -13,18 +13,25 @@ No está enlazada desde la web pública y va con `noindex`.
 
 | | Socio (Eduardo, Cristóbal) | Editor de vídeo |
 |---|---|---|
-| Episodios y guiones | Todos, y los edita | Solo los que se le marquen, **en lectura** |
+| Episodios y guiones | Todos, y los edita | El guión definitivo de los que se le marquen, **solo lectura** |
 | Enlaces, imágenes y archivos del guión | Sí | Sí, y se los descarga |
+| Cuñas de patrocinio del episodio, en su sitio | Sí | **Sí**: las tiene que montar |
 | Temas marcados «internos» | Sí | **No** |
 | Notas internas del episodio | Sí | **No** |
-| Patrocinios (también los intercalados en el guión) | Sí | **No** |
+| Agenda de patrocinadores (contactos, estados, importes) | Sí | **No** |
 | Proyectos y presupuestos | Sí | **No** |
-| Accesos | Sí | **No** |
+| Accesos | Sí | **No** (ni su propia contraseña: se la cambia un socio) |
 
-La frontera no es cosmética: cuando mira el editor, los temas internos y las
-menciones **no se leen de la base**, los ficheros de un tema interno devuelven
-404 y las pantallas de socio responden 403 aunque teclee la URL a mano. Si
-tocas `guion.php` o `fichero.php`, respeta eso.
+El editor **no puede escribir nada**: todas las pantallas que guardan algo
+exigen ser socio y le responden 403 aunque mande un token CSRF válido, y las
+dos que sí puede abrir (`guion.php` y `fichero.php`) no atienden POST.
+
+La frontera no es cosmética: cuando mira el editor, los temas internos, las
+notas, la agenda de marcas y los proyectos **no se leen de la base**, los
+ficheros de un tema interno devuelven 404 y las pantallas de socio responden
+403 aunque teclee la URL a mano. Lo que sí ve de cada cuña es marca, tipo, qué
+hay que decir y si está hecha: ni contactos ni dinero, que viven en otras
+tablas. Si tocas `guion.php` o `fichero.php`, respeta eso.
 
 ## El guión
 
@@ -66,7 +73,7 @@ archivos salen como lista de descargas.
 |---|---|
 | `estudio/entrar.php` | Formulario de entrada y salida. Si no hay nadie dado de alta, el primero se crea como socio |
 | `estudio/index.php` | Episodios (socio) · Mis guiones (invitado) |
-| `estudio/episodio.php` | Editor: datos, temas con enlace e imágenes, menciones y quién lo ve |
+| `estudio/episodio.php` | Edición (solo socios): datos, temas con enlaces e imágenes, cuñas y quién lo ve |
 | `estudio/guion.php` | El guión. Lo que ve el editor de vídeo, y la hoja de grabación del socio (imprimible) |
 | `estudio/fichero.php` | Enseña o descarga un fichero tras comprobar quién pregunta |
 | `estudio/proyectos.php` · `proyecto.php` | Proyectos, patrocinadores y presupuesto |

@@ -8,12 +8,15 @@
 
    Dos roles, y la diferencia es el motivo de que esto exista:
      socio   → lo ve y lo toca todo
-     editor  → SOLO el guión (temas, enlaces e imágenes) de los
-               episodios que se le abran, en modo lectura. Nunca
-               proyectos, patrocinadores, importes ni notas.
+     editor  → SOLO el guión definitivo de los episodios que se le
+               abran, en lectura: temas, enlaces, imágenes, archivos
+               y las cuñas de patrocinio en su sitio (las tiene que
+               montar). Nunca proyectos, la agenda de patrocinadores
+               (contactos, estados, importes), accesos, notas
+               internas ni temas marcados como internos.
 
-   El filtro no es visual: los datos de patrocinio y presupuesto
-   no se leen de la base cuando quien mira es el editor.
+   El filtro no es visual: nada de eso se lee de la base cuando
+   quien mira es el editor, y sus pantallas le responden 403.
    ============================================================ */
 
 declare(strict_types=1);
@@ -147,8 +150,9 @@ function ane_pod_bd(): PDO
         );
         CREATE INDEX IF NOT EXISTS i_pod_ficheros ON pod_ficheros (bloque_id, orden);
 
-        -- Patrocinadores y menciones que hay que hacer en el episodio.
-        -- Van en orden, como los temas. Reservado a los socios.
+        -- Las cuñas de patrocinio del episodio, intercaladas entre los temas.
+        -- Las ve también el editor, en su sitio del guión: las tiene que
+        -- montar. Lo que no ve nunca es la agenda (pod_marcas) ni importes.
         CREATE TABLE IF NOT EXISTS pod_menciones (
             id          INTEGER PRIMARY KEY,
             episodio_id INTEGER NOT NULL,
@@ -496,9 +500,10 @@ function ane_pod_coloca(PDO $bd, int $episodio, string $tabla, int $id, string $
 }
 
 /* El guión que se pinta: temas y patrocinios mezclados en su orden, y
-   «Bici o Cepo» al final. Los patrocinios SOLO si mira un socio: con el
-   editor delante, la tabla de menciones ni se consulta. */
-function ane_pod_guion(PDO $bd, int $episodio, bool $conPatrocinio, bool $soloPublicos = false): array
+   «Bici o Cepo» al final. Es el mismo para socios y editor, con una
+   diferencia: con $soloPublicos (el editor) los temas internos ni se piden.
+   Las cuñas sí van: el editor las tiene que montar. */
+function ane_pod_guion(PDO $bd, int $episodio, bool $soloPublicos = false): array
 {
     $piezas = [];
     $cierre = null;
@@ -509,13 +514,11 @@ function ane_pod_guion(PDO $bd, int $episodio, bool $conPatrocinio, bool $soloPu
             $piezas[] = ['clase' => 'tema', 'fila' => $b];
         }
     }
-    if ($conPatrocinio) {
-        foreach (ane_pod_menciones_socio($bd, $episodio) as $m) {
-            $piezas[] = ['clase' => 'patrocinio', 'fila' => $m];
-        }
-        usort($piezas, fn ($a, $b) => [(int) $a['fila']['orden'], $a['clase'] === 'patrocinio', (int) $a['fila']['id']]
-                                  <=> [(int) $b['fila']['orden'], $b['clase'] === 'patrocinio', (int) $b['fila']['id']]);
+    foreach (ane_pod_menciones($bd, $episodio) as $m) {
+        $piezas[] = ['clase' => 'patrocinio', 'fila' => $m];
     }
+    usort($piezas, fn ($a, $b) => [(int) $a['fila']['orden'], $a['clase'] === 'patrocinio', (int) $a['fila']['id']]
+                              <=> [(int) $b['fila']['orden'], $b['clase'] === 'patrocinio', (int) $b['fila']['id']]);
     if ($cierre) {
         $piezas[] = $cierre;
     }
@@ -800,8 +803,10 @@ function ane_pod_tamano(int $bytes): string
 
 /* ---------- Menciones ---------- */
 
-/* Menciones de patrocinio: solo para socios. La función lo recuerda en el nombre. */
-function ane_pod_menciones_socio(PDO $bd, int $episodio): array
+/* Las cuñas de patrocinio de un episodio: marca, tipo, qué hay que decir y si
+   ya está hecha. Nada de contactos ni importes: eso vive en pod_marcas y en
+   pod_proy_marcas, que el editor no toca nunca. */
+function ane_pod_menciones(PDO $bd, int $episodio): array
 {
     $st = $bd->prepare('SELECT * FROM pod_menciones WHERE episodio_id = ? ORDER BY orden, id');
     $st->execute([$episodio]);

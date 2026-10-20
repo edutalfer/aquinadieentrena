@@ -2,13 +2,13 @@
 /* ============================================================
    AQUÍ NADIE ENTRENA — Estudio · el guión
    ------------------------------------------------------------
-   La única pantalla que ve el editor de vídeo: temas, enlaces e
-   imágenes, en lectura. Los temas internos, las notas y las
-   menciones de patrocinio ni se consultan cuando es él quien
-   mira.
+   La única pantalla que ve el editor de vídeo: el guión definitivo,
+   en lectura. Temas, enlaces, imágenes, archivos y las cuñas de
+   patrocinio en su sitio, que las tiene que montar. Los temas
+   internos y las notas ni se consultan cuando es él quien mira.
 
-   Para un socio es además el guión de grabación, con las
-   menciones a la vista y pensado para imprimir.
+   Para un socio es además el guión de grabación, pensado para
+   imprimir, con las notas internas al final.
    ============================================================ */
 
 declare(strict_types=1);
@@ -27,9 +27,9 @@ if (!$ep || !ane_pod_puede_ver($bd, $yo_pod, $id)) {
     exit;
 }
 
-/* Temas y patrocinios en su orden. Con el editor delante, los patrocinios ni
-   se piden a la base (segundo argumento) y los temas internos tampoco (tercero). */
-$guion = ane_pod_guion($bd, $id, $es_socio, !$es_socio);
+/* Temas y patrocinios en su orden. Con el editor delante, los temas internos
+   ni se piden a la base. */
+$guion = ane_pod_guion($bd, $id, !$es_socio);
 $enlaces = ane_pod_enlaces($bd, $id);
 $ficheros = ane_pod_ficheros_de($bd, $id);
 
@@ -137,7 +137,6 @@ ane_pod_cabecera('episodios');
     <?php foreach ($guion as $pz):
         $b = $pz['fila'];
         if ($pz['clase'] === 'patrocinio'): ?>
-      <?php /* Solo llega aquí si mira un socio: ane_pod_guion() no los trae para el editor */ ?>
       <div class="bloque patro<?= (int) $b['hecho'] ? ' hecho' : '' ?>">
         <div class="min"><?= (int) $b['hecho'] ? '✓' : '€' ?></div>
         <div>
@@ -185,9 +184,6 @@ ane_pod_cabecera('episodios');
     <p class="nota noimprime" style="margin-top:14px">
       <?php
         $fuera = ['las notas'];
-        if ($patrocinios) {
-            $fuera[] = $patrocinios === 1 ? 'el patrocinio' : "los $patrocinios patrocinios";
-        }
         if ($ocultos) {
             $fuera[] = $ocultos === 1 ? 'el tema interno' : "los $ocultos temas internos";
         }

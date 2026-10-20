@@ -7,8 +7,8 @@
    «Bici o Cepo» de cierre, menciones de patrocinio y a quién se
    le abre el guión.
 
-   Solo socios. Lo que ve el editor es guion.php, y de ahí se
-   caen los temas internos, las menciones y las notas.
+   Solo socios. Lo que ve el editor es guion.php: el guión
+   definitivo, cuñas incluidas, sin temas internos ni notas.
    ============================================================ */
 
 declare(strict_types=1);
@@ -242,7 +242,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 /* ---------- Datos ---------- */
 
 ane_pod_asegura_cierre($bd, $id);
-$guion = ane_pod_guion($bd, $id, true);      /* socio: temas y patrocinios juntos */
+$guion = ane_pod_guion($bd, $id);            /* todo, temas internos incluidos */
 $enlaces = ane_pod_enlaces($bd, $id);
 $ficheros = ane_pod_ficheros_de($bd, $id);
 $marcas = ane_pod_marcas($bd);
@@ -337,7 +337,8 @@ ane_pod_cabecera('episodios');
   <section id="guion">
     <h2>Guión</h2>
     <p class="nota">Temas y patrocinios en el orden en que se graban: una cuña puede ir entre dos temas.
-      Los <b>patrocinios</b> (en rojo) y los temas <b>internos</b> no los ve el editor. En el texto valen
+      Los <b>patrocinios</b> van en rojo. El editor ve el guión entero, cuñas incluidas, salvo los temas
+      <b>internos</b> y las notas. En el texto valen
       <code>**negrita**</code>, <code>_cursiva_</code> y líneas que empiecen por <code>- </code>.</p>
 
     <?php if (!$piezas): ?>
@@ -658,7 +659,7 @@ ane_pod_cabecera('episodios');
             <select name="despues"><?= ane_pod_opciones_sitio($piezas, $numTema, 'final') ?></select></div>
           <button class="btn azul" type="submit">Añadir patrocinio</button>
           <p class="nota" style="margin:10px 0 0">Las marcas salen de la pestaña
-            <a href="/estudio/marcas.php">Patrocinadores</a>. Esto no lo ve el editor.</p>
+            <a href="/estudio/marcas.php">Patrocinadores</a>. El editor ve la cuña en su sitio, pero nunca la agenda.</p>
         </form>
       </div>
     </div>
@@ -668,7 +669,8 @@ ane_pod_cabecera('episodios');
   <section id="accesos">
     <h2>Quién puede ver este guión</h2>
     <p class="nota">Editores dados de alta en <a href="/estudio/accesos.php">Accesos</a>.
-      Verán el guión con sus enlaces e imágenes; ni menciones, ni notas, ni temas internos.</p>
+      Verán el guión definitivo, en lectura: temas, enlaces, imágenes, archivos y las cuñas de patrocinio
+      en su sitio. Ni notas, ni temas internos, ni nada de proyectos, agenda de patrocinadores o accesos.</p>
     <?php if (!$editores): ?>
       <p class="vacio">No hay ningún editor dado de alta.
         <a href="/estudio/accesos.php">Crear uno →</a></p>

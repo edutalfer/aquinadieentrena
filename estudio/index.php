@@ -36,8 +36,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $episodios = ane_pod_mis_episodios($bd, $yo_pod);
 
-/* Cuentas rápidas y patrocinadores: SOLO para socios. El editor no ve marcas
-   ni aquí ni en ningún sitio, así que esto ni se consulta cuando mira él. */
+/* Cuentas rápidas y patrocinadores de cada episodio: el resumen de trabajo
+   de los socios. El editor tiene aquí solo su lista de guiones; las cuñas las
+   ve dentro de cada guión, en su sitio. */
 $pendientes = [];
 $patrocinadores = [];
 $proxima = null;
@@ -57,9 +58,10 @@ if ($es_socio) {
 }
 
 /* Cuántos temas tiene cada episodio (una consulta, no una por fila).
-   «Bici o Cepo» no cuenta como tema: está siempre. */
-$bloques = $bd->query("SELECT episodio_id, COUNT(*) AS n FROM pod_bloques WHERE tipo <> '" . ANE_POD_CIERRE . "'
-                       GROUP BY episodio_id")->fetchAll(PDO::FETCH_KEY_PAIR);
+   «Bici o Cepo» no cuenta como tema: está siempre. Al editor se le cuentan
+   solo los que ve: si no, le saldrían más temas que en su guión. */
+$bloques = $bd->query("SELECT episodio_id, COUNT(*) AS n FROM pod_bloques WHERE tipo <> '" . ANE_POD_CIERRE . "'"
+                      . ($es_socio ? '' : ' AND interno = 0') . ' GROUP BY episodio_id')->fetchAll(PDO::FETCH_KEY_PAIR);
 
 ane_pod_cabeza('Episodios');
 ane_pod_cabecera('episodios');

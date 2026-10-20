@@ -4,7 +4,8 @@
    ------------------------------------------------------------
    Quién entra y hasta dónde:
      socio     → todo
-     editor    → solo el guión de los episodios marcados
+     editor    → solo el guión definitivo de los episodios marcados,
+                 en lectura (cuñas incluidas)
 
    Las contraseñas se generan aquí y se enseñan UNA vez: en la
    base solo queda el hash. Si se pierde, se genera otra.
@@ -159,9 +160,10 @@ ane_pod_cabecera('accesos');
     <h2>Cómo funciona</h2>
     <p class="nota" style="margin:0">
       Un <b>socio</b> lo ve y lo toca todo: episodios, guiones, patrocinadores, proyectos y presupuestos.
-      Un <b>editor</b> (el que monta el vídeo) solo ve el guión de los episodios que le marques, en
-      lectura: temas, enlaces e imágenes. Ni proyectos, ni patrocinadores, ni importes, ni notas internas,
-      ni temas marcados como internos.
+      Un <b>editor</b> (el que monta el vídeo) solo ve el <b>guión definitivo</b> de los episodios que le
+      marques, y en lectura: no puede tocar nada. Ve temas, enlaces, imágenes, archivos y las cuñas de
+      patrocinio en su sitio, que las tiene que montar. No ve proyectos, ni la agenda de patrocinadores
+      (contactos, estados, importes), ni accesos, ni notas internas, ni temas marcados como internos.
     </p>
   </section>
 
