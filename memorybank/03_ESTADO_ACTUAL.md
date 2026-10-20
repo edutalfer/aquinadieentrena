@@ -224,6 +224,11 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   uno (57 → 1/11, 60 → 22/11…) y pasa a Pasados el lunes siguiente, tenga o no
   fecha de grabación. Si algún domingo no sale episodio, hay que mover el ancla
   (`pod_ancla_numero` y `pod_ancla_domingo` en `ajustes`, o `ANE_POD_ANCLA`).
+- **Agenda de marcas recogida (20/10/2026):** cada marca es una línea (estado,
+  dinero firmado, acuerdos, contratos, contacto y siguiente paso) que se
+  despliega al pulsar; «+ Nueva marca», plegada arriba. Fuera la **fecha del
+  siguiente paso** y su aviso de «seguimiento pendiente», a petición de Eduardo
+  (la columna `seguimiento` sigue en la base, sin usar).
 - **Contratos (D25):** en la ficha de la marca (y del acuerdo, en su proyecto),
   también al firmar. PDF, Word o foto, comprobados por dentro. Ficheros en
   `~/datos/estudio/contratos/`, **solo socios** (`estudio/contrato.php`; el

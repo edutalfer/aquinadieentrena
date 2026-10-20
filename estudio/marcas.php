@@ -24,7 +24,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         ane_recorta((string) ($_POST['telefono'] ?? ''), 40),
         isset(ANE_POD_PATRO_ESTADOS[(string) ($_POST['estado'] ?? '')]) ? (string) $_POST['estado'] : 'contactado',
         ane_recorta((string) ($_POST['siguiente'] ?? ''), 300),
-        preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($_POST['seguimiento'] ?? '')) ? (string) $_POST['seguimiento'] : null,
         ane_recorta((string) ($_POST['notas'] ?? ''), 4000),
     ];
 
@@ -35,15 +34,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 header('Location: /estudio/marcas.php?mal=nombre', true, 303);
                 exit;
             }
-            $bd->prepare('INSERT INTO pod_marcas (nombre, contacto, correo, telefono, estado, siguiente, seguimiento,
-                            notas, creado, actualizado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            $bd->prepare('INSERT INTO pod_marcas (nombre, contacto, correo, telefono, estado, siguiente,
+                            notas, creado, actualizado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
                ->execute(array_merge([$nombre], $campos, [$ahora, $ahora]));
             header('Location: /estudio/marcas.php?ok=creada', true, 303);
             exit;
 
         case 'guardar':
             $bd->prepare('UPDATE pod_marcas SET nombre = ?, contacto = ?, correo = ?, telefono = ?, estado = ?,
-                            siguiente = ?, seguimiento = ?, notas = ?, actualizado = ? WHERE id = ?')
+                            siguiente = ?, notas = ?, actualizado = ? WHERE id = ?')
                ->execute(array_merge([ane_recorta((string) ($_POST['nombre'] ?? ''), 120) ?: 'Sin nombre'],
                                      $campos, [$ahora, $fila]));
             /* Si cambió el nombre, que llegue a las cuñas pendientes de sus acuerdos */
@@ -52,7 +51,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $acuerdo) {
                 ane_pod_sincroniza_acuerdo($bd, (int) $acuerdo);
             }
-            header('Location: /estudio/marcas.php?ok=guardada#m' . $fila, true, 303);
+            header('Location: /estudio/marcas.php?ok=guardada&abre=' . $fila . '#m' . $fila, true, 303);
             exit;
 
         /* Firmar con una marca de la agenda: proyecto (Podcast por defecto), dinero y
@@ -72,7 +71,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $r = ane_pod_guarda_contrato($bd, $fila, $nuevo, $f);
             }
             $aviso = ($r === '' || $r === 'vacio') ? 'ok=firmado' : 'ok=firmado&mal=contrato_' . $r;
-            header('Location: /estudio/marcas.php?' . $aviso . '#m' . $fila, true, 303);
+            header('Location: /estudio/marcas.php?' . $aviso . '&abre=' . $fila . '#m' . $fila, true, 303);
             exit;
 
         /* Subir un contrato a una marca, colgado de uno de sus acuerdos si se elige */
@@ -89,7 +88,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $r = ane_pod_guarda_contrato($bd, $fila, $acuerdoId, $f);
                 $subidos += $r === '' ? 1 : 0;
             }
-            header('Location: /estudio/marcas.php?' . ($subidos ? 'ok=contrato' : 'mal=contrato_' . $r) . '#m' . $fila, true, 303);
+            header('Location: /estudio/marcas.php?' . ($subidos ? 'ok=contrato' : 'mal=contrato_' . $r) . '&abre=' . $fila . '#m' . $fila, true, 303);
             exit;
 
         case 'contrato_borrar':
@@ -97,7 +96,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if ($c) {
                 ane_pod_borra_contrato($bd, $c);
             }
-            header('Location: /estudio/marcas.php?ok=contrato_borrado#m' . (int) ($c['marca_id'] ?? 0), true, 303);
+            header('Location: /estudio/marcas.php?ok=contrato_borrado&abre=' . (int) ($c['marca_id'] ?? 0) . '#m' . (int) ($c['marca_id'] ?? 0), true, 303);
             exit;
 
         case 'borrar':
@@ -149,7 +148,8 @@ foreach ($marcas as $m) {
         $cuenta['negociando']++;
     }
 }
-$hoy = (new DateTime('today', new DateTimeZone('Europe/Madrid')))->format('Y-m-d');
+/* Para el resumen de cada marca: cuántos contratos tiene */
+$nContratos = $bd->query('SELECT marca_id, COUNT(*) FROM pod_contratos GROUP BY marca_id')->fetchAll(PDO::FETCH_KEY_PAIR);
 
 ane_pod_cabeza('Patrocinadores');
 ane_pod_cabecera('marcas');
@@ -171,17 +171,34 @@ ane_pod_cabecera('marcas');
     <div class="cifra"><b><?= $cuenta['negociando'] ?></b><span>En conversación</span></div>
   </div>
 
-  <?php
-  $tocan = array_filter($marcas, fn ($m) => $m['seguimiento'] && $m['seguimiento'] <= $hoy
-                                            && !in_array($m['estado'], ['facturado', 'descartado'], true));
-  if ($tocan): ?>
-    <div class="aviso"><b>Seguimiento pendiente:</b>
-      <?php foreach ($tocan as $m): ?>
-        <a href="#m<?= (int) $m['id'] ?>"><?= ane_h($m['nombre']) ?></a>
-        (<?= ane_h((string) $m['seguimiento']) ?>)<?= $m === end($tocan) ? '' : ' · ' ?>
-      <?php endforeach; ?>
-    </div>
-  <?php endif; ?>
+  <details class="nueva-marca"<?= ($_GET['mal'] ?? '') === 'nombre' ? ' open' : '' ?>>
+    <summary class="btn azul">+ Nueva marca</summary>
+  <section>
+    <form method="post">
+      <?= ane_pod_csrf_campo() ?>
+      <input type="hidden" name="accion" value="crear">
+      <div class="campos">
+        <div class="campo" style="margin:0"><label>Marca</label>
+          <input type="text" name="nombre" maxlength="120" required></div>
+        <div class="campo" style="margin:0"><label>Persona de contacto</label>
+          <input type="text" name="contacto" maxlength="120"></div>
+        <div class="campo" style="margin:0"><label>Correo</label>
+          <input type="email" name="correo" maxlength="160"></div>
+        <div class="campo" style="margin:0"><label>Teléfono</label>
+          <input type="text" name="telefono" maxlength="40"></div>
+        <div class="campo" style="margin:0"><label>Estado</label>
+          <select name="estado">
+            <?php foreach (ANE_POD_PATRO_ESTADOS as $k => $v): ?>
+              <option value="<?= $k ?>"><?= ane_h($v) ?></option>
+            <?php endforeach; ?>
+          </select></div>
+      </div>
+      <div class="campo" style="margin:14px 0"><label>Siguiente paso</label>
+        <input type="text" name="siguiente" maxlength="300"></div>
+      <button class="btn azul" type="submit">Añadir marca</button>
+    </form>
+  </section>
+  </details>
 
   <?php if (!$marcas): ?>
     <section><p class="vacio">La agenda está vacía.</p></section>
@@ -191,12 +208,26 @@ ane_pod_cabecera('marcas');
       $clave = $mid;
       $suyosPr = $enProyectos[$clave] ?? ($enProyectos['n:' . mb_strtolower($m['nombre'])] ?? []);
       $suyosEp = $enEpisodios[$clave] ?? ($enEpisodios['n:' . mb_strtolower($m['nombre'])] ?? []); ?>
-    <section id="m<?= $mid ?>">
-      <div class="barra" style="margin-bottom:12px">
-        <h2><?= ane_h($m['nombre']) ?></h2>
+    <?php
+      /* Lo que se ve sin abrir: lo firmado, cuántos acuerdos y contratos, y el siguiente paso */
+      $firmado = array_sum(array_map(fn ($f) => in_array($f['estado'], ANE_POD_FIRMADO, true) ? (int) $f['importe'] : 0, $suyosPr));
+      $nc = (int) ($nContratos[$mid] ?? 0);
+      $abierta = in_array((string) $mid, [(string) ($_GET['abre'] ?? ''), (string) ($_GET['firmar'] ?? '')], true); ?>
+    <details id="m<?= $mid ?>" class="marca"<?= $abierta ? ' open' : '' ?>>
+      <summary>
+        <span class="marca-nombre"><?= ane_h($m['nombre']) ?></span>
         <?= ane_pod_chip($m['estado'], ANE_POD_PATRO_ESTADOS) ?>
-      </div>
-      <div class="dos">
+        <span class="marca-datos">
+          <?php if ($firmado): ?><b><?= ane_pod_euros($firmado) ?></b><?php endif; ?>
+          <?php if ($suyosPr): ?><span><?= count($suyosPr) ?> acuerdo<?= count($suyosPr) === 1 ? '' : 's' ?></span><?php endif; ?>
+          <?php if ($nc): ?><span><?= $nc ?> contrato<?= $nc === 1 ? '' : 's' ?></span><?php endif; ?>
+          <?php if ($m['contacto'] !== ''): ?><span><?= ane_h($m['contacto']) ?></span><?php endif; ?>
+        </span>
+        <?php if ($m['siguiente'] !== ''): ?>
+          <span class="marca-siguiente">→ <?= ane_h(mb_strimwidth($m['siguiente'], 0, 90, '…')) ?></span>
+        <?php endif; ?>
+      </summary>
+      <div class="dos marca-cuerpo">
         <form method="post">
           <?= ane_pod_csrf_campo() ?>
           <input type="hidden" name="accion" value="guardar">
@@ -216,8 +247,6 @@ ane_pod_cabecera('marcas');
                   <option value="<?= $k ?>"<?= $m['estado'] === $k ? ' selected' : '' ?>><?= ane_h($v) ?></option>
                 <?php endforeach; ?>
               </select></div>
-            <div class="campo" style="margin:0"><label>Fecha del siguiente paso</label>
-              <input type="date" name="seguimiento" value="<?= ane_h((string) $m['seguimiento']) ?>"></div>
           </div>
           <div class="campo" style="margin:14px 0"><label>Siguiente paso</label>
             <input type="text" name="siguiente" maxlength="300" value="<?= ane_h($m['siguiente']) ?>"
@@ -348,37 +377,17 @@ ane_pod_cabecera('marcas');
           </form>
         </div>
       </div>
-    </section>
+    </details>
   <?php endforeach; ?>
 
-  <section>
-    <h2>Nueva marca</h2>
-    <form method="post">
-      <?= ane_pod_csrf_campo() ?>
-      <input type="hidden" name="accion" value="crear">
-      <div class="campos">
-        <div class="campo" style="margin:0"><label>Marca</label>
-          <input type="text" name="nombre" maxlength="120" required></div>
-        <div class="campo" style="margin:0"><label>Persona de contacto</label>
-          <input type="text" name="contacto" maxlength="120"></div>
-        <div class="campo" style="margin:0"><label>Correo</label>
-          <input type="email" name="correo" maxlength="160"></div>
-        <div class="campo" style="margin:0"><label>Teléfono</label>
-          <input type="text" name="telefono" maxlength="40"></div>
-        <div class="campo" style="margin:0"><label>Estado</label>
-          <select name="estado">
-            <?php foreach (ANE_POD_PATRO_ESTADOS as $k => $v): ?>
-              <option value="<?= $k ?>"><?= ane_h($v) ?></option>
-            <?php endforeach; ?>
-          </select></div>
-        <div class="campo" style="margin:0"><label>Fecha del siguiente paso</label>
-          <input type="date" name="seguimiento"></div>
-      </div>
-      <div class="campo" style="margin:14px 0"><label>Siguiente paso</label>
-        <input type="text" name="siguiente" maxlength="300"></div>
-      <button class="btn azul" type="submit">Añadir marca</button>
-    </form>
-  </section>
+  <?php /* Al volver de guardar (…#m12), la marca tocada se abre sola */ ?>
+  <script>
+    (function () {
+      var d = location.hash && document.getElementById(location.hash.slice(1));
+      if (d && d.tagName === 'DETAILS') { d.open = true; d.scrollIntoView(); }
+    })();
+  </script>
+
 </main>
 <?php
 ane_pod_pie();

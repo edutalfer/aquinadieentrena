@@ -289,6 +289,25 @@ function ane_pod_estilo(): void
   .archivos li input[type=text] { flex: 1 1 200px; font-size: 13px; padding: 5px 7px; }
   .archivos.lectura li { border: 0; background: none; padding: 0; }
 
+  /* ---- Agenda de marcas: una línea por marca, la ficha se abre al pulsar ---- */
+  details.nueva-marca { margin-bottom: 16px; }
+  details.nueva-marca > summary { list-style: none; display: inline-block; }
+  details.nueva-marca > summary::-webkit-details-marker { display: none; }
+  details.nueva-marca[open] > summary { margin-bottom: 10px; }
+  details.marca { background: #fff; border: 1px solid var(--linea); margin-bottom: 8px; }
+  details.marca[open] { border-color: var(--negro); }
+  details.marca > summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; flex-wrap: wrap;
+                            align-items: center; gap: 6px 12px; }
+  details.marca > summary::-webkit-details-marker { display: none; }
+  details.marca > summary::before { content: '▸'; color: var(--gris); width: 10px; }
+  details.marca[open] > summary::before { content: '▾'; }
+  details.marca > summary:hover { background: var(--humo); }
+  .marca-nombre { font-weight: 700; font-size: 17px; }
+  .marca-datos { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--gris); margin-left: auto; }
+  .marca-datos b { color: var(--negro); }
+  .marca-siguiente { flex: 1 1 100%; font-size: 13px; color: var(--gris); padding-left: 22px; }
+  .marca-cuerpo { padding: 4px 16px 16px; border-top: 1px solid var(--linea); padding-top: 14px; }
+
   /* ---- Lista de episodios: el que toca, resaltado; los pasados, plegados ---- */
   .tarjeta.siguiente { border-left-width: 6px; border-color: var(--azul); background: #EDF2FC;
                        box-shadow: 0 0 0 2px var(--azul) inset; }
@@ -387,6 +406,8 @@ function ane_pod_estilo(): void
 
     .archivos li { align-items: flex-start; }
     .contratos li { flex-direction: column; align-items: flex-start; }
+    .marca-datos { margin-left: 22px; flex: 1 1 100%; }
+    .marca-cuerpo { padding: 12px 12px 14px; }
     .archivos li input[type=text] { flex: 1 1 100%; }
     .archivos li form { flex: 1 1 100%; }
 
