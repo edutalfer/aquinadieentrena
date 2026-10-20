@@ -7,8 +7,12 @@
    se comprueba quién pregunta antes de soltar un byte, y los de
    un tema interno no existen para el editor.
 
-     fichero.php?f=12        la imagen, para verla en el guión
-     fichero.php?f=12&d=1    el fichero, para descargarlo
+     fichero.php?f=12&v=…        la imagen, para verla en el guión
+     fichero.php?f=12&v=…&d=1    el fichero, para descargarlo
+
+   «v» es la marca de ESE fichero (ane_pod_url_fichero()): como SQLite
+   reutiliza números, sin ella una foto nueva heredaba la dirección de una
+   borrada y el navegador enseñaba la vieja.
 
    Lo que no es imagen sale SIEMPRE como adjunto y como
    application/octet-stream: el navegador no lo ejecuta jamás.
@@ -49,9 +53,10 @@ $nombre = (string) $f['nombre'] !== '' ? (string) $f['nombre'] : basename((strin
 $ascii = preg_replace('/[^\x20-\x7E]/', '_', $nombre) ?? 'descarga';
 $ascii = str_replace(['"', '\\'], '_', $ascii);
 
-/* La cabecera de _plantilla.php dice no-store: aquí interesa lo contrario,
-   que el navegador no se baje la misma foto en cada recarga del guión. */
-header('Cache-Control: private, max-age=86400');
+/* Con la marca de este fichero, la dirección es única para siempre: que el
+   navegador la guarde. Sin ella, o con la de otro, nada de guardar. */
+$propia = hash_equals(substr((string) $f['fichero'], 0, 10), (string) ($_GET['v'] ?? ''));
+header('Cache-Control: ' . ($propia ? 'private, max-age=31536000, immutable' : 'private, no-store'));
 header('Content-Type: ' . ($f['tipo'] === 'imagen' ? (string) $f['mime'] : 'application/octet-stream'));
 header('Content-Length: ' . (string) filesize($ruta));
 header('Content-Disposition: ' . ($descarga ? 'attachment' : 'inline')

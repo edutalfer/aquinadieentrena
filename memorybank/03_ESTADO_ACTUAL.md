@@ -370,3 +370,11 @@ Riesgo real si ambos tocan `index.html` a la vez.
    con `strict-origin-when-cross-origin`, pero `php -S` en local no lee el
    `.htaccess`. Ahora el panel ya manda `same-origin`. **Prueba el panel con un
    navegador** (Playwright vale), no solo con `curl`, que no manda `Origin`.
+
+8. **SQLite reutiliza el número de la última fila borrada** (las tablas no
+   llevan `AUTOINCREMENT`). Pasó el 20/10/2026 en «Bici o Cepo»: se borró la
+   foto 7, la nueva volvió a ser la 7, su dirección era idéntica
+   (`fichero.php?f=7`) y el navegador, que la tenía guardada un día, enseñaba
+   la vieja. Ahora las direcciones llevan una marca del fichero
+   (`ane_pod_url_fichero()`: `?f=7&v=…`) y solo esas se guardan en caché.
+   **Si sirves algo por id con caché, mete una marca así.**

@@ -75,10 +75,10 @@ function ane_pod_pinta_fotos(array $fotos): void
     foreach ($fotos as $f) {
         $i = (int) $f['id'];
         echo '<div class="pareja lectura">'
-           . '<figure><a href="/estudio/fichero.php?f=' . $i . '" target="_blank" rel="noopener">'
-           . '<img src="/estudio/fichero.php?f=' . $i . '" alt="' . ane_h(mb_strimwidth((string) $f['pie'], 0, 80, '…'))
+           . '<figure><a href="' . ane_pod_url_fichero($f) . '" target="_blank" rel="noopener">'
+           . '<img src="' . ane_pod_url_fichero($f) . '" alt="' . ane_h(mb_strimwidth((string) $f['pie'], 0, 80, '…'))
            . '" loading="lazy"></a>'
-           . '<figcaption><a class="descarga" href="/estudio/fichero.php?f=' . $i . '&amp;d=1">Descargar</a></figcaption>'
+           . '<figcaption><a class="descarga" href="' . ane_pod_url_fichero($f, true) . '">Descargar</a></figcaption>'
            . '</figure>'
            . '<div class="cuerpo">' . ($f['pie'] !== '' ? ane_pod_texto((string) $f['pie']) : '') . '</div>'
            . '</div>';
@@ -94,7 +94,7 @@ function ane_pod_pinta_archivos(array $lista): void
     }
     echo '<ul class="archivos lectura">';
     foreach ($lista as $f) {
-        echo '<li>↓ <a href="/estudio/fichero.php?f=' . (int) $f['id'] . '&amp;d=1">' . ane_h($f['nombre']) . '</a>'
+        echo '<li>↓ <a href="' . ane_pod_url_fichero($f, true) . '">' . ane_h($f['nombre']) . '</a>'
            . ' <span class="dom">' . ane_h(ane_pod_tamano((int) $f['tamano'])) . '</span>'
            . ($f['pie'] !== '' ? ' <span class="dom">· ' . ane_h($f['pie']) . '</span>' : '')
            . '</li>';

@@ -221,7 +221,11 @@ con prefijo `pod_`:
 
 Las **imágenes y los archivos** no van en la base ni en el repo: viven en
 `~/datos/estudio/imagenes/` y solo salen por `estudio/fichero.php`, que mira
-antes quién pregunta (`?f=<id>` lo enseña, `?f=<id>&d=1` lo descarga).
+antes quién pregunta (`?f=<id>&v=<marca>` lo enseña, con `&d=1` lo descarga).
+La dirección **siempre** se hace con `ane_pod_url_fichero()`: lleva una marca
+del fichero porque SQLite reutiliza números de filas borradas, y sin ella una
+foto nueva heredaba la dirección de una borrada y el navegador enseñaba la
+vieja (pasó el 20/10/2026).
 
 - **Imágenes** (JPG, PNG, WEBP, GIF, hasta 12 MB): se redibujan con GD y se
   reducen a 2000 px de lado. Eso valida que sean imágenes de verdad y de paso

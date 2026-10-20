@@ -683,6 +683,17 @@ function ane_pod_solo(array $lista, string $tipo): array
     return array_values(array_filter($lista, fn ($f) => $f['tipo'] === $tipo));
 }
 
+/* La dirección de un fichero. Lleva una marca de ESE fichero (el principio de
+   su nombre en disco, que es aleatorio): SQLite reutiliza el número de la
+   última fila borrada, y sin la marca una foto nueva heredaría la dirección
+   de la que se borró… y el navegador, que la tenía guardada, enseñaba la vieja.
+   Pasó el 20/10/2026 en «Bici o Cepo». */
+function ane_pod_url_fichero(array $f, bool $descarga = false): string
+{
+    return '/estudio/fichero.php?f=' . (int) $f['id'] . '&amp;v=' . substr((string) $f['fichero'], 0, 10)
+         . ($descarga ? '&amp;d=1' : '');
+}
+
 function ane_pod_fichero(PDO $bd, int $id): ?array
 {
     $st = $bd->prepare('SELECT * FROM pod_ficheros WHERE id = ?');

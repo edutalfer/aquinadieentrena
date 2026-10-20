@@ -492,9 +492,9 @@ ane_pod_cabecera('episodios');
             <?php /* Cada foto, con su descripción al lado: van juntas */ ?>
             <div class="pareja">
               <figure>
-                <img src="/estudio/fichero.php?f=<?= $iid ?>" alt="<?= ane_h(mb_strimwidth($img['pie'], 0, 80, '…')) ?>" loading="lazy">
+                <img src="<?= ane_pod_url_fichero($img) ?>" alt=""<?= ane_h(mb_strimwidth($img['pie'], 0, 80, '…')) ?>" loading="lazy">
                 <figcaption class="acciones">
-                  <a class="btn claro pequeno" href="/estudio/fichero.php?f=<?= $iid ?>&amp;d=1">Descargar</a>
+                  <a class="btn claro pequeno" href="<?= ane_pod_url_fichero($img, true) ?>">Descargar</a>
                   <form method="post" onsubmit="return confirm('¿Borrar la foto y su descripción?')">
                     <?= ane_pod_csrf_campo() ?>
                     <input type="hidden" name="accion" value="fichero_borrar">
@@ -530,7 +530,7 @@ ane_pod_cabecera('episodios');
                     <input type="hidden" name="id" value="<?= $id ?>">
                     <input type="hidden" name="fila" value="<?= $aid ?>">
                   </form>
-                  <a href="/estudio/fichero.php?f=<?= $aid ?>&amp;d=1"><?= ane_h($ar['nombre']) ?></a>
+                  <a href="<?= ane_pod_url_fichero($ar, true) ?>"><?= ane_h($ar['nombre']) ?></a>
                   <span class="dom"><?= ane_h(ane_pod_tamano((int) $ar['tamano'])) ?></span>
                   <form method="post" class="acciones">
                     <?= ane_pod_csrf_campo() ?>
