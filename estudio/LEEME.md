@@ -56,6 +56,37 @@ dirección sola, o con su nombre delante («Rider Manual https://…»,
 «Perfil | https://…»). Una línea que no parezca un enlace se queda fuera y se
 avisa. Luego cada uno se puede retocar o borrar en su fila.
 
+## Marcas, acuerdos, proyectos y episodios
+
+1. Al **hablar** con una marca, se apunta en *Patrocinadores* (contacto, estado,
+   siguiente paso).
+2. Al **firmar**, «Firmar acuerdo» en su ficha (o «Nuevo acuerdo» en la ficha
+   del proyecto): proyecto, cuánto pone, **episodios con cuña** («10-13, 20»),
+   tipo y qué hay que decir.
+3. Firmado (confirmado o facturado), el acuerdo **crea los episodios que
+   falten** («Episodio 12») y mete su cuña en cada uno, al principio del guión.
+   La marca pasa a «confirmado» y el dinero suma en el proyecto.
+
+El proyecto **«Podcast»** es fijo (`pod_proyectos.fijo = 1`): siempre existe,
+va el primero y no se borra. Ahí van las marcas que patrocinan episodios sueltos.
+
+Reglas para que acuerdo y episodios no se descuadren (`ane_pod_sincroniza_acuerdo()`):
+
+- El acuerdo **manda** en el tipo y el texto de sus cuñas pendientes; en el
+  episodio solo se marca «hecha». Las hechas no se tocan nunca.
+- Quitar un episodio del acuerdo (o descartarlo) quita su cuña **salvo si ya
+  está hecha**. Borrar el acuerdo deja las hechas como cuñas sueltas.
+- Quitar a mano una cuña de acuerdo, borrar el episodio o cambiarle el número
+  **corrige la lista del acuerdo**, para que al guardarlo no resuciten.
+- Nunca se borran episodios solos: pueden tener guión.
+
+La lista de episodios va en **Próximos** (por número; el siguiente que se graba,
+resaltado) y **Pasados** (plegados). Los episodios salen los domingos: uno pasa
+a Pasados el **lunes siguiente al domingo de la semana en que se graba**
+(`ane_pod_ya_salio()`). Sin fecha de grabación, es próximo.
+
+## Bici o Cepo
+
 Todo episodio acaba en una sección fija, **Bici o Cepo**, que no se borra ni se
 mueve: **cada foto con su descripción al lado**, tantas parejas como haga
 falta. Ahí no hay texto de bloque: lo que se cuenta va en la descripción de

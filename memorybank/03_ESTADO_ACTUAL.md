@@ -211,6 +211,17 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   su nombre delante o sin él («Rider Manual https://…», «Perfil | https://…»).
   La migración (una vez, `ajustes.pod_orden_unificado`) puso las menciones que
   hubiera al principio del guión con su «momento» escrito delante del texto.
+- **Acuerdos (21/10/2026, D24):** la marca se apunta en *Patrocinadores* al
+  hablar con ella; al firmar, **«Firmar acuerdo»** (en su ficha o en la del
+  proyecto): proyecto, cuánto pone, episodios con cuña («10-13, 20»), tipo y
+  texto. Firmado, **crea los episodios que falten** y les mete la cuña. Proyecto
+  **fijo «Podcast»** para patrocinios de episodios sueltos (no se borra). El
+  acuerdo manda en el texto de sus cuñas pendientes; quitar un episodio quita
+  su cuña **salvo si está hecha**.
+- **Lista de episodios:** **Próximos** por número, con el siguiente que se graba
+  resaltado (y «grabado · sale el domingo» si ya se grabó), y **Pasados**
+  plegados. Un episodio pasa a Pasados el **lunes siguiente al domingo** de la
+  semana en que se graba; sin fecha, es próximo.
 - **Ficheros:** en `~/datos/estudio/imagenes/` (fuera del repo y del docroot),
   servidos por `estudio/fichero.php` tras comprobar quién pregunta: `?f=<id>`
   lo enseña y `?f=<id>&d=1` lo descarga. **El editor se descarga todo lo que

@@ -162,7 +162,8 @@ function ane_pod_bd(): PDO
             momento     TEXT    NOT NULL DEFAULT \'\',   -- ya no se usa (21/10/2026): lo dice el sitio en el guión
             texto       TEXT    NOT NULL DEFAULT \'\',   -- lo que hay que decir
             hecho       INTEGER NOT NULL DEFAULT 0,
-            orden       INTEGER NOT NULL DEFAULT 0
+            orden       INTEGER NOT NULL DEFAULT 0,
+            acuerdo_id  INTEGER NOT NULL DEFAULT 0    -- 0 = cuña suelta; si no, viene de un acuerdo
         );
         CREATE INDEX IF NOT EXISTS i_pod_menciones ON pod_menciones (episodio_id, orden);
 
@@ -193,11 +194,14 @@ function ane_pod_bd(): PDO
             coste       INTEGER NOT NULL DEFAULT 0,     -- euros que cuesta
             notas       TEXT    NOT NULL DEFAULT \'\',
             orden       INTEGER NOT NULL DEFAULT 0,
+            fijo        INTEGER NOT NULL DEFAULT 0,     -- 1 = «Podcast»: siempre está, no se borra
             creado      TEXT    NOT NULL,
             actualizado TEXT    NOT NULL
         );
 
-        -- Qué marca está en qué proyecto, por cuánto y a cambio de qué.
+        -- El ACUERDO con una marca: en qué proyecto, por cuánto, a cambio de
+        -- qué y en qué episodios sale su cuña. Firmado (confirmado o
+        -- facturado), crea los episodios que falten y les mete la cuña.
         CREATE TABLE IF NOT EXISTS pod_proy_marcas (
             id             INTEGER PRIMARY KEY,
             proyecto_id    INTEGER NOT NULL,
@@ -206,7 +210,10 @@ function ane_pod_bd(): PDO
             estado         TEXT    NOT NULL DEFAULT \'contactado\',
             importe        INTEGER NOT NULL DEFAULT 0,
             contrapartidas TEXT    NOT NULL DEFAULT \'\',
-            notas          TEXT    NOT NULL DEFAULT \'\'
+            notas          TEXT    NOT NULL DEFAULT \'\',
+            episodios      TEXT    NOT NULL DEFAULT \'\',   -- «10-13, 20»: números de episodio
+            tipo           TEXT    NOT NULL DEFAULT \'cuna\', -- tipo de cuña que llevan
+            texto          TEXT    NOT NULL DEFAULT \'\'    -- qué hay que decir en cada una
         );
         CREATE INDEX IF NOT EXISTS i_pod_proy_marcas ON pod_proy_marcas (proyecto_id);
 
@@ -266,6 +273,15 @@ function ane_pod_bd(): PDO
 
     ane_pod_unifica_orden($bd);
 
+    /* 21/10/2026: los acuerdos unen marca, proyecto, dinero y episodios (D24).
+       Columnas nuevas en tablas que ya existían, y el proyecto fijo «Podcast». */
+    ane_pod_columna($bd, 'pod_proyectos', 'fijo', 'INTEGER NOT NULL DEFAULT 0');
+    ane_pod_columna($bd, 'pod_proy_marcas', 'episodios', "TEXT NOT NULL DEFAULT ''");
+    ane_pod_columna($bd, 'pod_proy_marcas', 'tipo', "TEXT NOT NULL DEFAULT 'cuna'");
+    ane_pod_columna($bd, 'pod_proy_marcas', 'texto', "TEXT NOT NULL DEFAULT ''");
+    ane_pod_columna($bd, 'pod_menciones', 'acuerdo_id', 'INTEGER NOT NULL DEFAULT 0');
+    ane_pod_proyecto_podcast($bd);
+
     $listo = true;
     return $bd;
 }
@@ -305,6 +321,15 @@ function ane_pod_unifica_orden(PDO $bd): void
     }
     $bd->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('pod_orden_unificado', '1')")->execute();
     $bd->commit();
+}
+
+/* Añade una columna si aún no está (SQLite no tiene «ADD COLUMN IF NOT EXISTS») */
+function ane_pod_columna(PDO $bd, string $tabla, string $columna, string $definicion): void
+{
+    $hay = $bd->query('PRAGMA table_info(' . $tabla . ')')->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array($columna, $hay, true)) {
+        $bd->exec("ALTER TABLE $tabla ADD COLUMN $columna $definicion");
+    }
 }
 
 /* ---------- Acceso ---------- */
@@ -829,7 +854,23 @@ function ane_pod_marca(PDO $bd, int $id): ?array
 
 function ane_pod_proyectos(PDO $bd): array
 {
-    return $bd->query('SELECT * FROM pod_proyectos ORDER BY orden, id')->fetchAll();
+    return $bd->query('SELECT * FROM pod_proyectos ORDER BY fijo DESC, orden, id')->fetchAll();
+}
+
+/* El proyecto «Podcast» existe siempre: ahí van las marcas que patrocinan
+   episodios sueltos. Si no está, se crea; devuelve su id. */
+function ane_pod_proyecto_podcast(PDO $bd): int
+{
+    $id = (int) $bd->query('SELECT id FROM pod_proyectos WHERE fijo = 1 ORDER BY id LIMIT 1')->fetchColumn();
+    if ($id) {
+        return $id;
+    }
+    $ahora = ane_ahora();
+    $bd->prepare("INSERT INTO pod_proyectos (nombre, detalle, estado, descripcion, orden, fijo, creado, actualizado)
+                  VALUES ('Podcast', 'Marcas que patrocinan episodios', 'abierto',
+                          'Proyecto fijo: los patrocinios de episodios sueltos del podcast.', 0, 1, ?, ?)")
+       ->execute([$ahora, $ahora]);
+    return (int) $bd->lastInsertId();
 }
 
 function ane_pod_proyecto(PDO $bd, int $id): ?array
@@ -862,6 +903,261 @@ function ane_pod_cuentas(array $filas): array
     }
     $c['total'] = $c['confirmado'] + $c['negociando'];
     return $c;
+}
+
+/* ---------- Acuerdos: la marca, el proyecto, el dinero y los episodios ---------- */
+
+/* Solo los acuerdos firmados ponen cuñas en los episodios */
+const ANE_POD_FIRMADO = ['confirmado', 'facturado'];
+const ANE_POD_MAX_EPISODIOS = 60;   /* por acuerdo: más es casi seguro un error al teclear */
+
+/* «10-13, 20 21; 30» → [10, 11, 12, 13, 20, 21, 30]. Ordenados y sin repetir. */
+function ane_pod_numeros(string $texto): array
+{
+    $fuera = [];
+    foreach (preg_split('/[\s,;]+/u', str_replace(['–', '—'], '-', trim($texto))) as $trozo) {
+        if (preg_match('/^(\d{1,4})\s*-\s*(\d{1,4})$/', $trozo, $m)) {
+            [$a, $b] = [(int) $m[1], (int) $m[2]];
+            if ($a > $b) {
+                [$a, $b] = [$b, $a];
+            }
+            for ($n = $a; $n <= $b && count($fuera) <= ANE_POD_MAX_EPISODIOS; $n++) {
+                $fuera[] = $n;
+            }
+        } elseif (preg_match('/^\d{1,4}$/', $trozo)) {
+            $fuera[] = (int) $trozo;
+        }
+    }
+    $fuera = array_values(array_unique(array_filter($fuera, fn ($n) => $n >= 1 && $n <= 9999)));
+    sort($fuera);
+    return array_slice($fuera, 0, ANE_POD_MAX_EPISODIOS);
+}
+
+/* [10, 11, 12, 13, 20] → «10-13, 20» */
+function ane_pod_texto_numeros(array $numeros): string
+{
+    $numeros = array_values(array_unique(array_map('intval', $numeros)));
+    sort($numeros);
+    $tramos = [];
+    foreach ($numeros as $n) {
+        $ultimo = count($tramos) - 1;
+        if ($ultimo >= 0 && $n === $tramos[$ultimo][1] + 1) {
+            $tramos[$ultimo][1] = $n;
+        } else {
+            $tramos[] = [$n, $n];
+        }
+    }
+    return implode(', ', array_map(fn ($t) => $t[0] === $t[1] ? (string) $t[0] : $t[0] . '-' . $t[1], $tramos));
+}
+
+/* El episodio con ese número; si no existe y se pide, se crea vacío («Episodio 12») */
+function ane_pod_episodio_numero(PDO $bd, int $numero, bool $crear = false): ?int
+{
+    $st = $bd->prepare('SELECT id FROM pod_episodios WHERE numero = ? ORDER BY id LIMIT 1');
+    $st->execute([$numero]);
+    $id = (int) $st->fetchColumn();
+    if ($id || !$crear) {
+        return $id ?: null;
+    }
+    $ahora = ane_ahora();
+    $bd->prepare("INSERT INTO pod_episodios (numero, titulo, creado, actualizado) VALUES (?, '', ?, ?)")
+       ->execute([$numero, $ahora, $ahora]);
+    $id = (int) $bd->lastInsertId();
+    ane_pod_asegura_cierre($bd, $id);
+    return $id;
+}
+
+function ane_pod_acuerdo(PDO $bd, int $id): ?array
+{
+    $st = $bd->prepare('SELECT pm.*, COALESCE(NULLIF(m.nombre, \'\'), pm.marca) AS marca_nombre, p.nombre AS proyecto
+                        FROM pod_proy_marcas pm
+                        LEFT JOIN pod_marcas m ON m.id = pm.marca_id
+                        LEFT JOIN pod_proyectos p ON p.id = pm.proyecto_id
+                        WHERE pm.id = ?');
+    $st->execute([$id]);
+    return $st->fetch() ?: null;
+}
+
+/* Pone los episodios y las cuñas de un acuerdo en su sitio:
+   - firmado: crea los episodios que falten y les mete la cuña (al principio
+     del guión, desde ahí se coloca a mano); a las cuñas pendientes les copia
+     marca, tipo y texto del acuerdo, que manda;
+   - lo que ya no toca (episodio quitado, o acuerdo que deja de estar
+     firmado): se quitan sus cuñas, SALVO las hechas, que ya se grabaron.
+   Nunca borra episodios: pueden tener guión. */
+function ane_pod_sincroniza_acuerdo(PDO $bd, int $acuerdoId): void
+{
+    $a = ane_pod_acuerdo($bd, $acuerdoId);
+    if (!$a) {
+        return;
+    }
+    $firmado = in_array($a['estado'], ANE_POD_FIRMADO, true);
+    $quiere = [];
+    foreach ($firmado ? ane_pod_numeros((string) $a['episodios']) : [] as $n) {
+        $quiere[ane_pod_episodio_numero($bd, $n, true)] = true;
+    }
+    $tipo = isset(ANE_POD_MENCION_TIPOS[$a['tipo']]) ? $a['tipo'] : 'cuna';
+
+    $st = $bd->prepare('SELECT id, episodio_id, hecho FROM pod_menciones WHERE acuerdo_id = ?');
+    $st->execute([$acuerdoId]);
+    $tiene = [];
+    foreach ($st->fetchAll() as $c) {
+        $ep = (int) $c['episodio_id'];
+        if (!isset($quiere[$ep]) || isset($tiene[$ep])) {
+            /* sobra (o está repetida): fuera, salvo que ya se haya grabado */
+            if (!(int) $c['hecho']) {
+                $bd->prepare('DELETE FROM pod_menciones WHERE id = ?')->execute([(int) $c['id']]);
+                continue;
+            }
+        } elseif (!(int) $c['hecho']) {
+            $bd->prepare('UPDATE pod_menciones SET marca_id = ?, marca = ?, tipo = ?, texto = ? WHERE id = ?')
+               ->execute([(int) $a['marca_id'], (string) $a['marca_nombre'], $tipo, (string) $a['texto'], (int) $c['id']]);
+        }
+        $tiene[$ep] = true;
+    }
+    foreach (array_keys($quiere) as $ep) {
+        if (isset($tiene[$ep])) {
+            continue;
+        }
+        $bd->prepare('INSERT INTO pod_menciones (episodio_id, marca_id, marca, tipo, texto, orden, acuerdo_id)
+                      VALUES (?, ?, ?, ?, ?, ?, ?)')
+           ->execute([$ep, (int) $a['marca_id'], (string) $a['marca_nombre'], $tipo, (string) $a['texto'],
+                      ane_pod_siguiente_orden($bd, $ep), $acuerdoId]);
+        ane_pod_coloca($bd, $ep, 'pod_menciones', (int) $bd->lastInsertId(), '');
+    }
+}
+
+/* Lo que llega de un formulario de acuerdo, limpio. Por defecto, firmado:
+   un acuerdo se apunta cuando se firma; antes, la marca va en la agenda. */
+function ane_pod_datos_acuerdo(array $post): array
+{
+    return [
+        'estado'         => isset(ANE_POD_PATRO_ESTADOS[(string) ($post['estado'] ?? '')]) ? (string) $post['estado'] : 'confirmado',
+        'importe'        => max(0, min(10000000, (int) ($post['importe'] ?? 0))),
+        'episodios'      => ane_pod_texto_numeros(ane_pod_numeros((string) ($post['episodios'] ?? ''))),
+        'tipo'           => isset(ANE_POD_MENCION_TIPOS[(string) ($post['tipo'] ?? '')]) ? (string) $post['tipo'] : 'cuna',
+        'texto'          => ane_recorta((string) ($post['texto'] ?? ''), 4000),
+        'contrapartidas' => ane_recorta((string) ($post['contrapartidas'] ?? ''), 2000),
+        'notas'          => ane_recorta((string) ($post['notas'] ?? ''), 2000),
+    ];
+}
+
+/* Apunta un acuerdo y pone sus episodios y cuñas. Si viene de la agenda y
+   está firmado, la marca pasa a «confirmado» (salvo que ya esté facturada).
+   Devuelve el id. */
+function ane_pod_crea_acuerdo(PDO $bd, int $proyecto, int $marcaId, string $marca, array $d): int
+{
+    $bd->beginTransaction();
+    $bd->prepare('INSERT INTO pod_proy_marcas (proyecto_id, marca_id, marca, estado, importe, contrapartidas, notas,
+                                               episodios, tipo, texto)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+       ->execute([$proyecto, $marcaId, $marca, $d['estado'], $d['importe'], $d['contrapartidas'], $d['notas'],
+                  $d['episodios'], $d['tipo'], $d['texto']]);
+    $id = (int) $bd->lastInsertId();
+    ane_pod_sincroniza_acuerdo($bd, $id);
+    if ($marcaId && in_array($d['estado'], ANE_POD_FIRMADO, true)) {
+        $bd->prepare("UPDATE pod_marcas SET estado = 'confirmado', actualizado = ?
+                      WHERE id = ? AND estado IN ('contactado', 'negociando', 'descartado')")->execute([ane_ahora(), $marcaId]);
+    }
+    $bd->commit();
+    return $id;
+}
+
+function ane_pod_actualiza_acuerdo(PDO $bd, int $id, array $d): void
+{
+    $bd->beginTransaction();
+    $bd->prepare('UPDATE pod_proy_marcas SET estado = ?, importe = ?, contrapartidas = ?, notas = ?,
+                                             episodios = ?, tipo = ?, texto = ? WHERE id = ?')
+       ->execute([$d['estado'], $d['importe'], $d['contrapartidas'], $d['notas'],
+                  $d['episodios'], $d['tipo'], $d['texto'], $id]);
+    ane_pod_sincroniza_acuerdo($bd, $id);
+    $bd->commit();
+}
+
+/* Para que la lista del acuerdo diga siempre la verdad cuando se toca algo
+   desde un episodio: */
+
+/* … se quita a mano una cuña que venía de un acuerdo: ese episodio sale de su lista */
+function ane_pod_quita_de_acuerdo(PDO $bd, int $acuerdoId, int $numero): void
+{
+    $a = ane_pod_acuerdo($bd, $acuerdoId);
+    if ($a && $numero > 0) {
+        $lista = array_diff(ane_pod_numeros((string) $a['episodios']), [$numero]);
+        $bd->prepare('UPDATE pod_proy_marcas SET episodios = ? WHERE id = ?')
+           ->execute([ane_pod_texto_numeros($lista), $acuerdoId]);
+    }
+}
+
+/* … a un episodio le cambian el número: sus acuerdos apuntan al número nuevo */
+function ane_pod_renumera_en_acuerdos(PDO $bd, int $episodio, int $viejo, int $nuevo): void
+{
+    if ($viejo === $nuevo) {
+        return;
+    }
+    $st = $bd->prepare('SELECT DISTINCT acuerdo_id FROM pod_menciones WHERE episodio_id = ? AND acuerdo_id > 0');
+    $st->execute([$episodio]);
+    foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $acuerdoId) {
+        $a = ane_pod_acuerdo($bd, (int) $acuerdoId);
+        if (!$a) {
+            continue;
+        }
+        $lista = array_diff(ane_pod_numeros((string) $a['episodios']), [$viejo]);
+        if ($nuevo > 0) {
+            $lista[] = $nuevo;
+        }
+        $bd->prepare('UPDATE pod_proy_marcas SET episodios = ? WHERE id = ?')
+           ->execute([ane_pod_texto_numeros($lista), (int) $acuerdoId]);
+    }
+}
+
+/* … se borra el acuerdo: sus cuñas pendientes se van, las hechas se quedan sueltas */
+function ane_pod_borra_acuerdo(PDO $bd, int $acuerdoId): void
+{
+    $bd->prepare('DELETE FROM pod_menciones WHERE acuerdo_id = ? AND hecho = 0')->execute([$acuerdoId]);
+    $bd->prepare('UPDATE pod_menciones SET acuerdo_id = 0 WHERE acuerdo_id = ?')->execute([$acuerdoId]);
+    $bd->prepare('DELETE FROM pod_proy_marcas WHERE id = ?')->execute([$acuerdoId]);
+}
+
+/* Los episodios que tiene de verdad un acuerdo, con su número y si la cuña ya está hecha */
+function ane_pod_episodios_de_acuerdo(PDO $bd, int $acuerdoId): array
+{
+    $st = $bd->prepare('SELECT e.id, e.numero, e.titulo, mc.hecho FROM pod_menciones mc
+                        JOIN pod_episodios e ON e.id = mc.episodio_id
+                        WHERE mc.acuerdo_id = ? ORDER BY e.numero, e.id');
+    $st->execute([$acuerdoId]);
+    return $st->fetchAll();
+}
+
+/* ---------- Calendario: los episodios salen los domingos ---------- */
+
+/* El domingo en que sale: el de la semana (de lunes a domingo) en que se graba */
+function ane_pod_domingo(?string $utc): ?DateTime
+{
+    if (!$utc) {
+        return null;
+    }
+    $d = new DateTime($utc, new DateTimeZone('UTC'));
+    $d->setTimezone(new DateTimeZone('Europe/Madrid'));
+    $d->setTime(0, 0);
+    $dia = (int) $d->format('N');          /* 1 = lunes … 7 = domingo */
+    return $d->modify('+' . (7 - $dia) . ' days');
+}
+
+/* Pasado = ya ha llegado el lunes siguiente a su domingo. Sin fecha, próximo. */
+function ane_pod_ya_salio(array $ep, ?DateTime $ahora = null): bool
+{
+    $domingo = ane_pod_domingo($ep['fecha'] ?? null);
+    if (!$domingo) {
+        return false;
+    }
+    $ahora = $ahora ?: new DateTime('now', new DateTimeZone('Europe/Madrid'));
+    return $ahora >= (clone $domingo)->modify('+1 day');
+}
+
+/* Grabado (la hora de grabación ya pasó), aunque aún no haya salido */
+function ane_pod_grabado(array $ep): bool
+{
+    return !empty($ep['fecha']) && strtotime((string) $ep['fecha'] . ' UTC') <= time();
 }
 
 /* ---------- Presentación ---------- */

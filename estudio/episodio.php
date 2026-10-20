@@ -38,10 +38,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
     switch ($accion) {
         case 'datos':
+            $numero = max(0, min(9999, (int) ($_POST['numero'] ?? 0)));
+            /* Si cambia el número, los acuerdos que lo citaban apuntan al nuevo */
+            ane_pod_renumera_en_acuerdos($bd, $id, (int) $ep['numero'], $numero);
             $bd->prepare('UPDATE pod_episodios SET numero = ?, titulo = ?, fecha = ?, duracion = ?, lugar = ?,
                             youtube_id = ?, notas = ?, actualizado = ? WHERE id = ?')
                ->execute([
-                   max(0, min(9999, (int) ($_POST['numero'] ?? 0))),
+                   $numero,
                    ane_recorta((string) ($_POST['titulo'] ?? ''), 200),
                    ane_local_a_utc((string) ($_POST['fecha'] ?? '')),
                    max(0, min(1000, (int) ($_POST['duracion'] ?? 0))),
@@ -53,6 +56,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             ane_pod_vuelve($id, 'ok=guardado');
 
         case 'borrar_episodio':
+            /* Sale de la lista de los acuerdos que lo citaban, o se volvería a crear */
+            $st = $bd->prepare('SELECT DISTINCT acuerdo_id FROM pod_menciones WHERE episodio_id = ? AND acuerdo_id > 0');
+            $st->execute([$id]);
+            foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $acuerdo) {
+                ane_pod_quita_de_acuerdo($bd, (int) $acuerdo, (int) $ep['numero']);
+            }
             ane_pod_borra_ficheros($bd, 'episodio_id', $id);
             foreach (['pod_bloques', 'pod_enlaces', 'pod_menciones'] as $t) {
                 $bd->prepare("DELETE FROM $t WHERE episodio_id = ?")->execute([$id]);
@@ -209,11 +218,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             ane_pod_vuelve($id, 'ok=mencion#p' . $nueva);
 
         case 'mencion_guardar':
-            $bd->prepare('UPDATE pod_menciones SET tipo = ?, texto = ?, hecho = ?
-                          WHERE id = ? AND episodio_id = ?')
-               ->execute([isset(ANE_POD_MENCION_TIPOS[(string) ($_POST['tipo'] ?? '')]) ? (string) $_POST['tipo'] : 'mencion',
-                          ane_recorta((string) ($_POST['texto'] ?? ''), 4000),
-                          empty($_POST['hecho']) ? 0 : 1, $fila, $id]);
+            $st = $bd->prepare('SELECT acuerdo_id FROM pod_menciones WHERE id = ? AND episodio_id = ?');
+            $st->execute([$fila, $id]);
+            if ((int) $st->fetchColumn()) {
+                /* Cuña de un acuerdo: el tipo y el texto los manda el acuerdo; aquí, solo si está hecha */
+                $bd->prepare('UPDATE pod_menciones SET hecho = ? WHERE id = ? AND episodio_id = ?')
+                   ->execute([empty($_POST['hecho']) ? 0 : 1, $fila, $id]);
+            } else {
+                $bd->prepare('UPDATE pod_menciones SET tipo = ?, texto = ?, hecho = ?
+                              WHERE id = ? AND episodio_id = ?')
+                   ->execute([isset(ANE_POD_MENCION_TIPOS[(string) ($_POST['tipo'] ?? '')]) ? (string) $_POST['tipo'] : 'mencion',
+                              ane_recorta((string) ($_POST['texto'] ?? ''), 4000),
+                              empty($_POST['hecho']) ? 0 : 1, $fila, $id]);
+            }
             ane_pod_vuelve($id, 'ok=guardado#p' . $fila);
 
         case 'mencion_mover':
@@ -221,6 +238,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             ane_pod_vuelve($id, 'guion=1#p' . $fila);
 
         case 'mencion_borrar':
+            /* Si venía de un acuerdo, este episodio sale de su lista: si no, volvería al guardar el acuerdo */
+            $st = $bd->prepare('SELECT acuerdo_id FROM pod_menciones WHERE id = ? AND episodio_id = ?');
+            $st->execute([$fila, $id]);
+            if ($acuerdo = (int) $st->fetchColumn()) {
+                ane_pod_quita_de_acuerdo($bd, $acuerdo, (int) $ep['numero']);
+            }
             $bd->prepare('DELETE FROM pod_menciones WHERE id = ? AND episodio_id = ?')->execute([$fila, $id]);
             ane_pod_vuelve($id, 'ok=borrado#guion');
 
@@ -243,6 +266,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 ane_pod_asegura_cierre($bd, $id);
 $guion = ane_pod_guion($bd, $id);            /* todo, temas internos incluidos */
+$acuerdos = [];
+$st = $bd->prepare('SELECT pm.id, pm.importe, pm.episodios, p.id AS proyecto_id, p.nombre AS proyecto
+                    FROM pod_proy_marcas pm JOIN pod_proyectos p ON p.id = pm.proyecto_id
+                    WHERE pm.id IN (SELECT acuerdo_id FROM pod_menciones WHERE episodio_id = ? AND acuerdo_id > 0)');
+$st->execute([$id]);
+foreach ($st->fetchAll() as $a) {
+    $acuerdos[(int) $a['id']] = $a;
+}
 $enlaces = ane_pod_enlaces($bd, $id);
 $ficheros = ane_pod_ficheros_de($bd, $id);
 $marcas = ane_pod_marcas($bd);
@@ -364,7 +395,8 @@ ane_pod_cabecera('episodios');
               <input type="hidden" name="hacia" value="<?= $hacia ?>">
             </form>
           <?php endforeach; ?>
-          <form method="post" id="pb<?= $mid ?>" class="escondida" onsubmit="return confirm('¿Quitar este patrocinio del guión?')">
+          <form method="post" id="pb<?= $mid ?>" class="escondida"
+                onsubmit="return confirm(<?= (int) $b['acuerdo_id'] ? "'¿Quitar la cuña de este episodio? También sale de la lista del acuerdo.'" : "'¿Quitar este patrocinio del guión?'" ?>)">
             <?= ane_pod_csrf_campo() ?>
             <input type="hidden" name="accion" value="mencion_borrar">
             <input type="hidden" name="id" value="<?= $id ?>">
@@ -385,6 +417,15 @@ ane_pod_cabecera('episodios');
             <input type="hidden" name="accion" value="mencion_guardar">
             <input type="hidden" name="id" value="<?= $id ?>">
             <input type="hidden" name="fila" value="<?= $mid ?>">
+            <?php $acu = $acuerdos[(int) $b['acuerdo_id']] ?? null;
+              if ($acu): ?>
+              <?php /* Cuña de un acuerdo: el texto se cambia en el acuerdo, que manda en todas sus cuñas */ ?>
+              <p class="origen">Del acuerdo de <b><?= ane_h($acu['proyecto']) ?></b><?= (int) $acu['importe'] ? ' · ' . ane_pod_euros((int) $acu['importe']) : '' ?>
+                · episodios <?= ane_h($acu['episodios']) ?>
+                · <a href="/estudio/proyecto.php?id=<?= (int) $acu['proyecto_id'] ?>#a<?= (int) $b['acuerdo_id'] ?>">cambiar en el acuerdo</a></p>
+              <p class="dom" style="margin:0 0 4px"><?= ane_h(ANE_POD_MENCION_TIPOS[$b['tipo']] ?? $b['tipo']) ?></p>
+              <div class="cuerpo leido"><?= $b['texto'] !== '' ? ane_pod_texto($b['texto']) : '<p class="vacio">El acuerdo aún no dice qué hay que decir.</p>' ?></div>
+            <?php else: ?>
             <div class="campo" style="margin:0 0 10px"><label>Tipo</label>
               <select name="tipo">
                 <?php foreach (ANE_POD_MENCION_TIPOS as $kk => $v): ?>
@@ -393,6 +434,7 @@ ane_pod_cabecera('episodios');
               </select></div>
             <div class="campo" style="margin:0 0 10px"><label>Qué hay que decir</label>
               <textarea name="texto" maxlength="4000" style="min-height:70px"><?= ane_h($b['texto']) ?></textarea></div>
+            <?php endif; ?>
             <div class="barra" style="margin:0">
               <div class="cas"><input type="checkbox" id="h<?= $mid ?>" name="hecho" value="1"
                    <?= (int) $b['hecho'] ? 'checked' : '' ?>>

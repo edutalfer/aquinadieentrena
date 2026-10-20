@@ -227,6 +227,15 @@ function ane_pod_estilo(): void
   /* ---- Un patrocinio dentro del guión: rojo, para que no se confunda con un tema ---- */
   .tema.patrocinio { border-left-color: var(--rojo); background: #FDF7F6; }
   .tema.patrocinio.hecho { border-left-color: var(--verde); background: #F6FBF8; }
+  .origen { margin: 0 0 8px; font-size: 13px; background: #fff; border: 1px solid #E9B8B4; padding: 6px 10px; }
+  .cuerpo.leido { background: #fff; border: 1px solid var(--linea); padding: 8px 12px; margin-bottom: 10px; }
+  .cuerpo.leido p:last-child { margin-bottom: 0; }
+  .en-guion { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .en-guion a.chip { text-decoration: none; }
+  details.firmar { margin-top: 14px; }
+  details.firmar > summary { list-style: none; display: inline-block; }
+  details.firmar > summary::-webkit-details-marker { display: none; }
+  details.firmar[open] > summary { background: var(--profundo); border-color: var(--profundo); }
   .mover { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px;
            border-top: 1px dashed var(--linea); padding-top: 10px; }
   .mover label { margin: 0; }
@@ -274,6 +283,21 @@ function ane_pod_estilo(): void
                  border: 1px solid var(--linea); background: var(--humo); padding: 8px 10px; }
   .archivos li input[type=text] { flex: 1 1 200px; font-size: 13px; padding: 5px 7px; }
   .archivos.lectura li { border: 0; background: none; padding: 0; }
+
+  /* ---- Lista de episodios: el que toca, resaltado; los pasados, plegados ---- */
+  .tarjeta.siguiente { border-left-width: 6px; border-color: var(--azul); background: #EDF2FC;
+                       box-shadow: 0 0 0 2px var(--azul) inset; }
+  .tarjeta .toca { margin: 0 0 4px; font: 900 italic 13px/1 "Archivo", sans-serif; text-transform: uppercase;
+                   letter-spacing: .02em; color: var(--azul); }
+  .tarjeta.grabado { border-left-color: var(--ambar); }
+  details.pasados { margin-top: 26px; }
+  details.pasados > summary { cursor: pointer; list-style: none; }
+  details.pasados > summary::-webkit-details-marker { display: none; }
+  details.pasados > summary h3 { display: inline; }
+  details.pasados > summary::before { content: '▸ '; color: var(--gris); }
+  details.pasados[open] > summary::before { content: '▾ '; }
+  details.pasados .tarjetas { margin-top: 12px; }
+  details.pasados .tarjeta { opacity: .8; border-left-color: var(--linea); }
 
   /* ---- Guión ---- */
   .guion { background: #fff; border: 1px solid var(--linea); padding: 26px 30px; }

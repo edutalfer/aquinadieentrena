@@ -83,18 +83,9 @@ $st = $bd->prepare('INSERT INTO pod_proyectos (nombre, detalle, estado, objetivo
 foreach ($proyectos as $p) {
     $st->execute(array_merge($p, [$ahora, $ahora]));
 }
+$podcast = ane_pod_proyecto_podcast($bd);   /* el fijo: lo borró el DELETE de arriba y vuelve */
 $pid = $bd->query('SELECT nombre, id FROM pod_proyectos')->fetchAll(PDO::FETCH_KEY_PAIR);
-
-$st = $bd->prepare('INSERT INTO pod_proy_marcas (proyecto_id, marca_id, marca, estado, importe, contrapartidas, notas)
-                    VALUES (?,?,?,?,?,?,?)');
-$st->execute([$pid['Cape Epic 2027'], $mid['Gobik'], 'Gobik', 'confirmado', 12000,
-              'Pecho del mono · dos menciones por episodio · un reel por etapa', '']);
-$st->execute([$pid['Cape Epic 2027'], $mid['Bicilab'], 'Bicilab', 'negociando', 6000,
-              'Espalda alta · mención en la intro', 'Pendiente de que cuadren el presupuesto de marzo.']);
-$st->execute([$pid['Cape Epic 2027'], $mid['klinpig'], 'klinpig', 'contactado', 3000, 'Manga izquierda', '']);
-$st->execute([$pid['ANE House 2027'], $mid['CMS'], 'CMS', 'confirmado', 9000,
-              'Cuña leída en los 8 episodios de la casa', '']);
-$st->execute([$pid['ANE House 2027'], $mid['Bicilab'], 'Bicilab', 'negociando', 7000, 'Presencia en la casa', '']);
+/* Los acuerdos van más abajo, cuando ya existen los episodios: si no, crearían los suyos */
 
 /* ---- Episodios ---- */
 $episodios = [
@@ -160,19 +151,41 @@ $bd->prepare('INSERT INTO pod_enlaces (episodio_id, bloque_id, titulo, url, orde
               'El reglamento de la UCI', 'https://www.uci.org/']);
 ane_pod_asegura_cierre($bd, $ep2);
 
-/* ---- Patrocinios del episodio de la creatina, intercalados entre los temas ----
-   Comparten orden con los temas (10, 20, 30...): el 15 va entre el tema 1 y el 2 */
-$menciones = [
-    [$mid['Gobik'], 'Gobik', 'cuna', "Cuña de 30 s: mono de Cape Epic, código ANE15. **No decir precios.**", 0, 15],
-    [$mid['CMS'], 'CMS', 'integrada', 'Mencionar que el seguimiento de la casa lo lleva CMS.', 0, 45],
-    [$mid['Bicilab'], 'Bicilab', 'mencion', 'Social Ride del 15 de noviembre: plazas por la web.', 1, 55],
-];
-$st = $bd->prepare('INSERT INTO pod_menciones (episodio_id, marca_id, marca, tipo, texto, hecho, orden)
-                    VALUES (?,?,?,?,?,?,?)');
-foreach ($menciones as $m) {
-    $st->execute(array_merge([$ep1], $m));
-}
-ane_pod_renumera($bd, ane_pod_piezas($bd, $ep1));   /* 10, 20, 30... sin huecos */
+/* ---- Acuerdos: marca + proyecto + dinero + episodios ----
+   Firmados, crean los episodios que falten (aquí, del 50 al 53) y les meten
+   la cuña. El de Bicilab en Cape Epic va negociando: aún no pone nada. */
+$gobik = ane_pod_crea_acuerdo($bd, $pid['Cape Epic 2027'], $mid['Gobik'], 'Gobik', ane_pod_datos_acuerdo([
+    'estado' => 'confirmado', 'importe' => 12000, 'episodios' => '49-51', 'tipo' => 'cuna',
+    'texto' => "Cuña de 30 s: mono de Cape Epic, código ANE15. **No decir precios.**",
+    'contrapartidas' => 'Pecho del mono · cuña en los episodios de antes de la carrera · un reel por etapa',
+]));
+ane_pod_crea_acuerdo($bd, $podcast, $mid['klinpig'], 'klinpig', ane_pod_datos_acuerdo([
+    'estado' => 'confirmado', 'importe' => 2000, 'episodios' => '50-53', 'tipo' => 'mencion',
+    'texto' => 'Geles klinpig: 15 % de descuento con el código ANE en su web.',
+    'contrapartidas' => 'Una mención por episodio · enlace en la descripción',
+]));
+ane_pod_crea_acuerdo($bd, $pid['ANE House 2027'], $mid['CMS'], 'CMS', ane_pod_datos_acuerdo([
+    'estado' => 'facturado', 'importe' => 9000, 'contrapartidas' => 'Cuña leída en los 8 episodios de la casa',
+]));
+ane_pod_crea_acuerdo($bd, $pid['Cape Epic 2027'], $mid['Bicilab'], 'Bicilab', ane_pod_datos_acuerdo([
+    'estado' => 'negociando', 'importe' => 6000, 'episodios' => '52', 'tipo' => 'integrada',
+    'contrapartidas' => 'Espalda alta · mención en la intro', 'notas' => 'Pendiente de que cuadren el presupuesto de marzo.',
+]));
+ane_pod_crea_acuerdo($bd, $pid['ANE House 2027'], $mid['Bicilab'], 'Bicilab', ane_pod_datos_acuerdo([
+    'estado' => 'negociando', 'importe' => 7000, 'contrapartidas' => 'Presencia en la casa',
+]));
+
+/* En el de la creatina, la cuña de Gobik va detrás del primer tema, y hay
+   además una cuña suelta (sin acuerdo) que ya está hecha */
+$st = $bd->prepare('SELECT id FROM pod_menciones WHERE acuerdo_id = ? AND episodio_id = ?');
+$st->execute([$gobik, $ep1]);
+$cunaGobik = (int) $st->fetchColumn();
+ane_pod_coloca($bd, $ep1, 'pod_menciones', $cunaGobik, 'pod_bloques:' . (int) $bid['Arranque y presentación']);
+$bd->prepare("INSERT INTO pod_menciones (episodio_id, marca_id, marca, tipo, texto, hecho, orden)
+              VALUES (?, ?, 'Bicilab', 'mencion', 'Social Ride del 15 de noviembre: plazas por la web.', 1, 0)")
+   ->execute([$ep1, $mid['Bicilab']]);
+ane_pod_coloca($bd, $ep1, 'pod_menciones', (int) $bd->lastInsertId(),
+               'pod_bloques:' . (int) $bid['Preguntas de los oyentes']);
 
 /* ---- Fotos de ejemplo en «Bici o Cepo» (se dibujan aquí, no hace falta traerlas) ---- */
 if (function_exists('imagecreatetruecolor')) {

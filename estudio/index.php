@@ -36,6 +36,32 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $episodios = ane_pod_mis_episodios($bd, $yo_pod);
 
+/* Los episodios salen los domingos: uno pasa a «Pasados» el lunes siguiente.
+   Los que no tienen fecha (los que crea un acuerdo) cuentan como próximos. */
+$proximos = [];
+$pasados = [];
+foreach ($episodios as $e) {
+    if (ane_pod_ya_salio($e)) {
+        $pasados[] = $e;
+    } else {
+        $proximos[] = $e;
+    }
+}
+/* Próximos por número, de menor a mayor: así se ve por dónde vamos. Los que no
+   tienen número, detrás, por fecha. Pasados, al revés: el último arriba. */
+usort($proximos, fn ($a, $b) => [(int) $a['numero'] === 0, (int) $a['numero'], (string) $a['fecha'], (int) $a['id']]
+                            <=> [(int) $b['numero'] === 0, (int) $b['numero'], (string) $b['fecha'], (int) $b['id']]);
+usort($pasados, fn ($a, $b) => [(int) $b['numero'], (string) $b['fecha']] <=> [(int) $a['numero'], (string) $a['fecha']]);
+
+/* El que toca grabar: el primero de los próximos que aún no se ha grabado */
+$siguiente = null;
+foreach ($proximos as $e) {
+    if (!ane_pod_grabado($e)) {
+        $siguiente = (int) $e['id'];
+        break;
+    }
+}
+
 /* Cuentas rápidas y patrocinadores de cada episodio: el resumen de trabajo
    de los socios. El editor tiene aquí solo su lista de guiones; las cuñas las
    ve dentro de cada guión, en su sitio. */
@@ -63,6 +89,53 @@ if ($es_socio) {
 $bloques = $bd->query("SELECT episodio_id, COUNT(*) AS n FROM pod_bloques WHERE tipo <> '" . ANE_POD_CIERRE . "'"
                       . ($es_socio ? '' : ' AND interno = 0') . ' GROUP BY episodio_id')->fetchAll(PDO::FETCH_KEY_PAIR);
 
+/* Una tarjeta de episodio: la misma en «Próximos» y en «Pasados» */
+function ane_pod_tarjeta(array $e): void
+{
+    global $es_socio, $bloques, $pendientes, $patrocinadores, $siguiente;
+    $id = (int) $e['id'];
+    $nb = (int) ($bloques[$id] ?? 0);
+    $np = (int) ($pendientes[$id] ?? 0);
+    $marcas = $patrocinadores[$id] ?? [];
+    $esSiguiente = $id === $siguiente;
+    $grabado = !$esSiguiente && ane_pod_grabado($e) && !ane_pod_ya_salio($e);
+    $clases = 'tarjeta' . ($e['fecha'] ? '' : ' sinfecha') . ($esSiguiente ? ' siguiente' : '') . ($grabado ? ' grabado' : '');
+    ?>
+      <article class="<?= $clases ?>">
+        <div>
+          <?php if ($esSiguiente): ?><p class="toca">Lo siguiente que se graba</p><?php endif; ?>
+          <div class="meta">
+            <?php /* Sin título, el número ya es el título: no se repite aquí */
+              if ((int) $e['numero'] && $e['titulo'] !== ''): ?><b>Episodio <?= (int) $e['numero'] ?></b> · <?php endif; ?>
+            <b><?= ane_pod_fecha_larga($e['fecha']) ?></b>
+            <?php if ($e['fecha']): ?> · <?= ane_h(ane_pod_cuando($e['fecha'])) ?><?php endif; ?>
+            <?php if ((int) $e['duracion']): ?> · <?= (int) $e['duracion'] ?> min<?php endif; ?>
+            <?php if ($e['lugar'] !== ''): ?> · <?= ane_h($e['lugar']) ?><?php endif; ?>
+          </div>
+          <h3><a href="<?= $es_socio ? '/estudio/episodio.php?id=' . $id : '/estudio/guion.php?id=' . $id ?>">
+            <?= ane_h($e['titulo'] !== '' ? $e['titulo'] : ane_pod_etiqueta($e)) ?></a></h3>
+          <div class="meta">
+            <?= $nb ?> tema<?= $nb === 1 ? '' : 's' ?>
+            <?php if ($grabado): ?> · <span class="chip editando">Grabado · sale el domingo <?= ane_pod_domingo($e['fecha'])->format('j') ?></span><?php endif; ?>
+            <?php if ($es_socio): ?>
+              · <?= $marcas ? 'Patrocina: <b>' . ane_h(implode(', ', $marcas)) . '</b>'
+                            : '<span class="dom">sin patrocinador</span>' ?>
+              <?php if ($np): ?> · <b><?= $np ?> cuña<?= $np === 1 ? '' : 's' ?> por hacer</b><?php endif; ?>
+            <?php endif; ?>
+          </div>
+        </div>
+        <div class="der">
+          <div class="acciones">
+            <a class="btn claro pequeno" href="/estudio/guion.php?id=<?= $id ?>">Guión</a>
+            <?php if ($es_socio): ?>
+              <a class="btn pequeno" href="/estudio/episodio.php?id=<?= $id ?>">Editar</a>
+            <?php endif; ?>
+          </div>
+        </div>
+      </article>
+    <?php
+}
+
 ane_pod_cabeza('Episodios');
 ane_pod_cabecera('episodios');
 ?>
@@ -74,14 +147,15 @@ ane_pod_cabecera('episodios');
 <?php if ($es_socio): ?>
   <div class="cifras">
     <div class="cifra">
-      <b><?= count($episodios) ?></b><span>Episodios en el gestor</span>
+      <b><?= count($proximos) ?></b><span>Episodios por delante</span>
     </div>
     <div class="cifra">
       <b><?= $proxima ? ane_pod_cuando($proxima['fecha']) : '—' ?></b>
       <span><?= $proxima ? 'Próxima grabación' : 'Sin grabación prevista' ?></span>
     </div>
     <div class="cifra">
-      <b><?= array_sum($pendientes) ?></b><span>Menciones por hacer</span>
+      <b><?= array_sum(array_intersect_key($pendientes, array_flip(array_map(fn ($e) => (int) $e['id'], $proximos)))) ?></b>
+      <span>Cuñas por hacer</span>
     </div>
   </div>
 
@@ -121,49 +195,25 @@ ane_pod_cabecera('episodios');
   </section>
 <?php endif; ?>
 
-<h3 style="margin-top:26px"><?= $es_socio ? 'Todos los episodios' : 'Compartidos contigo' ?></h3>
-
 <?php if (!$episodios): ?>
-  <section><p class="vacio"><?= $es_socio ? 'Todavía no hay episodios. Crea el primero arriba.'
+  <h3 style="margin-top:26px"><?= $es_socio ? 'Episodios' : 'Compartidos contigo' ?></h3>
+  <section><p class="vacio"><?= $es_socio ? 'Todavía no hay episodios. Crea el primero arriba, o firma un acuerdo con episodios.'
                                           : 'Aún no te han compartido ningún guión.' ?></p></section>
 <?php else: ?>
-  <div class="tarjetas">
-    <?php foreach ($episodios as $e):
-        $id = (int) $e['id'];
-        $nb = (int) ($bloques[$id] ?? 0);
-        $np = (int) ($pendientes[$id] ?? 0);
-        $marcas = $patrocinadores[$id] ?? []; ?>
-      <article class="tarjeta<?= $e['fecha'] ? '' : ' sinfecha' ?>">
-        <div>
-          <div class="meta">
-            <b><?= ane_pod_fecha_larga($e['fecha']) ?></b>
-            <?php if ($e['fecha']): ?> · <?= ane_h(ane_pod_cuando($e['fecha'])) ?><?php endif; ?>
-            <?php if ((int) $e['duracion']): ?> · <?= (int) $e['duracion'] ?> min<?php endif; ?>
-            <?php if ($e['lugar'] !== ''): ?> · <?= ane_h($e['lugar']) ?><?php endif; ?>
-            <?php if ((int) $e['numero']): ?> · <b>Episodio <?= (int) $e['numero'] ?></b><?php endif; ?>
-          </div>
-          <h3><a href="<?= $es_socio ? '/estudio/episodio.php?id=' . $id : '/estudio/guion.php?id=' . $id ?>">
-            <?= ane_h($e['titulo'] !== '' ? $e['titulo'] : ane_pod_etiqueta($e)) ?></a></h3>
-          <div class="meta">
-            <?= $nb ?> tema<?= $nb === 1 ? '' : 's' ?>
-            <?php if ($es_socio): ?>
-              · <?= $marcas ? 'Patrocina: <b>' . ane_h(implode(', ', $marcas)) . '</b>'
-                            : '<span class="dom">sin patrocinador</span>' ?>
-              <?php if ($np): ?> · <b><?= $np ?> mención<?= $np === 1 ? '' : 'es' ?> por hacer</b><?php endif; ?>
-            <?php endif; ?>
-          </div>
-        </div>
-        <div class="der">
-          <div class="acciones">
-            <a class="btn claro pequeno" href="/estudio/guion.php?id=<?= $id ?>">Guión</a>
-            <?php if ($es_socio): ?>
-              <a class="btn pequeno" href="/estudio/episodio.php?id=<?= $id ?>">Editar</a>
-            <?php endif; ?>
-          </div>
-        </div>
-      </article>
-    <?php endforeach; ?>
-  </div>
+
+  <h3 style="margin-top:26px">Próximos <span class="dom">· <?= count($proximos) ?></span></h3>
+  <?php if (!$proximos): ?>
+    <section><p class="vacio">Nada por delante. Crea el siguiente arriba.</p></section>
+  <?php else: ?>
+    <div class="tarjetas"><?php foreach ($proximos as $e) { ane_pod_tarjeta($e); } ?></div>
+  <?php endif; ?>
+
+  <?php if ($pasados): ?>
+    <details class="pasados"<?= !$proximos ? ' open' : '' ?>>
+      <summary><h3>Pasados <span class="dom">· <?= count($pasados) ?> · ya han salido</span></h3></summary>
+      <div class="tarjetas"><?php foreach ($pasados as $e) { ane_pod_tarjeta($e); } ?></div>
+    </details>
+  <?php endif; ?>
 <?php endif; ?>
 </main>
 <?php

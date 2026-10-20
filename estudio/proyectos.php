@@ -77,6 +77,7 @@ ane_pod_cabecera('proyectos');
             <p class="nota" style="margin:0"><?= ane_h($p['detalle']) ?></p>
           </div>
           <div class="acciones">
+            <?php if ((int) $p['fijo']): ?><span class="chip">fijo · episodios sueltos</span><?php endif; ?>
             <?= ane_pod_chip($p['estado'], ANE_POD_PROY_ESTADOS) ?>
             <a class="btn pequeno" href="/estudio/proyecto.php?id=<?= (int) $p['id'] ?>">Abrir</a>
           </div>

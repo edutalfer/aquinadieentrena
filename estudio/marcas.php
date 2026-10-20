@@ -46,7 +46,27 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                             siguiente = ?, seguimiento = ?, notas = ?, actualizado = ? WHERE id = ?')
                ->execute(array_merge([ane_recorta((string) ($_POST['nombre'] ?? ''), 120) ?: 'Sin nombre'],
                                      $campos, [$ahora, $fila]));
+            /* Si cambió el nombre, que llegue a las cuñas pendientes de sus acuerdos */
+            $st = $bd->prepare('SELECT id FROM pod_proy_marcas WHERE marca_id = ?');
+            $st->execute([$fila]);
+            foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $acuerdo) {
+                ane_pod_sincroniza_acuerdo($bd, (int) $acuerdo);
+            }
             header('Location: /estudio/marcas.php?ok=guardada#m' . $fila, true, 303);
+            exit;
+
+        /* Firmar con una marca de la agenda: proyecto (Podcast por defecto), dinero y
+           episodios. Los episodios que falten se crean y llevan ya su cuña. */
+        case 'firmar':
+            $marca = ane_pod_marca($bd, $fila);
+            $proyecto = ane_pod_proyecto($bd, (int) ($_POST['proyecto_id'] ?? 0));
+            if (!$marca || !$proyecto) {
+                header('Location: /estudio/marcas.php', true, 303);
+                exit;
+            }
+            $nuevo = ane_pod_crea_acuerdo($bd, (int) $proyecto['id'], $fila, (string) $marca['nombre'],
+                                          ane_pod_datos_acuerdo($_POST));
+            header('Location: /estudio/marcas.php?ok=firmado&acuerdo=' . $nuevo . '#m' . $fila, true, 303);
             exit;
 
         case 'borrar':
@@ -62,11 +82,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 }
 
 $marcas = ane_pod_marcas($bd);
+$proyectos = ane_pod_proyectos($bd);
+$podcast = ane_pod_proyecto_podcast($bd);
 
 /* Dónde aparece cada marca: proyectos y episodios */
 $enProyectos = [];
-foreach ($bd->query('SELECT pm.marca_id, pm.marca, pm.estado, pm.importe, p.nombre AS proyecto, p.id AS proyecto_id
-                     FROM pod_proy_marcas pm JOIN pod_proyectos p ON p.id = pm.proyecto_id') as $f) {
+foreach ($bd->query('SELECT pm.id, pm.marca_id, pm.marca, pm.estado, pm.importe, pm.episodios,
+                            p.nombre AS proyecto, p.id AS proyecto_id
+                     FROM pod_proy_marcas pm JOIN pod_proyectos p ON p.id = pm.proyecto_id
+                     ORDER BY p.fijo DESC, p.orden, pm.id') as $f) {
     $clave = (int) $f['marca_id'] ?: 'n:' . mb_strtolower($f['marca']);
     $enProyectos[$clave][] = $f;
 }
@@ -92,7 +116,8 @@ ane_pod_cabecera('marcas');
 ?>
 <main class="caja">
   <?php ane_pod_aviso(['creada' => 'Marca añadida.', 'guardada' => 'Cambios guardados.',
-                       'borrada' => 'Marca borrada.', 'nombre' => 'Falta el nombre de la marca.']); ?>
+                       'borrada' => 'Marca borrada.',
+                       'firmado' => 'Acuerdo apuntado. Si lleva episodios, ya tienen su cuña.', 'nombre' => 'Falta el nombre de la marca.']); ?>
 
   <div class="cifras">
     <div class="cifra"><b><?= count($marcas) ?></b><span>Marcas en la agenda</span></div>
@@ -158,25 +183,61 @@ ane_pod_cabecera('marcas');
           </div>
         </form>
         <div>
-          <h3 style="margin-top:0">Dónde aparece</h3>
-          <?php if (!$suyosPr && !$suyosEp): ?>
-            <p class="vacio">En ningún proyecto ni episodio.</p>
-          <?php endif; ?>
-          <?php if ($suyosPr): ?>
+          <h3 style="margin-top:0">Acuerdos</h3>
+          <?php if (!$suyosPr): ?>
+            <p class="vacio">Ninguno todavía.</p>
+          <?php else: ?>
             <table>
               <tr><th>Proyecto</th><th class="n">€</th></tr>
               <?php foreach ($suyosPr as $f): ?>
-                <tr><td><a href="/estudio/proyecto.php?id=<?= (int) $f['proyecto_id'] ?>"><?= ane_h($f['proyecto']) ?></a><br>
-                  <?= ane_pod_chip($f['estado'], ANE_POD_PATRO_ESTADOS) ?></td>
+                <tr><td><a href="/estudio/proyecto.php?id=<?= (int) $f['proyecto_id'] ?>#a<?= (int) $f['id'] ?>"><?= ane_h($f['proyecto']) ?></a><br>
+                  <?= ane_pod_chip($f['estado'], ANE_POD_PATRO_ESTADOS) ?>
+                  <?php if ($f['episodios'] !== ''): ?><span class="dom">episodios <?= ane_h($f['episodios']) ?></span><?php endif; ?></td>
                   <td class="n"><?= (int) $f['importe'] ? ane_pod_euros((int) $f['importe']) : '—' ?></td></tr>
               <?php endforeach; ?>
             </table>
           <?php endif; ?>
+
+          <details class="firmar"<?= ($_GET['firmar'] ?? '') === (string) $mid ? ' open' : '' ?>>
+            <summary class="btn azul pequeno">Firmar acuerdo</summary>
+            <form method="post">
+              <?= ane_pod_csrf_campo() ?>
+              <input type="hidden" name="accion" value="firmar">
+              <input type="hidden" name="fila" value="<?= $mid ?>">
+              <div class="campo" style="margin:12px 0 10px"><label>Proyecto</label>
+                <select name="proyecto_id">
+                  <?php foreach ($proyectos as $pr): ?>
+                    <option value="<?= (int) $pr['id'] ?>"<?= (int) $pr['id'] === $podcast ? ' selected' : '' ?>>
+                      <?= ane_h($pr['nombre']) ?><?= (int) $pr['fijo'] ? ' (episodios sueltos)' : '' ?></option>
+                  <?php endforeach; ?>
+                </select></div>
+              <div class="campos" style="grid-template-columns:1fr 1fr">
+                <div class="campo" style="margin:0"><label>Cuánto pone (€)</label>
+                  <input type="number" name="importe" min="0" step="100" value="0"></div>
+                <div class="campo" style="margin:0"><label>Episodios con cuña</label>
+                  <input type="text" name="episodios" maxlength="300" placeholder="10-13, 20" inputmode="numeric"></div>
+              </div>
+              <div class="campo" style="margin:12px 0 10px"><label>Tipo de cuña</label>
+                <select name="tipo">
+                  <?php foreach (ANE_POD_MENCION_TIPOS as $k => $v): ?>
+                    <option value="<?= $k ?>"><?= ane_h($v) ?></option>
+                  <?php endforeach; ?>
+                </select></div>
+              <div class="campo" style="margin:0 0 10px"><label>Qué hay que decir en cada cuña</label>
+                <textarea name="texto" maxlength="4000" style="min-height:60px"></textarea></div>
+              <div class="campo" style="margin:0 0 10px"><label>Contrapartidas</label>
+                <textarea name="contrapartidas" maxlength="2000" style="min-height:50px"></textarea></div>
+              <p class="nota" style="margin:0 0 10px">Los episodios que no existan se crean («Episodio 12») y cada
+                uno lleva ya la cuña de <?= ane_h($m['nombre']) ?>.</p>
+              <button class="btn azul" type="submit">Firmar</button>
+            </form>
+          </details>
+
           <?php if ($suyosEp): ?>
-            <table style="margin-top:12px">
-              <tr><th>Menciones en episodios</th><th class="n"></th></tr>
+            <table style="margin-top:14px">
+              <tr><th>Cuñas en episodios</th><th class="n"></th></tr>
               <?php foreach ($suyosEp as $f): ?>
-                <tr><td><a href="/estudio/episodio.php?id=<?= (int) $f['episodio_id'] ?>#menciones">
+                <tr><td><a href="/estudio/episodio.php?id=<?= (int) $f['episodio_id'] ?>#guion">
                   <?= ane_h(mb_strimwidth(ane_pod_etiqueta($f), 0, 40, '…')) ?></a><br>
                   <span class="dom"><?= ane_h(ane_pod_fecha_larga($f['fecha'])) ?></span></td>
                   <td class="n"><?= (int) $f['hecho'] ? '✓' : 'por hacer' ?></td></tr>
