@@ -209,8 +209,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             /* El «momento» de antes ya no hace falta: lo dice el sitio que ocupa en el guión */
             $bd->prepare('INSERT INTO pod_menciones (episodio_id, marca_id, marca, tipo, texto, orden)
                           VALUES (?, ?, ?, ?, ?, ?)')
-               ->execute([$id, $marcaId, $marca,
-                          isset(ANE_POD_MENCION_TIPOS[(string) ($_POST['tipo'] ?? '')]) ? (string) $_POST['tipo'] : 'mencion',
+               ->execute([$id, $marcaId, $marca, ane_pod_tipos_csv($_POST['tipo'] ?? ''),
                           ane_recorta((string) ($_POST['texto'] ?? ''), 4000),
                           ane_pod_siguiente_orden($bd, $id)]);
             $nueva = (int) $bd->lastInsertId();
@@ -227,7 +226,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             } else {
                 $bd->prepare('UPDATE pod_menciones SET tipo = ?, texto = ?, hecho = ?
                               WHERE id = ? AND episodio_id = ?')
-                   ->execute([isset(ANE_POD_MENCION_TIPOS[(string) ($_POST['tipo'] ?? '')]) ? (string) $_POST['tipo'] : 'mencion',
+                   ->execute([ane_pod_tipos_csv($_POST['tipo'] ?? ''),
                               ane_recorta((string) ($_POST['texto'] ?? ''), 4000),
                               empty($_POST['hecho']) ? 0 : 1, $fila, $id]);
             }
@@ -426,15 +425,11 @@ ane_pod_cabecera('episodios');
               <p class="origen">Del acuerdo de <b><?= ane_h($acu['proyecto']) ?></b><?= (int) $acu['importe'] ? ' · ' . ane_pod_euros((int) $acu['importe']) : '' ?>
                 · episodios <?= ane_h($acu['episodios']) ?>
                 · <a href="/estudio/proyecto.php?id=<?= (int) $acu['proyecto_id'] ?>#a<?= (int) $b['acuerdo_id'] ?>">cambiar en el acuerdo</a></p>
-              <p class="dom" style="margin:0 0 4px"><?= ane_h(ANE_POD_MENCION_TIPOS[$b['tipo']] ?? $b['tipo']) ?></p>
+              <p class="dom" style="margin:0 0 4px"><?= ane_h(ane_pod_tipos_texto((string) $b['tipo'])) ?></p>
               <div class="cuerpo leido"><?= $b['texto'] !== '' ? ane_pod_texto($b['texto']) : '<p class="vacio">El acuerdo aún no dice qué hay que decir.</p>' ?></div>
             <?php else: ?>
-            <div class="campo" style="margin:0 0 10px"><label>Tipo</label>
-              <select name="tipo">
-                <?php foreach (ANE_POD_MENCION_TIPOS as $kk => $v): ?>
-                  <option value="<?= $kk ?>"<?= $b['tipo'] === $kk ? ' selected' : '' ?>><?= ane_h($v) ?></option>
-                <?php endforeach; ?>
-              </select></div>
+            <div class="campo" style="margin:0 0 10px"><label>Tipo · uno o varios</label>
+              <?= ane_pod_casillas_tipo((string) $b['tipo'], 'tp' . $mid) ?></div>
             <div class="campo" style="margin:0 0 10px"><label>Qué hay que decir</label>
               <textarea name="texto" maxlength="4000" style="min-height:70px"><?= ane_h($b['texto']) ?></textarea></div>
             <?php endif; ?>
@@ -692,12 +687,8 @@ ane_pod_cabecera('episodios');
             <div class="campo" style="margin:0"><label>…o a mano</label>
               <input type="text" name="marca" maxlength="120"></div>
           </div>
-          <div class="campo" style="margin:12px 0 10px"><label>Tipo</label>
-            <select name="tipo">
-              <?php foreach (ANE_POD_MENCION_TIPOS as $kk => $v): ?>
-                <option value="<?= $kk ?>"><?= ane_h($v) ?></option>
-              <?php endforeach; ?>
-            </select></div>
+          <div class="campo" style="margin:12px 0 10px"><label>Tipo · uno o varios</label>
+            <?= ane_pod_casillas_tipo('explicito', 'tnp') ?></div>
           <div class="campo" style="margin:0 0 10px"><label>Qué hay que decir</label>
             <textarea name="texto" maxlength="4000" style="min-height:70px"></textarea></div>
           <div class="campo" style="margin:0 0 10px"><label>Dónde va</label>

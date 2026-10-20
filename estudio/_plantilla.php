@@ -227,6 +227,10 @@ function ane_pod_estilo(): void
   /* ---- Un patrocinio dentro del guión: rojo, para que no se confunda con un tema ---- */
   .tema.patrocinio { border-left-color: var(--rojo); background: #FDF7F6; }
   .tema.patrocinio.hecho { border-left-color: var(--verde); background: #F6FBF8; }
+  .casillas-tipo { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 6px 0; }
+  .casillas-tipo label.cas { margin: 0; font-size: 14px; font-weight: 400; letter-spacing: 0; text-transform: none;
+                             color: var(--negro); display: inline-flex; gap: 6px; align-items: center; }
+  .casillas-tipo input { width: auto; margin: 0; }
   .origen { margin: 0 0 8px; font-size: 13px; background: #fff; border: 1px solid #E9B8B4; padding: 6px 10px; }
   .cuerpo.leido { background: #fff; border: 1px solid var(--linea); padding: 8px 12px; margin-bottom: 10px; }
   .cuerpo.leido p:last-child { margin-bottom: 0; }

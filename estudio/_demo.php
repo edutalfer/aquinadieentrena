@@ -155,12 +155,12 @@ ane_pod_asegura_cierre($bd, $ep2);
    Firmados, crean los episodios que falten (aquí, del 57 al 60) y les meten
    la cuña. El de Bicilab en Cape Epic va negociando: aún no pone nada. */
 $gobik = ane_pod_crea_acuerdo($bd, $pid['Cape Epic 2027'], $mid['Gobik'], 'Gobik', ane_pod_datos_acuerdo([
-    'estado' => 'confirmado', 'importe' => 12000, 'episodios' => '56-58', 'tipo' => 'cuna',
+    'estado' => 'confirmado', 'importe' => 12000, 'episodios' => '56-58', 'tipo' => 'explicito,producto',
     'texto' => "Cuña de 30 s: mono de Cape Epic, código ANE15. **No decir precios.**",
     'contrapartidas' => 'Pecho del mono · cuña en los episodios de antes de la carrera · un reel por etapa',
 ]));
 ane_pod_crea_acuerdo($bd, $podcast, $mid['klinpig'], 'klinpig', ane_pod_datos_acuerdo([
-    'estado' => 'confirmado', 'importe' => 2000, 'episodios' => '57-60', 'tipo' => 'mencion',
+    'estado' => 'confirmado', 'importe' => 2000, 'episodios' => '57-60', 'tipo' => 'explicito',
     'texto' => 'Geles klinpig: 15 % de descuento con el código ANE en su web.',
     'contrapartidas' => 'Una mención por episodio · enlace en la descripción',
 ]));
@@ -168,7 +168,7 @@ ane_pod_crea_acuerdo($bd, $pid['ANE House 2027'], $mid['CMS'], 'CMS', ane_pod_da
     'estado' => 'facturado', 'importe' => 9000, 'contrapartidas' => 'Cuña leída en los 8 episodios de la casa',
 ]));
 ane_pod_crea_acuerdo($bd, $pid['Cape Epic 2027'], $mid['Bicilab'], 'Bicilab', ane_pod_datos_acuerdo([
-    'estado' => 'negociando', 'importe' => 6000, 'episodios' => '59', 'tipo' => 'integrada',
+    'estado' => 'negociando', 'importe' => 6000, 'episodios' => '59', 'tipo' => 'integrado',
     'contrapartidas' => 'Espalda alta · mención en la intro', 'notas' => 'Pendiente de que cuadren el presupuesto de marzo.',
 ]));
 ane_pod_crea_acuerdo($bd, $pid['ANE House 2027'], $mid['Bicilab'], 'Bicilab', ane_pod_datos_acuerdo([
@@ -182,7 +182,7 @@ $st->execute([$gobik, $ep1]);
 $cunaGobik = (int) $st->fetchColumn();
 ane_pod_coloca($bd, $ep1, 'pod_menciones', $cunaGobik, 'pod_bloques:' . (int) $bid['Arranque y presentación']);
 $bd->prepare("INSERT INTO pod_menciones (episodio_id, marca_id, marca, tipo, texto, hecho, orden)
-              VALUES (?, ?, 'Bicilab', 'mencion', 'Social Ride del 15 de noviembre: plazas por la web.', 1, 0)")
+              VALUES (?, ?, 'Bicilab', 'evento', 'Social Ride del 15 de noviembre: plazas por la web.', 1, 0)")
    ->execute([$ep1, $mid['Bicilab']]);
 ane_pod_coloca($bd, $ep1, 'pod_menciones', (int) $bd->lastInsertId(),
                'pod_bloques:' . (int) $bid['Preguntas de los oyentes']);

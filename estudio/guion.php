@@ -142,7 +142,7 @@ ane_pod_cabecera('episodios');
         <div class="min"><?= (int) $b['hecho'] ? '✓' : '€' ?></div>
         <div>
           <h3><span class="chip interno">Patrocinio</span> <?= ane_h($b['marca']) ?>
-            <span class="dom">· <?= ane_h(ANE_POD_MENCION_TIPOS[$b['tipo']] ?? $b['tipo']) ?><?= (int) $b['hecho'] ? ' · hecho' : '' ?></span></h3>
+            <span class="dom"><?= ($tt = ane_pod_tipos_texto((string) $b['tipo'])) !== '' ? '· ' . ane_h($tt) : '' ?><?= (int) $b['hecho'] ? ' · hecho' : '' ?></span></h3>
           <div class="cuerpo"><?= ane_pod_texto($b['texto']) ?></div>
         </div>
       </div>

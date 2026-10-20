@@ -62,7 +62,9 @@ avisa. Luego cada uno se puede retocar o borrar en su fila.
    siguiente paso).
 2. Al **firmar**, «Firmar acuerdo» en su ficha (o «Nuevo acuerdo» en la ficha
    del proyecto): proyecto, cuánto pone, **episodios con cuña** («10-13, 20»),
-   tipo y qué hay que decir.
+   tipo y qué hay que decir. Tipos: anuncio explícito, anuncio integrado en
+   sección, presencia en el evento y product placement; **se pueden marcar
+   varios** (`ANE_POD_MENCION_TIPOS`, guardados como «explicito,producto»).
 3. Firmado (confirmado o facturado), el acuerdo **crea los episodios que
    falten** («Episodio 12») y mete su cuña en cada uno, al principio del guión.
    La marca pasa a «confirmado» y el dinero suma en el proyecto.

@@ -190,12 +190,8 @@ ane_pod_cabecera('proyectos');
                      placeholder="10-13, 20" inputmode="numeric"></div>
           </div>
           <div class="campos" style="grid-template-columns:1fr 2fr;margin-top:12px">
-            <div class="campo" style="margin:0"><label>Tipo de cuña</label>
-              <select name="tipo">
-                <?php foreach (ANE_POD_MENCION_TIPOS as $k => $v): ?>
-                  <option value="<?= $k ?>"<?= $m['tipo'] === $k ? ' selected' : '' ?>><?= ane_h($v) ?></option>
-                <?php endforeach; ?>
-              </select></div>
+            <div class="campo" style="margin:0"><label>Tipo de cuña · uno o varios</label>
+              <?= ane_pod_casillas_tipo((string) $m['tipo'], 'ta' . $mid) ?></div>
             <div class="campo" style="margin:0"><label>Qué hay que decir en cada cuña</label>
               <textarea name="texto" maxlength="4000" style="min-height:60px"><?= ane_h($m['texto']) ?></textarea></div>
           </div>
@@ -295,13 +291,9 @@ ane_pod_cabecera('proyectos');
           <input type="number" name="importe" min="0" step="100" value="0"></div>
         <div class="campo" style="margin:0"><label>Episodios con cuña</label>
           <input type="text" name="episodios" maxlength="300" placeholder="10-13, 20" inputmode="numeric"></div>
-        <div class="campo" style="margin:0"><label>Tipo de cuña</label>
-          <select name="tipo">
-            <?php foreach (ANE_POD_MENCION_TIPOS as $k => $v): ?>
-              <option value="<?= $k ?>"><?= ane_h($v) ?></option>
-            <?php endforeach; ?>
-          </select></div>
       </div>
+      <div class="campo" style="margin:12px 0 0"><label>Tipo de cuña · uno o varios</label>
+        <?= ane_pod_casillas_tipo('explicito', 'tnuevo') ?></div>
       <div class="campo" style="margin:12px 0 10px"><label>Qué hay que decir en cada cuña</label>
         <textarea name="texto" maxlength="4000" style="min-height:60px"></textarea></div>
       <div class="campo" style="margin:0 0 10px"><label>Contrapartidas</label>

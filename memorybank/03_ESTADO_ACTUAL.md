@@ -224,6 +224,12 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   uno (57 → 1/11, 60 → 22/11…) y pasa a Pasados el lunes siguiente, tenga o no
   fecha de grabación. Si algún domingo no sale episodio, hay que mover el ancla
   (`pod_ancla_numero` y `pod_ancla_domingo` en `ajustes`, o `ANE_POD_ANCLA`).
+- **Tipos de cuña (20/10/2026):** *Anuncio explícito*, *Anuncio integrado en
+  sección*, *Presencia en el evento* y *Product placement*, y **se pueden marcar
+  varios** (casillas; se guardan como «explicito,producto»). Los viejos se
+  convirtieron solos (cuña leída y mención suelta → explícito; integrada →
+  integrado; producto en pantalla → product placement), marcado en
+  `ajustes.pod_tipos_v2`.
 - **Agenda de marcas recogida (20/10/2026):** cada marca es una línea (estado,
   dinero firmado, acuerdos, contratos, contacto y siguiente paso) que se
   despliega al pulsar; «+ Nueva marca», plegada arriba. Fuera la **fecha del

@@ -24,12 +24,17 @@ require_once __DIR__ . '/_formularios.php';   /* trae _bd.php y las utilidades c
 
 /* ---------- Vocabulario ---------- */
 
+/* Cómo sale una marca en un episodio. Se pueden marcar varios a la vez:
+   se guardan separados por comas («explicito,producto»). */
 const ANE_POD_MENCION_TIPOS = [
-    'cuna'      => 'Cuña leída',
-    'mencion'   => 'Mención suelta',
-    'integrada' => 'Integrada en el tema',
-    'producto'  => 'Producto en pantalla',
+    'explicito' => 'Anuncio explícito',
+    'integrado' => 'Anuncio integrado en sección',
+    'evento'    => 'Presencia en el evento',
+    'producto'  => 'Product placement',
 ];
+
+/* Los tipos de antes del 20/10/2026, y a qué equivalen ahora */
+const ANE_POD_TIPOS_VIEJOS = ['cuna' => 'explicito', 'mencion' => 'explicito', 'integrada' => 'integrado'];
 
 const ANE_POD_PATRO_ESTADOS = [
     'contactado'  => 'Contactado',
@@ -158,7 +163,7 @@ function ane_pod_bd(): PDO
             episodio_id INTEGER NOT NULL,
             marca_id    INTEGER NOT NULL DEFAULT 0,   -- 0 = marca escrita a mano
             marca       TEXT    NOT NULL DEFAULT \'\',
-            tipo        TEXT    NOT NULL DEFAULT \'mencion\',
+            tipo        TEXT    NOT NULL DEFAULT \'explicito\',
             momento     TEXT    NOT NULL DEFAULT \'\',   -- ya no se usa (21/10/2026): lo dice el sitio en el guión
             texto       TEXT    NOT NULL DEFAULT \'\',   -- lo que hay que decir
             hecho       INTEGER NOT NULL DEFAULT 0,
@@ -212,7 +217,7 @@ function ane_pod_bd(): PDO
             contrapartidas TEXT    NOT NULL DEFAULT \'\',
             notas          TEXT    NOT NULL DEFAULT \'\',
             episodios      TEXT    NOT NULL DEFAULT \'\',   -- «10-13, 20»: números de episodio
-            tipo           TEXT    NOT NULL DEFAULT \'cuna\', -- tipo de cuña que llevan
+            tipo           TEXT    NOT NULL DEFAULT \'explicito\', -- tipos de cuña, «explicito,producto»
             texto          TEXT    NOT NULL DEFAULT \'\'    -- qué hay que decir en cada una
         );
         CREATE INDEX IF NOT EXISTS i_pod_proy_marcas ON pod_proy_marcas (proyecto_id);
@@ -293,10 +298,20 @@ function ane_pod_bd(): PDO
        Columnas nuevas en tablas que ya existían, y el proyecto fijo «Podcast». */
     ane_pod_columna($bd, 'pod_proyectos', 'fijo', 'INTEGER NOT NULL DEFAULT 0');
     ane_pod_columna($bd, 'pod_proy_marcas', 'episodios', "TEXT NOT NULL DEFAULT ''");
-    ane_pod_columna($bd, 'pod_proy_marcas', 'tipo', "TEXT NOT NULL DEFAULT 'cuna'");
+    ane_pod_columna($bd, 'pod_proy_marcas', 'tipo', "TEXT NOT NULL DEFAULT 'explicito'");
     ane_pod_columna($bd, 'pod_proy_marcas', 'texto', "TEXT NOT NULL DEFAULT ''");
     ane_pod_columna($bd, 'pod_menciones', 'acuerdo_id', 'INTEGER NOT NULL DEFAULT 0');
     ane_pod_proyecto_podcast($bd);
+
+    /* 20/10/2026: tipos nuevos de cuña, y se pueden marcar varios */
+    if (!$bd->query("SELECT valor FROM ajustes WHERE clave = 'pod_tipos_v2'")->fetchColumn()) {
+        foreach (['pod_menciones', 'pod_proy_marcas'] as $t) {
+            foreach ($bd->query("SELECT id, tipo FROM $t")->fetchAll() as $f) {
+                $bd->prepare("UPDATE $t SET tipo = ? WHERE id = ?")->execute([ane_pod_tipos_csv((string) $f['tipo']), (int) $f['id']]);
+            }
+        }
+        $bd->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('pod_tipos_v2', '1')")->execute();
+    }
 
     $listo = true;
     return $bd;
@@ -854,6 +869,48 @@ function ane_pod_menciones(PDO $bd, int $episodio): array
     return $st->fetchAll();
 }
 
+/* ---------- Tipos de cuña (se pueden marcar varios) ---------- */
+
+/* Lo que llegue (casillas del formulario, «a,b» de la base o un tipo viejo) →
+   lista limpia de tipos válidos, en el orden de ANE_POD_MENCION_TIPOS */
+function ane_pod_tipos($valor): array
+{
+    $lista = is_array($valor) ? $valor : explode(',', (string) $valor);
+    $limpia = [];
+    foreach ($lista as $t) {
+        $t = trim((string) $t);
+        $t = ANE_POD_TIPOS_VIEJOS[$t] ?? $t;
+        if (isset(ANE_POD_MENCION_TIPOS[$t])) {
+            $limpia[$t] = true;
+        }
+    }
+    return array_values(array_filter(array_keys(ANE_POD_MENCION_TIPOS), fn ($k) => isset($limpia[$k])));
+}
+
+function ane_pod_tipos_csv($valor): string
+{
+    return implode(',', ane_pod_tipos($valor));
+}
+
+/* «Anuncio explícito + Product placement» */
+function ane_pod_tipos_texto(string $csv): string
+{
+    return implode(' + ', array_map(fn ($t) => ANE_POD_MENCION_TIPOS[$t], ane_pod_tipos($csv)));
+}
+
+/* Las casillas para elegir tipos. $id hace únicos los «for» de las etiquetas. */
+function ane_pod_casillas_tipo(string $csv, string $id): string
+{
+    $marcados = ane_pod_tipos($csv);
+    $html = '<div class="casillas-tipo">';
+    foreach (ANE_POD_MENCION_TIPOS as $k => $v) {
+        $html .= '<label class="cas" for="' . ane_h($id . $k) . '"><input type="checkbox" name="tipo[]" value="' . $k
+               . '" id="' . ane_h($id . $k) . '"' . (in_array($k, $marcados, true) ? ' checked' : '') . '> '
+               . ane_h($v) . '</label>';
+    }
+    return $html . '</div>';
+}
+
 /* ---------- Marcas y proyectos ---------- */
 
 function ane_pod_marcas(PDO $bd): array
@@ -1012,7 +1069,7 @@ function ane_pod_sincroniza_acuerdo(PDO $bd, int $acuerdoId): void
     foreach ($firmado ? ane_pod_numeros((string) $a['episodios']) : [] as $n) {
         $quiere[ane_pod_episodio_numero($bd, $n, true)] = true;
     }
-    $tipo = isset(ANE_POD_MENCION_TIPOS[$a['tipo']]) ? $a['tipo'] : 'cuna';
+    $tipo = ane_pod_tipos_csv((string) $a['tipo']);
 
     $st = $bd->prepare('SELECT id, episodio_id, hecho FROM pod_menciones WHERE acuerdo_id = ?');
     $st->execute([$acuerdoId]);
@@ -1051,7 +1108,7 @@ function ane_pod_datos_acuerdo(array $post): array
         'estado'         => isset(ANE_POD_PATRO_ESTADOS[(string) ($post['estado'] ?? '')]) ? (string) $post['estado'] : 'confirmado',
         'importe'        => max(0, min(10000000, (int) ($post['importe'] ?? 0))),
         'episodios'      => ane_pod_texto_numeros(ane_pod_numeros((string) ($post['episodios'] ?? ''))),
-        'tipo'           => isset(ANE_POD_MENCION_TIPOS[(string) ($post['tipo'] ?? '')]) ? (string) $post['tipo'] : 'cuna',
+        'tipo'           => ane_pod_tipos_csv($post['tipo'] ?? ''),
         'texto'          => ane_recorta((string) ($post['texto'] ?? ''), 4000),
         'contrapartidas' => ane_recorta((string) ($post['contrapartidas'] ?? ''), 2000),
         'notas'          => ane_recorta((string) ($post['notas'] ?? ''), 2000),

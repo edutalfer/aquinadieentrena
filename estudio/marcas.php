@@ -339,12 +339,8 @@ ane_pod_cabecera('marcas');
                 <div class="campo" style="margin:0"><label>Episodios con cuña</label>
                   <input type="text" name="episodios" maxlength="300" placeholder="10-13, 20" inputmode="numeric"></div>
               </div>
-              <div class="campo" style="margin:12px 0 10px"><label>Tipo de cuña</label>
-                <select name="tipo">
-                  <?php foreach (ANE_POD_MENCION_TIPOS as $k => $v): ?>
-                    <option value="<?= $k ?>"><?= ane_h($v) ?></option>
-                  <?php endforeach; ?>
-                </select></div>
+              <div class="campo" style="margin:12px 0 10px"><label>Tipo de cuña · uno o varios</label>
+                <?= ane_pod_casillas_tipo('explicito', 'tf' . $mid) ?></div>
               <div class="campo" style="margin:0 0 10px"><label>Qué hay que decir en cada cuña</label>
                 <textarea name="texto" maxlength="4000" style="min-height:60px"></textarea></div>
               <div class="campo" style="margin:0 0 10px"><label>Contrapartidas</label>
