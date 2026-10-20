@@ -217,6 +217,22 @@ function ane_pod_bd(): PDO
         );
         CREATE INDEX IF NOT EXISTS i_pod_proy_marcas ON pod_proy_marcas (proyecto_id);
 
+        -- Contratos firmados con las marcas. Van colgados de la marca y, si se
+        -- sabe, del acuerdo. Fichero en ~/datos/estudio/contratos/ (fuera del
+        -- repo y del docroot) y SOLO para socios: los sirve estudio/contrato.php.
+        -- Si se borra el acuerdo, el contrato se queda en la marca.
+        CREATE TABLE IF NOT EXISTS pod_contratos (
+            id          INTEGER PRIMARY KEY,
+            marca_id    INTEGER NOT NULL DEFAULT 0,
+            acuerdo_id  INTEGER NOT NULL DEFAULT 0,
+            fichero     TEXT    NOT NULL,            -- nombre en disco
+            nombre      TEXT    NOT NULL DEFAULT \'\', -- nombre original
+            mime        TEXT    NOT NULL,
+            tamano      INTEGER NOT NULL DEFAULT 0,
+            creado      TEXT    NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS i_pod_contratos ON pod_contratos (marca_id, acuerdo_id);
+
         -- Qué guión puede ver el editor. Sin fila aquí, no ve nada.
         CREATE TABLE IF NOT EXISTS pod_accesos (
             usuario_id  INTEGER NOT NULL,
@@ -1113,6 +1129,8 @@ function ane_pod_renumera_en_acuerdos(PDO $bd, int $episodio, int $viejo, int $n
 /* … se borra el acuerdo: sus cuñas pendientes se van, las hechas se quedan sueltas */
 function ane_pod_borra_acuerdo(PDO $bd, int $acuerdoId): void
 {
+    /* El contrato no se pierde: se queda en la marca, sin acuerdo */
+    $bd->prepare('UPDATE pod_contratos SET acuerdo_id = 0 WHERE acuerdo_id = ?')->execute([$acuerdoId]);
     $bd->prepare('DELETE FROM pod_menciones WHERE acuerdo_id = ? AND hecho = 0')->execute([$acuerdoId]);
     $bd->prepare('UPDATE pod_menciones SET acuerdo_id = 0 WHERE acuerdo_id = ?')->execute([$acuerdoId]);
     $bd->prepare('DELETE FROM pod_proy_marcas WHERE id = ?')->execute([$acuerdoId]);
@@ -1128,9 +1146,143 @@ function ane_pod_episodios_de_acuerdo(PDO $bd, int $acuerdoId): array
     return $st->fetchAll();
 }
 
-/* ---------- Calendario: los episodios salen los domingos ---------- */
+/* ---------- Contratos ---------- */
 
-/* El domingo en que sale: el de la semana (de lunes a domingo) en que se graba */
+/* Lo que se acepta como contrato, y cómo se reconoce por dentro (no por el nombre) */
+const ANE_POD_CONTRATO_TIPOS = [
+    'pdf'  => ['application/pdf', "%PDF-"],
+    'jpg'  => ['image/jpeg', "\xFF\xD8\xFF"],
+    'jpeg' => ['image/jpeg', "\xFF\xD8\xFF"],
+    'png'  => ['image/png', "\x89PNG"],
+    'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', "PK\x03\x04"],
+    'odt'  => ['application/vnd.oasis.opendocument.text', "PK\x03\x04"],
+    'doc'  => ['application/msword', "\xD0\xCF\x11\xE0"],
+];
+const ANE_POD_CONTRATO_MAX = 32 * 1024 * 1024;
+
+function ane_pod_carpeta_contratos(): string
+{
+    $d = ANE_DATOS . '/estudio/contratos';
+    if (!is_dir($d)) {
+        mkdir($d, 0700, true);
+    }
+    return $d;
+}
+
+function ane_pod_contrato(PDO $bd, int $id): ?array
+{
+    $st = $bd->prepare('SELECT * FROM pod_contratos WHERE id = ?');
+    $st->execute([$id]);
+    return $st->fetch() ?: null;
+}
+
+/* Los contratos de una marca (con el proyecto de su acuerdo, si lo tiene) o de un acuerdo */
+function ane_pod_contratos(PDO $bd, string $de, int $id): array
+{
+    $campo = $de === 'acuerdo' ? 'c.acuerdo_id' : 'c.marca_id';
+    $st = $bd->prepare("SELECT c.*, p.nombre AS proyecto FROM pod_contratos c
+                        LEFT JOIN pod_proy_marcas pm ON pm.id = c.acuerdo_id
+                        LEFT JOIN pod_proyectos p ON p.id = pm.proyecto_id
+                        WHERE $campo = ? ORDER BY c.id DESC");
+    $st->execute([$id]);
+    return $st->fetchAll();
+}
+
+/* Guarda un contrato subido. Devuelve '' si fue bien o el motivo (los de
+   ane_pod_motivo_fichero). Se comprueba por dentro que el fichero sea lo
+   que dice su extensión: un .pdf que no empieza por «%PDF-» no entra. */
+function ane_pod_guarda_contrato(PDO $bd, int $marcaId, int $acuerdoId, array $f): string
+{
+    $err = (int) ($f['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($err === UPLOAD_ERR_NO_FILE) {
+        return 'vacio';
+    }
+    if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE || (int) ($f['size'] ?? 0) > ANE_POD_CONTRATO_MAX) {
+        return 'grande';
+    }
+    if ($err !== UPLOAD_ERR_OK || !is_uploaded_file((string) ($f['tmp_name'] ?? ''))) {
+        return 'subida';
+    }
+    $original = ane_pod_nombre_fichero((string) ($f['name'] ?? ''));
+    $ext = ane_pod_extension($original);
+    if (!isset(ANE_POD_CONTRATO_TIPOS[$ext])) {
+        return 'formato';
+    }
+    [$mime, $firma] = ANE_POD_CONTRATO_TIPOS[$ext];
+    $cabeza = (string) @file_get_contents((string) $f['tmp_name'], false, null, 0, 8);
+    if (strncmp($cabeza, $firma, strlen($firma)) !== 0) {
+        return 'formato';
+    }
+    $nombre = bin2hex(random_bytes(16)) . '.' . $ext;
+    $destino = ane_pod_carpeta_contratos() . '/' . $nombre;
+    if (!move_uploaded_file($f['tmp_name'], $destino)) {
+        return 'disco';
+    }
+    chmod($destino, 0600);
+    $bd->prepare('INSERT INTO pod_contratos (marca_id, acuerdo_id, fichero, nombre, mime, tamano, creado)
+                  VALUES (?, ?, ?, ?, ?, ?, ?)')
+       ->execute([$marcaId, $acuerdoId, $nombre, $original ?: 'contrato.' . $ext, $mime,
+                  (int) filesize($destino), ane_ahora()]);
+    return '';
+}
+
+function ane_pod_borra_contrato(PDO $bd, array $c): void
+{
+    $ruta = ane_pod_carpeta_contratos() . '/' . basename((string) $c['fichero']);
+    if (is_file($ruta)) {
+        @unlink($ruta);
+    }
+    $bd->prepare('DELETE FROM pod_contratos WHERE id = ?')->execute([(int) $c['id']]);
+}
+
+/* ---------- Calendario: un episodio cada domingo, sin parar ---------- */
+
+/* El 56 sale el domingo 25/10/2026 y desde ahí, uno cada domingo: el número
+   ya dice cuándo sale cada episodio (el 57, el 1/11; el 60, el 22/11…). Si
+   algún día se salta una semana, se mueve el ancla en `ajustes`
+   (pod_ancla_numero y pod_ancla_domingo) y todo se recoloca solo. */
+const ANE_POD_ANCLA = [56, '2026-10-25'];
+
+function ane_pod_ancla(): array
+{
+    static $ancla = null;
+    if ($ancla === null) {
+        $ancla = ANE_POD_ANCLA;
+        try {
+            $f = ane_bd()->query("SELECT clave, valor FROM ajustes WHERE clave IN ('pod_ancla_numero', 'pod_ancla_domingo')")
+                         ->fetchAll(PDO::FETCH_KEY_PAIR);
+            if ((int) ($f['pod_ancla_numero'] ?? 0) > 0 && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($f['pod_ancla_domingo'] ?? ''))) {
+                $ancla = [(int) $f['pod_ancla_numero'], (string) $f['pod_ancla_domingo']];
+            }
+        } catch (Throwable $e) {
+            /* sin base todavía: vale el ancla de serie */
+        }
+    }
+    return $ancla;
+}
+
+/* El domingo en que sale un episodio: por su número si lo tiene; si no, el
+   domingo de la semana (de lunes a domingo) en que se graba */
+function ane_pod_sale(array $ep): ?DateTime
+{
+    $numero = (int) ($ep['numero'] ?? 0);
+    if ($numero > 0) {
+        [$n, $domingo] = ane_pod_ancla();
+        $d = new DateTime($domingo, new DateTimeZone('Europe/Madrid'));
+        return $d->modify(($numero - $n >= 0 ? '+' : '') . (($numero - $n) * 7) . ' days');
+    }
+    return ane_pod_domingo($ep['fecha'] ?? null);
+}
+
+/* «dom 25 oct»; si cae en otro año, «dom 7 mar 2027» */
+function ane_pod_dia_corto(DateTime $d): string
+{
+    $meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    $anio = $d->format('Y') !== (new DateTime('now', new DateTimeZone('Europe/Madrid')))->format('Y') ? ' ' . $d->format('Y') : '';
+    return 'dom ' . $d->format('j') . ' ' . $meses[(int) $d->format('n') - 1] . $anio;
+}
+
+/* El domingo de la semana (de lunes a domingo) de una fecha */
 function ane_pod_domingo(?string $utc): ?DateTime
 {
     if (!$utc) {
@@ -1143,10 +1295,11 @@ function ane_pod_domingo(?string $utc): ?DateTime
     return $d->modify('+' . (7 - $dia) . ' days');
 }
 
-/* Pasado = ya ha llegado el lunes siguiente a su domingo. Sin fecha, próximo. */
+/* Pasado = ya ha llegado el lunes siguiente al domingo en que sale. Sin número
+   ni fecha, no hay forma de saberlo: próximo. */
 function ane_pod_ya_salio(array $ep, ?DateTime $ahora = null): bool
 {
-    $domingo = ane_pod_domingo($ep['fecha'] ?? null);
+    $domingo = ane_pod_sale($ep);
     if (!$domingo) {
         return false;
     }

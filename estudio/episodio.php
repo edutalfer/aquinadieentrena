@@ -329,6 +329,9 @@ ane_pod_cabecera('episodios');
   <div class="barra">
     <h2 class="display" style="font-size:30px"><?= ane_h(ane_pod_etiqueta($ep)) ?></h2>
     <div class="acciones">
+      <?php if ($sale = ane_pod_sale($ep)): ?>
+        <span class="chip planificado"><?= ane_pod_ya_salio($ep) ? 'Salió el ' : 'Sale el ' ?><?= ane_h(ane_pod_dia_corto($sale)) ?></span>
+      <?php endif; ?>
       <a class="btn claro pequeno" href="/estudio/guion.php?id=<?= $id ?>">Ver el guión</a>
     </div>
   </div>

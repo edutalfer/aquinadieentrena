@@ -81,9 +81,30 @@ Reglas para que acuerdo y episodios no se descuadren (`ane_pod_sincroniza_acuerd
 - Nunca se borran episodios solos: pueden tener guión.
 
 La lista de episodios va en **Próximos** (por número; el siguiente que se graba,
-resaltado) y **Pasados** (plegados). Los episodios salen los domingos: uno pasa
-a Pasados el **lunes siguiente al domingo de la semana en que se graba**
-(`ane_pod_ya_salio()`). Sin fecha de grabación, es próximo.
+resaltado) y **Pasados** (plegados).
+
+**Calendario.** Sale un episodio cada domingo, sin parar: el **56 sale el
+domingo 25/10/2026**. Así que el número ya dice cuándo sale cada uno
+(`ane_pod_sale()`), y pasa a Pasados el lunes siguiente (`ane_pod_ya_salio()`),
+tenga o no fecha de grabación. Un episodio sin número usa el domingo de la
+semana en que se graba. Si algún domingo no sale episodio, se mueve el ancla:
+`pod_ancla_numero` y `pod_ancla_domingo` en la tabla `ajustes` (por defecto,
+`ANE_POD_ANCLA = [56, '2026-10-25']`).
+
+## Contratos
+
+Cada marca guarda sus contratos firmados: en su ficha de *Patrocinadores* (se
+elige de qué acuerdo es), al firmar el acuerdo, o en la tarjeta del acuerdo
+dentro del proyecto. PDF, Word (docx, doc, odt) o foto (jpg, png), hasta 32 MB,
+**comprobados por dentro**: un fichero renombrado no entra.
+
+- Viven en `~/datos/estudio/contratos/` y solo los sirve `estudio/contrato.php`,
+  **solo para socios** (el editor, 403). El PDF se puede ver en el navegador;
+  lo demás solo se descarga.
+- Borrar un acuerdo no borra su contrato: se queda en la marca. Borrar la marca
+  borra sus contratos sueltos; los de un acuerdo siguen con el acuerdo.
+- Backup: además de `~/datos/ane.db`, las carpetas `~/datos/estudio/imagenes/`
+  y `~/datos/estudio/contratos/`.
 
 ## Bici o Cepo
 

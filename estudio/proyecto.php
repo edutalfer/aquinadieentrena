@@ -57,6 +57,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             }
             ane_pod_vuelve_pr($id, 'ok=guardado#a' . $fila);
 
+        /* El contrato de un acuerdo: se cuelga del acuerdo y de su marca */
+        case 'contrato_nuevo':
+            $a = ane_pod_acuerdo($bd, $fila);
+            if (!$a || (int) $a['proyecto_id'] !== $id) {
+                ane_pod_vuelve_pr($id);
+            }
+            $r = 'vacio';
+            $subidos = 0;
+            foreach (ane_pod_subidas('contrato') as $f) {
+                $r = ane_pod_guarda_contrato($bd, (int) $a['marca_id'], $fila, $f);
+                $subidos += $r === '' ? 1 : 0;
+            }
+            ane_pod_vuelve_pr($id, ($subidos ? 'ok=contrato' : 'mal=contrato_' . $r) . '#a' . $fila);
+
+        case 'contrato_borrar':
+            $c = ane_pod_contrato($bd, $fila);
+            $a = $c ? ane_pod_acuerdo($bd, (int) $c['acuerdo_id']) : null;
+            if ($c && $a && (int) $a['proyecto_id'] === $id) {
+                ane_pod_borra_contrato($bd, $c);
+                ane_pod_vuelve_pr($id, 'ok=contrato_borrado#a' . (int) $a['id']);
+            }
+            ane_pod_vuelve_pr($id);
+
         case 'marca_borrar':
             $a = ane_pod_acuerdo($bd, $fila);
             if ($a && (int) $a['proyecto_id'] === $id) {
@@ -95,7 +118,13 @@ ane_pod_cabecera('proyectos');
   <?php ane_pod_aviso(['guardado' => 'Guardado. Los episodios y las cuñas ya están al día.',
                        'marca' => 'Acuerdo apuntado. Si está firmado, sus episodios ya llevan la cuña.',
                        'borrado' => 'Borrado.', 'creado' => 'Proyecto creado.', 'marca_falta' => 'Falta la marca.',
-                       'fijo' => '«Podcast» es fijo: no se puede borrar.']); ?>
+                       'fijo' => '«Podcast» es fijo: no se puede borrar.',
+                       'contrato' => 'Contrato guardado.', 'contrato_borrado' => 'Contrato borrado.',
+                       'contrato_formato' => 'Eso no entra como contrato: tiene que ser PDF, Word (docx, doc, odt) o una foto (jpg, png), y serlo de verdad.',
+                       'contrato_grande' => 'El contrato pesa demasiado: hasta 32 MB.',
+                       'contrato_vacio' => 'No elegiste ningún fichero.',
+                       'contrato_subida' => 'La subida se cortó. Inténtalo otra vez.',
+                       'contrato_disco' => 'No se ha podido guardar el contrato en el servidor.']); ?>
 
   <div class="barra">
     <h2 class="display" style="font-size:30px"><?= ane_h($pr['nombre']) ?></h2>
@@ -200,6 +229,44 @@ ane_pod_cabecera('proyectos');
             <button class="btn peligro pequeno" type="submit" form="ab<?= $mid ?>">Quitar acuerdo</button>
           </div>
         </form>
+
+        <!-- Contrato del acuerdo -->
+        <?php $contratos = ane_pod_contratos($bd, 'acuerdo', $mid); ?>
+        <div class="contrato-acuerdo">
+          <label>Contrato<?= count($contratos) > 1 ? 's' : '' ?></label>
+          <?php if ($contratos): ?>
+            <ul class="contratos">
+              <?php foreach ($contratos as $c): $cid = (int) $c['id']; ?>
+                <li>
+                  <form method="post" id="cb<?= $cid ?>" class="escondida"
+                        onsubmit="return confirm('¿Borrar este contrato? No hay vuelta.')">
+                    <?= ane_pod_csrf_campo() ?>
+                    <input type="hidden" name="accion" value="contrato_borrar">
+                    <input type="hidden" name="id" value="<?= $id ?>">
+                    <input type="hidden" name="fila" value="<?= $cid ?>">
+                  </form>
+                  <div><b><?= ane_h($c['nombre']) ?></b>
+                    <span class="dom">· <?= ane_h(ane_pod_tamano((int) $c['tamano'])) ?> · <?= ane_h(ane_utc_a_local($c['creado'], 'j/n/Y')) ?></span></div>
+                  <div class="acciones">
+                    <?php if ($c['mime'] === 'application/pdf'): ?>
+                      <a class="btn claro pequeno" href="/estudio/contrato.php?c=<?= $cid ?>" target="_blank" rel="noopener">Ver</a>
+                    <?php endif; ?>
+                    <a class="btn claro pequeno" href="/estudio/contrato.php?c=<?= $cid ?>&amp;d=1">Descargar</a>
+                    <button class="btn peligro pequeno" type="submit" form="cb<?= $cid ?>" aria-label="Borrar contrato">✕</button>
+                  </div>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+          <form method="post" enctype="multipart/form-data" class="subir">
+            <?= ane_pod_csrf_campo() ?>
+            <input type="hidden" name="accion" value="contrato_nuevo">
+            <input type="hidden" name="id" value="<?= $id ?>">
+            <input type="hidden" name="fila" value="<?= $mid ?>">
+            <input type="file" name="contrato[]" accept=".pdf,.docx,.doc,.odt,.jpg,.jpeg,.png" required>
+            <button class="btn claro pequeno" type="submit"><?= $contratos ? 'Subir otro' : 'Subir contrato' ?></button>
+          </form>
+        </div>
       </div>
     <?php endforeach; ?>
 

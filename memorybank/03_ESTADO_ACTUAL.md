@@ -219,9 +219,15 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   acuerdo manda en el texto de sus cuñas pendientes; quitar un episodio quita
   su cuña **salvo si está hecha**.
 - **Lista de episodios:** **Próximos** por número, con el siguiente que se graba
-  resaltado (y «grabado · sale el domingo» si ya se grabó), y **Pasados**
-  plegados. Un episodio pasa a Pasados el **lunes siguiente al domingo** de la
-  semana en que se graba; sin fecha, es próximo.
+  resaltado, y **Pasados** plegados. **Un episodio cada domingo, sin parar: el
+  56 sale el domingo 25/10/2026** (D25). Así que el número dice cuándo sale cada
+  uno (57 → 1/11, 60 → 22/11…) y pasa a Pasados el lunes siguiente, tenga o no
+  fecha de grabación. Si algún domingo no sale episodio, hay que mover el ancla
+  (`pod_ancla_numero` y `pod_ancla_domingo` en `ajustes`, o `ANE_POD_ANCLA`).
+- **Contratos (D25):** en la ficha de la marca (y del acuerdo, en su proyecto),
+  también al firmar. PDF, Word o foto, comprobados por dentro. Ficheros en
+  `~/datos/estudio/contratos/`, **solo socios** (`estudio/contrato.php`; el
+  editor, 403). Borrar el acuerdo no borra el contrato.
 - **Ficheros:** en `~/datos/estudio/imagenes/` (fuera del repo y del docroot),
   servidos por `estudio/fichero.php` tras comprobar quién pregunta: `?f=<id>`
   lo enseña y `?f=<id>&d=1` lo descarga. **El editor se descarga todo lo que

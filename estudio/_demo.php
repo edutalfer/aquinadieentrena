@@ -89,9 +89,9 @@ $pid = $bd->query('SELECT nombre, id FROM pod_proyectos')->fetchAll(PDO::FETCH_K
 
 /* ---- Episodios ---- */
 $episodios = [
-    [49, '¿La creatina sirve en ciclismo?', '+3 days 18:00', 75, 'Estudio · Valencia', '',
+    [56, '¿La creatina sirve en ciclismo?', 'thursday 18:00', 75, 'Estudio · Valencia', '',
      'Confirmar los estudios que vamos a citar. Pedirle a Cristóbal las fotos de la bici antes del martes.'],
-    [48, 'Pidcock, ruedas del mundial y Decathlon', '-16 days 19:30', 68, 'Estudio · Valencia', 'gy5RLwGDFs8',
+    [55, 'Pidcock, ruedas del mundial y Decathlon', 'thursday last week 19:30', 68, 'Estudio · Valencia', 'gy5RLwGDFs8',
      'Subido el 4 oct. Buen rendimiento del bloque de ruedas.'],
     [0, 'Preparar un maratón de MTB sin morir', null, 0, '', '',
      'Idea de Cristóbal. Encaja antes de Mediterranean Epic.'],
@@ -152,15 +152,15 @@ $bd->prepare('INSERT INTO pod_enlaces (episodio_id, bloque_id, titulo, url, orde
 ane_pod_asegura_cierre($bd, $ep2);
 
 /* ---- Acuerdos: marca + proyecto + dinero + episodios ----
-   Firmados, crean los episodios que falten (aquí, del 50 al 53) y les meten
+   Firmados, crean los episodios que falten (aquí, del 57 al 60) y les meten
    la cuña. El de Bicilab en Cape Epic va negociando: aún no pone nada. */
 $gobik = ane_pod_crea_acuerdo($bd, $pid['Cape Epic 2027'], $mid['Gobik'], 'Gobik', ane_pod_datos_acuerdo([
-    'estado' => 'confirmado', 'importe' => 12000, 'episodios' => '49-51', 'tipo' => 'cuna',
+    'estado' => 'confirmado', 'importe' => 12000, 'episodios' => '56-58', 'tipo' => 'cuna',
     'texto' => "Cuña de 30 s: mono de Cape Epic, código ANE15. **No decir precios.**",
     'contrapartidas' => 'Pecho del mono · cuña en los episodios de antes de la carrera · un reel por etapa',
 ]));
 ane_pod_crea_acuerdo($bd, $podcast, $mid['klinpig'], 'klinpig', ane_pod_datos_acuerdo([
-    'estado' => 'confirmado', 'importe' => 2000, 'episodios' => '50-53', 'tipo' => 'mencion',
+    'estado' => 'confirmado', 'importe' => 2000, 'episodios' => '57-60', 'tipo' => 'mencion',
     'texto' => 'Geles klinpig: 15 % de descuento con el código ANE en su web.',
     'contrapartidas' => 'Una mención por episodio · enlace en la descripción',
 ]));
@@ -168,7 +168,7 @@ ane_pod_crea_acuerdo($bd, $pid['ANE House 2027'], $mid['CMS'], 'CMS', ane_pod_da
     'estado' => 'facturado', 'importe' => 9000, 'contrapartidas' => 'Cuña leída en los 8 episodios de la casa',
 ]));
 ane_pod_crea_acuerdo($bd, $pid['Cape Epic 2027'], $mid['Bicilab'], 'Bicilab', ane_pod_datos_acuerdo([
-    'estado' => 'negociando', 'importe' => 6000, 'episodios' => '52', 'tipo' => 'integrada',
+    'estado' => 'negociando', 'importe' => 6000, 'episodios' => '59', 'tipo' => 'integrada',
     'contrapartidas' => 'Espalda alta · mención en la intro', 'notas' => 'Pendiente de que cuadren el presupuesto de marzo.',
 ]));
 ane_pod_crea_acuerdo($bd, $pid['ANE House 2027'], $mid['Bicilab'], 'Bicilab', ane_pod_datos_acuerdo([

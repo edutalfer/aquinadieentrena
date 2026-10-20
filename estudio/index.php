@@ -99,6 +99,7 @@ function ane_pod_tarjeta(array $e): void
     $marcas = $patrocinadores[$id] ?? [];
     $esSiguiente = $id === $siguiente;
     $grabado = !$esSiguiente && ane_pod_grabado($e) && !ane_pod_ya_salio($e);
+    $sale = ane_pod_sale($e);
     $clases = 'tarjeta' . ($e['fecha'] ? '' : ' sinfecha') . ($esSiguiente ? ' siguiente' : '') . ($grabado ? ' grabado' : '');
     ?>
       <article class="<?= $clases ?>">
@@ -107,8 +108,8 @@ function ane_pod_tarjeta(array $e): void
           <div class="meta">
             <?php /* Sin título, el número ya es el título: no se repite aquí */
               if ((int) $e['numero'] && $e['titulo'] !== ''): ?><b>Episodio <?= (int) $e['numero'] ?></b> · <?php endif; ?>
-            <b><?= ane_pod_fecha_larga($e['fecha']) ?></b>
-            <?php if ($e['fecha']): ?> · <?= ane_h(ane_pod_cuando($e['fecha'])) ?><?php endif; ?>
+            <?php if ($sale): ?><b class="sale"><?= ane_pod_ya_salio($e) ? 'Salió el ' : 'Sale el ' ?><?= ane_pod_dia_corto($sale) ?></b> · <?php endif; ?>
+            <?= $e['fecha'] ? 'Grabación: ' . ane_pod_fecha_larga($e['fecha']) . ' · ' . ane_h(ane_pod_cuando($e['fecha'])) : 'Sin fecha de grabación' ?>
             <?php if ((int) $e['duracion']): ?> · <?= (int) $e['duracion'] ?> min<?php endif; ?>
             <?php if ($e['lugar'] !== ''): ?> · <?= ane_h($e['lugar']) ?><?php endif; ?>
           </div>
@@ -116,7 +117,7 @@ function ane_pod_tarjeta(array $e): void
             <?= ane_h($e['titulo'] !== '' ? $e['titulo'] : ane_pod_etiqueta($e)) ?></a></h3>
           <div class="meta">
             <?= $nb ?> tema<?= $nb === 1 ? '' : 's' ?>
-            <?php if ($grabado): ?> · <span class="chip editando">Grabado · sale el domingo <?= ane_pod_domingo($e['fecha'])->format('j') ?></span><?php endif; ?>
+            <?php if ($grabado): ?> · <span class="chip editando">Grabado · falta que salga</span><?php endif; ?>
             <?php if ($es_socio): ?>
               · <?= $marcas ? 'Patrocina: <b>' . ane_h(implode(', ', $marcas)) . '</b>'
                             : '<span class="dom">sin patrocinador</span>' ?>

@@ -230,6 +230,11 @@ function ane_pod_estilo(): void
   .origen { margin: 0 0 8px; font-size: 13px; background: #fff; border: 1px solid #E9B8B4; padding: 6px 10px; }
   .cuerpo.leido { background: #fff; border: 1px solid var(--linea); padding: 8px 12px; margin-bottom: 10px; }
   .cuerpo.leido p:last-child { margin-bottom: 0; }
+  .contratos { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+  .contratos li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between;
+                  border: 1px solid var(--linea); background: #fff; padding: 7px 10px; font-size: 14px; }
+  .contrato-acuerdo { margin-top: 12px; border-top: 1px dashed var(--linea); padding-top: 10px; }
+  .contrato-acuerdo > label { margin-bottom: 6px; }
   .en-guion { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .en-guion a.chip { text-decoration: none; }
   details.firmar { margin-top: 14px; }
@@ -287,6 +292,7 @@ function ane_pod_estilo(): void
   /* ---- Lista de episodios: el que toca, resaltado; los pasados, plegados ---- */
   .tarjeta.siguiente { border-left-width: 6px; border-color: var(--azul); background: #EDF2FC;
                        box-shadow: 0 0 0 2px var(--azul) inset; }
+  .tarjeta .meta b.sale { color: var(--enlace); }
   .tarjeta .toca { margin: 0 0 4px; font: 900 italic 13px/1 "Archivo", sans-serif; text-transform: uppercase;
                    letter-spacing: .02em; color: var(--azul); }
   .tarjeta.grabado { border-left-color: var(--ambar); }
@@ -380,6 +386,7 @@ function ane_pod_estilo(): void
     .enlaces li .dom { flex: 1 1 100%; margin-left: 18px; }
 
     .archivos li { align-items: flex-start; }
+    .contratos li { flex-direction: column; align-items: flex-start; }
     .archivos li input[type=text] { flex: 1 1 100%; }
     .archivos li form { flex: 1 1 100%; }
 

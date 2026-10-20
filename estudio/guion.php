@@ -124,7 +124,8 @@ ane_pod_cabecera('episodios');
       <?php endif; ?>
       <h1 class="display"><?= ane_h($ep['titulo'] !== '' ? $ep['titulo'] : ane_pod_etiqueta($ep)) ?></h1>
       <p class="nota" style="margin:0">
-        <?= ane_pod_fecha_larga($ep['fecha']) ?>
+        <?php if ($sale = ane_pod_sale($ep)): ?><b><?= ane_pod_ya_salio($ep) ? 'Salió el ' : 'Sale el ' ?><?= ane_pod_dia_corto($sale) ?></b> · <?php endif; ?>
+        Grabación: <?= ane_pod_fecha_larga($ep['fecha']) ?>
         <?php if ((int) $ep['duracion']): ?> · <?= (int) $ep['duracion'] ?> min previstos<?php endif; ?>
         <?php if ($ep['lugar'] !== ''): ?> · <?= ane_h($ep['lugar']) ?><?php endif; ?>
       </p>

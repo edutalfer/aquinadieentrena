@@ -66,10 +66,50 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             }
             $nuevo = ane_pod_crea_acuerdo($bd, (int) $proyecto['id'], $fila, (string) $marca['nombre'],
                                           ane_pod_datos_acuerdo($_POST));
-            header('Location: /estudio/marcas.php?ok=firmado&acuerdo=' . $nuevo . '#m' . $fila, true, 303);
+            /* El contrato, si lo han adjuntado al firmar */
+            $r = '';
+            foreach (ane_pod_subidas('contrato') as $f) {
+                $r = ane_pod_guarda_contrato($bd, $fila, $nuevo, $f);
+            }
+            $aviso = ($r === '' || $r === 'vacio') ? 'ok=firmado' : 'ok=firmado&mal=contrato_' . $r;
+            header('Location: /estudio/marcas.php?' . $aviso . '#m' . $fila, true, 303);
+            exit;
+
+        /* Subir un contrato a una marca, colgado de uno de sus acuerdos si se elige */
+        case 'contrato_nuevo':
+            if (!ane_pod_marca($bd, $fila)) {
+                header('Location: /estudio/marcas.php', true, 303);
+                exit;
+            }
+            $acuerdo = ane_pod_acuerdo($bd, (int) ($_POST['acuerdo_id'] ?? 0));
+            $acuerdoId = $acuerdo && (int) $acuerdo['marca_id'] === $fila ? (int) $acuerdo['id'] : 0;
+            $r = 'vacio';
+            $subidos = 0;
+            foreach (ane_pod_subidas('contrato') as $f) {
+                $r = ane_pod_guarda_contrato($bd, $fila, $acuerdoId, $f);
+                $subidos += $r === '' ? 1 : 0;
+            }
+            header('Location: /estudio/marcas.php?' . ($subidos ? 'ok=contrato' : 'mal=contrato_' . $r) . '#m' . $fila, true, 303);
+            exit;
+
+        case 'contrato_borrar':
+            $c = ane_pod_contrato($bd, $fila);
+            if ($c) {
+                ane_pod_borra_contrato($bd, $c);
+            }
+            header('Location: /estudio/marcas.php?ok=contrato_borrado#m' . (int) ($c['marca_id'] ?? 0), true, 303);
             exit;
 
         case 'borrar':
+            /* Sus contratos: los que van con un acuerdo siguen con él (el acuerdo conserva
+               el nombre de la marca); los sueltos se borran, que no tendrían dónde verse */
+            foreach (ane_pod_contratos($bd, 'marca', $fila) as $c) {
+                if ((int) $c['acuerdo_id']) {
+                    $bd->prepare('UPDATE pod_contratos SET marca_id = 0 WHERE id = ?')->execute([(int) $c['id']]);
+                } else {
+                    ane_pod_borra_contrato($bd, $c);
+                }
+            }
             $bd->prepare('DELETE FROM pod_marcas WHERE id = ?')->execute([$fila]);
             /* En proyectos y menciones queda el nombre escrito, así que no se pierde el rastro */
             $bd->prepare('UPDATE pod_proy_marcas SET marca_id = 0 WHERE marca_id = ?')->execute([$fila]);
@@ -117,7 +157,13 @@ ane_pod_cabecera('marcas');
 <main class="caja">
   <?php ane_pod_aviso(['creada' => 'Marca añadida.', 'guardada' => 'Cambios guardados.',
                        'borrada' => 'Marca borrada.',
-                       'firmado' => 'Acuerdo apuntado. Si lleva episodios, ya tienen su cuña.', 'nombre' => 'Falta el nombre de la marca.']); ?>
+                       'firmado' => 'Acuerdo apuntado. Si lleva episodios, ya tienen su cuña.',
+                       'contrato' => 'Contrato guardado.', 'contrato_borrado' => 'Contrato borrado.',
+                       'contrato_formato' => 'Eso no entra como contrato: tiene que ser PDF, Word (docx, doc, odt) o una foto (jpg, png), y serlo de verdad (un fichero renombrado no cuela).',
+                       'contrato_grande' => 'El contrato pesa demasiado: hasta 32 MB.',
+                       'contrato_vacio' => 'No elegiste ningún fichero.',
+                       'contrato_subida' => 'La subida se cortó. Inténtalo otra vez.',
+                       'contrato_disco' => 'No se ha podido guardar el contrato en el servidor.', 'nombre' => 'Falta el nombre de la marca.']); ?>
 
   <div class="cifras">
     <div class="cifra"><b><?= count($marcas) ?></b><span>Marcas en la agenda</span></div>
@@ -198,9 +244,56 @@ ane_pod_cabecera('marcas');
             </table>
           <?php endif; ?>
 
+          <?php $contratos = ane_pod_contratos($bd, 'marca', $mid); ?>
+          <h3 style="margin:16px 0 6px">Contratos</h3>
+          <?php if (!$contratos): ?>
+            <p class="vacio" style="padding:0 0 6px">Ninguno guardado.</p>
+          <?php else: ?>
+            <ul class="contratos">
+              <?php foreach ($contratos as $c): $cid = (int) $c['id']; ?>
+                <li>
+                  <form method="post" id="cb<?= $cid ?>" class="escondida"
+                        onsubmit="return confirm('¿Borrar este contrato? No hay vuelta.')">
+                    <?= ane_pod_csrf_campo() ?>
+                    <input type="hidden" name="accion" value="contrato_borrar">
+                    <input type="hidden" name="fila" value="<?= $cid ?>">
+                  </form>
+                  <div>
+                    <b><?= ane_h($c['nombre']) ?></b>
+                    <span class="dom">· <?= ane_h(ane_pod_tamano((int) $c['tamano'])) ?>
+                      · <?= ane_h(ane_utc_a_local($c['creado'], 'j/n/Y')) ?>
+                      · <?= $c['proyecto'] ? 'acuerdo de ' . ane_h($c['proyecto']) : 'sin acuerdo' ?></span>
+                  </div>
+                  <div class="acciones">
+                    <?php if ($c['mime'] === 'application/pdf'): ?>
+                      <a class="btn claro pequeno" href="/estudio/contrato.php?c=<?= $cid ?>" target="_blank" rel="noopener">Ver</a>
+                    <?php endif; ?>
+                    <a class="btn claro pequeno" href="/estudio/contrato.php?c=<?= $cid ?>&amp;d=1">Descargar</a>
+                    <button class="btn peligro pequeno" type="submit" form="cb<?= $cid ?>" aria-label="Borrar contrato">✕</button>
+                  </div>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+          <form method="post" enctype="multipart/form-data" class="subir">
+            <?= ane_pod_csrf_campo() ?>
+            <input type="hidden" name="accion" value="contrato_nuevo">
+            <input type="hidden" name="fila" value="<?= $mid ?>">
+            <input type="file" name="contrato[]" accept=".pdf,.docx,.doc,.odt,.jpg,.jpeg,.png" required>
+            <?php if ($suyosPr): ?>
+              <select name="acuerdo_id" aria-label="De qué acuerdo es">
+                <?php foreach ($suyosPr as $f): ?>
+                  <option value="<?= (int) $f['id'] ?>">Acuerdo de <?= ane_h($f['proyecto']) ?></option>
+                <?php endforeach; ?>
+                <option value="0">Sin acuerdo (general)</option>
+              </select>
+            <?php endif; ?>
+            <button class="btn claro pequeno" type="submit">Subir contrato</button>
+          </form>
+
           <details class="firmar"<?= ($_GET['firmar'] ?? '') === (string) $mid ? ' open' : '' ?>>
             <summary class="btn azul pequeno">Firmar acuerdo</summary>
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
               <?= ane_pod_csrf_campo() ?>
               <input type="hidden" name="accion" value="firmar">
               <input type="hidden" name="fila" value="<?= $mid ?>">
@@ -227,6 +320,8 @@ ane_pod_cabecera('marcas');
                 <textarea name="texto" maxlength="4000" style="min-height:60px"></textarea></div>
               <div class="campo" style="margin:0 0 10px"><label>Contrapartidas</label>
                 <textarea name="contrapartidas" maxlength="2000" style="min-height:50px"></textarea></div>
+              <div class="campo" style="margin:0 0 10px"><label>Contrato (opcional) · PDF, Word o foto</label>
+                <input type="file" name="contrato[]" accept=".pdf,.docx,.doc,.odt,.jpg,.jpeg,.png"></div>
               <p class="nota" style="margin:0 0 10px">Los episodios que no existan se crean («Episodio 12») y cada
                 uno lleva ya la cuña de <?= ane_h($m['nombre']) ?>.</p>
               <button class="btn azul" type="submit">Firmar</button>
@@ -239,12 +334,13 @@ ane_pod_cabecera('marcas');
               <?php foreach ($suyosEp as $f): ?>
                 <tr><td><a href="/estudio/episodio.php?id=<?= (int) $f['episodio_id'] ?>#guion">
                   <?= ane_h(mb_strimwidth(ane_pod_etiqueta($f), 0, 40, '…')) ?></a><br>
-                  <span class="dom"><?= ane_h(ane_pod_fecha_larga($f['fecha'])) ?></span></td>
+                  <?php $sale = ane_pod_sale($f); ?>
+                  <span class="dom"><?= $sale ? (ane_pod_ya_salio($f) ? 'Salió el ' : 'Sale el ') . ane_h(ane_pod_dia_corto($sale)) : 'Sin fecha' ?></span></td>
                   <td class="n"><?= (int) $f['hecho'] ? '✓' : 'por hacer' ?></td></tr>
               <?php endforeach; ?>
             </table>
           <?php endif; ?>
-          <form method="post" onsubmit="return confirm('¿Borrar la marca de la agenda?')" style="margin-top:14px">
+          <form method="post" onsubmit="return confirm('¿Borrar la marca de la agenda? Sus contratos sin acuerdo se borran también; los de un acuerdo siguen en el proyecto.')" style="margin-top:14px">
             <?= ane_pod_csrf_campo() ?>
             <input type="hidden" name="accion" value="borrar">
             <input type="hidden" name="fila" value="<?= $mid ?>">
