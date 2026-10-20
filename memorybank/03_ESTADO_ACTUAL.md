@@ -234,7 +234,9 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   dinero firmado, acuerdos, contratos, contacto y siguiente paso) que se
   despliega al pulsar; «+ Nueva marca», plegada arriba. Fuera la **fecha del
   siguiente paso** y su aviso de «seguimiento pendiente», a petición de Eduardo
-  (la columna `seguimiento` sigue en la base, sin usar).
+  (la columna `seguimiento` sigue en la base, sin usar). **Lo mismo en la
+  ficha de cada proyecto:** cada acuerdo es una línea (marca, estado, dinero,
+  episodios, contratos y tipos) que se despliega, y «+ Nuevo acuerdo», plegado.
 - **Contratos (D25):** en la ficha de la marca (y del acuerdo, en su proyecto),
   también al firmar. PDF, Word o foto, comprobados por dentro. Ficheros en
   `~/datos/estudio/contratos/`, **solo socios** (`estudio/contrato.php`; el
