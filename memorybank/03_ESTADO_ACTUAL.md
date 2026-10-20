@@ -225,7 +225,7 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   fecha de grabación. Si algún domingo no sale episodio, hay que mover el ancla
   (`pod_ancla_numero` y `pod_ancla_domingo` en `ajustes`, o `ANE_POD_ANCLA`).
 - **Tipos de cuña (20/10/2026):** *Anuncio explícito*, *Anuncio integrado en
-  sección*, *Presencia en el evento* y *Product placement*, y **se pueden marcar
+  sección*, *Presencia en el evento*, *Presencia en el maillot* y *Product placement*, y **se pueden marcar
   varios** (casillas; se guardan como «explicito,producto»). Los viejos se
   convirtieron solos (cuña leída y mención suelta → explícito; integrada →
   integrado; producto en pantalla → product placement), marcado en

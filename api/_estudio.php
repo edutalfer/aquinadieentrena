@@ -30,6 +30,7 @@ const ANE_POD_MENCION_TIPOS = [
     'explicito' => 'Anuncio explícito',
     'integrado' => 'Anuncio integrado en sección',
     'evento'    => 'Presencia en el evento',
+    'maillot'   => 'Presencia en el maillot',
     'producto'  => 'Product placement',
 ];
 
