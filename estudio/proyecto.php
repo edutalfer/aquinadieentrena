@@ -19,7 +19,11 @@ if (!$pr) {
 
 function ane_pod_vuelve_pr(int $id, string $query = ''): void
 {
-    header('Location: /estudio/proyecto.php?id=' . $id . ($query !== '' ? '&' . $query : ''), true, 303);
+    /* Si vuelve a un acuerdo (…#a12), ese acuerdo se abre: ?abre=12 */
+    if (preg_match('/#a(\d+)$/', $query, $m)) {
+        $query = substr($query, 0, -strlen($m[0])) . '&abre=' . $m[1] . $m[0];
+    }
+    header('Location: /estudio/proyecto.php?id=' . $id . ($query !== '' ? '&' . ltrim($query, '&') : ''), true, 303);
     exit;
 }
 
@@ -153,8 +157,21 @@ ane_pod_cabecera('proyectos');
     <?php foreach ($suyas as $m):
         $mid = (int) $m['id'];
         $firmado = in_array($m['estado'], ANE_POD_FIRMADO, true);
-        $enGuion = ane_pod_episodios_de_acuerdo($bd, $mid); ?>
-      <div id="a<?= $mid ?>" class="tema<?= $firmado ? ' hecho' : '' ?>">
+        $enGuion = ane_pod_episodios_de_acuerdo($bd, $mid);
+        $contratos = ane_pod_contratos($bd, 'acuerdo', $mid);
+        $tipos = ane_pod_tipos_texto((string) $m['tipo']); ?>
+      <details id="a<?= $mid ?>" class="marca acuerdo<?= $firmado ? ' firmado' : '' ?>"<?= (string) ($_GET['abre'] ?? '') === (string) $mid ? ' open' : '' ?>>
+        <summary>
+          <span class="marca-nombre"><?= ane_h(($m['marca_nombre'] ?? '') ?: $m['marca']) ?></span>
+          <?= ane_pod_chip($m['estado'], ANE_POD_PATRO_ESTADOS) ?>
+          <span class="marca-datos">
+            <?php if ((int) $m['importe']): ?><b><?= ane_pod_euros((int) $m['importe']) ?></b><?php endif; ?>
+            <?php if ($m['episodios'] !== ''): ?><span>episodios <?= ane_h($m['episodios']) ?></span><?php endif; ?>
+            <?php if ($contratos): ?><span><?= count($contratos) ?> contrato<?= count($contratos) === 1 ? '' : 's' ?></span><?php endif; ?>
+          </span>
+          <?php if ($tipos !== ''): ?><span class="marca-siguiente"><?= ane_h($tipos) ?></span><?php endif; ?>
+        </summary>
+        <div class="marca-cuerpo">
         <form method="post" id="ab<?= $mid ?>" class="escondida"
               onsubmit="return confirm('¿Quitar este acuerdo? Sus cuñas pendientes salen de los episodios; las ya hechas se quedan.')">
           <?= ane_pod_csrf_campo() ?>
@@ -167,15 +184,9 @@ ane_pod_cabecera('proyectos');
           <input type="hidden" name="accion" value="marca_guardar">
           <input type="hidden" name="id" value="<?= $id ?>">
           <input type="hidden" name="fila" value="<?= $mid ?>">
-          <div class="barra" style="margin:0 0 10px">
-            <h3 style="margin:0"><?= ane_h(($m['marca_nombre'] ?? '') ?: $m['marca']) ?>
-              <?php if ($m['marca_correo'] ?? ''): ?>
-                <span class="dom"><?= ane_h($m['marca_correo']) ?></span><?php endif; ?></h3>
-            <div class="acciones">
-              <?php if ((int) $m['importe']): ?><b><?= ane_pod_euros((int) $m['importe']) ?></b><?php endif; ?>
-              <?= ane_pod_chip($m['estado'], ANE_POD_PATRO_ESTADOS) ?>
-            </div>
-          </div>
+          <?php if ($m['marca_correo'] ?? ''): ?>
+            <p class="dom" style="margin:0 0 10px">Contacto: <?= ane_h($m['marca_correo']) ?></p>
+          <?php endif; ?>
           <div class="campos" style="grid-template-columns:1fr 1fr 1fr">
             <div class="campo" style="margin:0"><label>Estado</label>
               <select name="estado">
@@ -227,7 +238,6 @@ ane_pod_cabecera('proyectos');
         </form>
 
         <!-- Contrato del acuerdo -->
-        <?php $contratos = ane_pod_contratos($bd, 'acuerdo', $mid); ?>
         <div class="contrato-acuerdo">
           <label>Contrato<?= count($contratos) > 1 ? 's' : '' ?></label>
           <?php if ($contratos): ?>
@@ -263,10 +273,12 @@ ane_pod_cabecera('proyectos');
             <button class="btn claro pequeno" type="submit"><?= $contratos ? 'Subir otro' : 'Subir contrato' ?></button>
           </form>
         </div>
-      </div>
+        </div>
+      </details>
     <?php endforeach; ?>
 
-    <h3 id="nuevo-acuerdo">Nuevo acuerdo</h3>
+    <details id="nuevo-acuerdo" class="nueva-marca" style="margin-top:14px"<?= ($_GET['mal'] ?? '') === 'marca_falta' ? ' open' : '' ?>>
+    <summary class="btn azul">+ Nuevo acuerdo</summary>
     <form method="post" class="anadir-uno">
       <?= ane_pod_csrf_campo() ?>
       <input type="hidden" name="accion" value="marca_nueva">
@@ -301,6 +313,15 @@ ane_pod_cabecera('proyectos');
                   placeholder="Logo en el mono · dos menciones por episodio · un reel"></textarea></div>
       <button class="btn azul" type="submit">Apuntar acuerdo</button>
     </form>
+    </details>
+
+    <?php /* Al volver de guardar (…#a12), el acuerdo tocado se abre solo */ ?>
+    <script>
+      (function () {
+        var d = location.hash && document.getElementById(location.hash.slice(1));
+        if (d && d.tagName === 'DETAILS') { d.open = true; d.scrollIntoView(); }
+      })();
+    </script>
   </section>
 
   <!-- ---------------- Datos ---------------- -->

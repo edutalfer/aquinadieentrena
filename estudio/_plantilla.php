@@ -310,6 +310,8 @@ function ane_pod_estilo(): void
   .marca-datos { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--gris); margin-left: auto; }
   .marca-datos b { color: var(--negro); }
   .marca-siguiente { flex: 1 1 100%; font-size: 13px; color: var(--gris); padding-left: 22px; }
+  details.acuerdo { border-left: 4px solid var(--azul); }
+  details.acuerdo.firmado { border-left-color: var(--verde); }
   .marca-cuerpo { padding: 4px 16px 16px; border-top: 1px solid var(--linea); padding-top: 14px; }
 
   /* ---- Lista de episodios: el que toca, resaltado; los pasados, plegados ---- */
