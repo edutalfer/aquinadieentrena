@@ -113,7 +113,9 @@ nunca: proyectos, la agenda de patrocinadores, accesos, notas ni temas
 internos. Esa frontera es de datos, no de CSS: con el editor delante eso no se
 lee de la base, sus pantallas dan 403 y los ficheros de un tema interno, 404. **Las imágenes y los archivos del
 guión viven en `~/datos/estudio/imagenes/`**, fuera del repo, y solo salen por
-`estudio/fichero.php`. Antes de tocarlo, `estudio/LEEME.md`.
+`estudio/fichero.php`. **Los contratos con las marcas viven en
+`~/datos/estudio/contratos/`** y solo los sirve `estudio/contrato.php`, solo a
+socios: son datos sensibles, igual que la base. Antes de tocarlo, `estudio/LEEME.md`.
 
 ---
 
