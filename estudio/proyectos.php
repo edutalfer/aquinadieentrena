@@ -81,6 +81,7 @@ ane_pod_cabecera('proyectos');
             <a class="btn pequeno" href="/estudio/proyecto.php?id=<?= (int) $p['id'] ?>">Abrir</a>
           </div>
         </div>
+        <div class="tabla-ancha">
         <table>
           <tr>
             <th class="n">Confirmado</th><th class="n">Negociando</th><th class="n">Objetivo</th>
@@ -94,6 +95,7 @@ ane_pod_cabecera('proyectos');
             <td class="n"><?= count($porProyecto[(int) $p['id']] ?? []) ?></td>
           </tr>
         </table>
+        </div>
         <?php if ($objetivo > 0): ?>
           <div style="margin-top:10px;background:var(--humo);border:1px solid var(--linea);height:14px">
             <div style="width:<?= $pct ?>%;height:100%;background:var(--azul)"></div>

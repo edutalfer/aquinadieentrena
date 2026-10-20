@@ -114,6 +114,28 @@ también si lo llama la web.
 
 ---
 
+## En el móvil
+
+Está pensado para usarse con el teléfono en la mano: una columna, campos a
+ancho completo, botones para dedos y campos de 16 px (si son más pequeños,
+Safari hace zoom al tocarlos y descoloca la página).
+
+Dos cosas que conviene saber si tocas los estilos:
+
+- Varias rejillas llevan su reparto en el atributo `style` del propio HTML
+  (`1fr 170px` para el orden de los temas, etc.). El atributo gana a cualquier
+  regla, así que el móvil las aplana con `.campos { grid-template-columns: 1fr
+  !important }`. Si añades otra rejilla con `style`, ya está cubierta.
+- En `.subir`, el `flex: 1 1 230px` de escritorio se lee como **altura**
+  cuando la caja pasa a columna, y los campos salen gigantes. Por eso el móvil
+  les pone `flex: 0 0 auto`. Ojo con esto al añadir campos ahí.
+
+Las tablas con muchas columnas o no existen (los patrocinadores de un proyecto
+son tarjetas) o se apilan (las menciones del guión) o se pueden empujar de
+lado (`.tabla-ancha`).
+
+---
+
 ## Datos
 
 Todo vive en `~/datos/ane.db`, **fuera del repo** (que es público), en tablas

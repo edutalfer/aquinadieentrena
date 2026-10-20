@@ -110,42 +110,46 @@ ane_pod_cabecera('proyectos');
   <section id="marcas">
     <h2>Patrocinadores del proyecto</h2>
     <p class="nota">Estado, importe y lo que se les ha prometido. Esto no sale nunca de aquí.</p>
-    <?php if (!$suyas): ?><p class="vacio">Ninguno todavía.</p><?php else: ?>
-      <table>
-        <tr><th>Marca</th><th>Estado</th><th class="n">Importe</th><th>Contrapartidas</th><th>Notas</th><th></th></tr>
-        <?php foreach ($suyas as $m): $mid = (int) $m['id']; ?>
-          <tr>
-            <form method="post" id="fp<?= $mid ?>">
-              <?= ane_pod_csrf_campo() ?>
-              <input type="hidden" name="accion" value="marca_guardar">
-              <input type="hidden" name="id" value="<?= $id ?>">
-              <input type="hidden" name="fila" value="<?= $mid ?>">
-            </form>
-            <td><b><?= ane_h($m['marca_nombre'] ?? '' ?: $m['marca']) ?></b>
-              <?php if ($m['marca_correo'] ?? ''): ?><br><span class="dom"><?= ane_h($m['marca_correo']) ?></span><?php endif; ?></td>
-            <td><select form="fp<?= $mid ?>" name="estado">
-                  <?php foreach (ANE_POD_PATRO_ESTADOS as $k => $v): ?>
-                    <option value="<?= $k ?>"<?= $m['estado'] === $k ? ' selected' : '' ?>><?= ane_h($v) ?></option>
-                  <?php endforeach; ?>
-                </select></td>
-            <td class="n"><input form="fp<?= $mid ?>" type="number" name="importe" min="0" step="100"
-                 value="<?= (int) $m['importe'] ?>" style="text-align:right"></td>
-            <td><textarea form="fp<?= $mid ?>" name="contrapartidas" maxlength="2000" style="min-height:60px"><?= ane_h($m['contrapartidas']) ?></textarea></td>
-            <td><textarea form="fp<?= $mid ?>" name="notas" maxlength="2000" style="min-height:60px"><?= ane_h($m['notas']) ?></textarea></td>
-            <td class="n"><div class="acciones" style="justify-content:flex-end">
-              <button class="btn claro pequeno" form="fp<?= $mid ?>" type="submit">Guardar</button>
-              <form method="post" class="enlinea" onsubmit="return confirm('¿Quitar esta marca del proyecto?')">
-                <?= ane_pod_csrf_campo() ?>
-                <input type="hidden" name="accion" value="marca_borrar">
-                <input type="hidden" name="id" value="<?= $id ?>">
-                <input type="hidden" name="fila" value="<?= $mid ?>">
-                <button class="btn peligro pequeno" type="submit">✕</button>
-              </form>
-            </div></td>
-          </tr>
-        <?php endforeach; ?>
-      </table>
-    <?php endif; ?>
+    <?php if (!$suyas): ?><p class="vacio">Ninguno todavía.</p><?php endif; ?>
+
+    <?php foreach ($suyas as $m): $mid = (int) $m['id']; ?>
+      <div class="tema<?= in_array($m['estado'], ['confirmado', 'facturado'], true) ? ' hecho' : '' ?>">
+        <form method="post">
+          <?= ane_pod_csrf_campo() ?>
+          <input type="hidden" name="accion" value="marca_guardar">
+          <input type="hidden" name="id" value="<?= $id ?>">
+          <input type="hidden" name="fila" value="<?= $mid ?>">
+          <div class="barra" style="margin:0 0 10px">
+            <h3 style="margin:0"><?= ane_h(($m['marca_nombre'] ?? '') ?: $m['marca']) ?>
+              <?php if ($m['marca_correo'] ?? ''): ?>
+                <span class="dom"><?= ane_h($m['marca_correo']) ?></span><?php endif; ?></h3>
+            <?= ane_pod_chip($m['estado'], ANE_POD_PATRO_ESTADOS) ?>
+          </div>
+          <div class="campos" style="grid-template-columns:1fr 1fr">
+            <div class="campo" style="margin:0"><label>Estado</label>
+              <select name="estado">
+                <?php foreach (ANE_POD_PATRO_ESTADOS as $k => $v): ?>
+                  <option value="<?= $k ?>"<?= $m['estado'] === $k ? ' selected' : '' ?>><?= ane_h($v) ?></option>
+                <?php endforeach; ?>
+              </select></div>
+            <div class="campo" style="margin:0"><label>Importe (€)</label>
+              <input type="number" name="importe" min="0" step="100" value="<?= (int) $m['importe'] ?>"></div>
+          </div>
+          <div class="campo" style="margin:12px 0 10px"><label>Contrapartidas</label>
+            <textarea name="contrapartidas" maxlength="2000" style="min-height:60px"><?= ane_h($m['contrapartidas']) ?></textarea></div>
+          <div class="campo" style="margin:0 0 10px"><label>Notas</label>
+            <textarea name="notas" maxlength="2000" style="min-height:60px"><?= ane_h($m['notas']) ?></textarea></div>
+          <button class="btn pequeno" type="submit">Guardar</button>
+        </form>
+        <form method="post" onsubmit="return confirm('¿Quitar esta marca del proyecto?')" style="margin-top:10px">
+          <?= ane_pod_csrf_campo() ?>
+          <input type="hidden" name="accion" value="marca_borrar">
+          <input type="hidden" name="id" value="<?= $id ?>">
+          <input type="hidden" name="fila" value="<?= $mid ?>">
+          <button class="btn peligro pequeno" type="submit">Quitar del proyecto</button>
+        </form>
+      </div>
+    <?php endforeach; ?>
 
     <h3>Añadir patrocinador</h3>
     <form method="post">

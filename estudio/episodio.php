@@ -379,6 +379,15 @@ ane_pod_cabecera('episodios');
             <ul class="archivos">
               <?php foreach ($suyosArch as $ar): $aid = (int) $ar['id']; ?>
                 <li>
+                  <?php /* Borrar vive en su propia forma, escondida: así el botón puede ir
+                            en la misma fila que Guardar sin anidar formas. */ ?>
+                  <form method="post" id="arb<?= $aid ?>" class="escondida"
+                        onsubmit="return confirm('¿Borrar el archivo?')">
+                    <?= ane_pod_csrf_campo() ?>
+                    <input type="hidden" name="accion" value="fichero_borrar">
+                    <input type="hidden" name="id" value="<?= $id ?>">
+                    <input type="hidden" name="fila" value="<?= $aid ?>">
+                  </form>
                   <a href="/estudio/fichero.php?f=<?= $aid ?>&amp;d=1"><?= ane_h($ar['nombre']) ?></a>
                   <span class="dom"><?= ane_h(ane_pod_tamano((int) $ar['tamano'])) ?></span>
                   <form method="post" class="acciones">
@@ -386,15 +395,9 @@ ane_pod_cabecera('episodios');
                     <input type="hidden" name="accion" value="fichero_pie">
                     <input type="hidden" name="id" value="<?= $id ?>">
                     <input type="hidden" name="fila" value="<?= $aid ?>">
-                    <input type="text" name="pie" maxlength="300" value="<?= ane_h($ar['pie']) ?>" placeholder="Para qué es (opcional)">
+                    <input type="text" name="pie" maxlength="2000" value="<?= ane_h($ar['pie']) ?>" placeholder="Para qué es (opcional)">
                     <button class="btn claro pequeno" type="submit">Guardar</button>
-                  </form>
-                  <form method="post" onsubmit="return confirm('¿Borrar el archivo?')">
-                    <?= ane_pod_csrf_campo() ?>
-                    <input type="hidden" name="accion" value="fichero_borrar">
-                    <input type="hidden" name="id" value="<?= $id ?>">
-                    <input type="hidden" name="fila" value="<?= $aid ?>">
-                    <button class="btn peligro pequeno" type="submit">✕</button>
+                    <button class="btn peligro pequeno" type="submit" form="arb<?= $aid ?>">✕</button>
                   </form>
                 </li>
               <?php endforeach; ?>

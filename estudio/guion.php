@@ -127,10 +127,10 @@ ane_pod_cabecera('episodios');
     <?php if ($es_socio && $menciones): ?>
       <section style="border-left:4px solid var(--rojo);margin:0 0 20px">
         <h2 style="font-size:17px">Menciones de este episodio <span class="chip interno">solo socios</span></h2>
-        <table>
+        <table class="menciones">
           <?php foreach ($menciones as $m): ?>
             <tr class="<?= (int) $m['hecho'] ? 'hecho' : '' ?>">
-              <td style="width:130px"><b><?= ane_h($m['marca']) ?></b><br>
+              <td style="width:130px"><b><?= ane_h($m['marca']) ?></b>
                 <span class="dom"><?= ane_h(ANE_POD_MENCION_TIPOS[$m['tipo']] ?? $m['tipo']) ?></span></td>
               <td style="width:110px"><?= ane_h($m['momento']) ?></td>
               <td><?= ane_pod_texto($m['texto']) ?></td>

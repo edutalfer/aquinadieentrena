@@ -187,6 +187,7 @@ function ane_pod_estilo(): void
   td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
   tr.hecho td { color: var(--gris); }
   .vacio { color: var(--gris); font-style: italic; padding: 10px 0; }
+  .dom { color: var(--gris); font-size: 12px; }
 
   /* ---- Chips de estado ---- */
   .chip { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
@@ -278,7 +279,10 @@ function ane_pod_estilo(): void
   .clave { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--humo);
            border: 1px solid var(--linea); padding: 2px 6px; font-size: 14px; }
 
-  /* ---- Móvil: el guión se lee en el teléfono mientras se graba ---- */
+  /* ---- Móvil ----
+     Esto se usa con el teléfono en la mano: leyendo el guión mientras se
+     graba y apuntando cosas desde cualquier sitio. Así que una columna,
+     dedos en vez de ratón y nada de tablas apretadas. */
   @media (max-width: 600px) {
     .guion { padding: 18px 16px; }
     .guion .cab h1 { font-size: 24px; line-height: 1; }
@@ -286,13 +290,59 @@ function ane_pod_estilo(): void
     .bloque .min { font-size: 16px; }
     .tarjeta { grid-template-columns: 1fr; }
     .tarjeta .der { justify-items: start; text-align: left; }
-    .cifra b { font-size: 28px; }
     .pareja { grid-template-columns: 1fr; }
+    header h1 { font-size: 24px; }
+    main.caja { padding: 20px 14px 60px; }
+    section { padding: 16px 14px; }
+
+    /* Las cifras, en una línea cada una: número y rótulo, sin cajones altos */
+    .cifras { gap: 8px; }
+    .cifra { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 14px; }
+    .cifra b { font-size: 26px; }
+    .cifra span { text-align: right; }
+
+    /* Varias rejillas llevan su reparto en el propio atributo style (170px
+       para el orden, 110px para el número...). En el móvil no caben y el
+       atributo gana a cualquier regla, así que aquí toca !important. */
+    .campos { grid-template-columns: 1fr !important; }
+
+    /* 16px o Safari hace zoom al tocar un campo y se descoloca la página */
+    input[type=text], input[type=url], input[type=email], input[type=password],
+    input[type=number], input[type=date], input[type=datetime-local], select, textarea { font-size: 16px; }
+
+    /* Botones para dedos, no para ratón */
+    .btn { padding: 12px 16px; }
+    .btn.pequeno { padding: 9px 13px; font-size: 12px; }
+    .acciones { gap: 10px; }
+
+    /* En columna, el «flex: 1 1 230px» de arriba se lee como ALTURA y los
+       campos salen gigantes: aquí cada uno ocupa lo suyo y punto. */
     .subir { flex-direction: column; align-items: stretch; }
+    .subir input[type=file], .subir input[type=text] { width: 100%; flex: 0 0 auto; }
     .fila-enlace { flex-wrap: wrap; }
     .fila-enlace input[type=text], .fila-enlace input[type=url] { flex: 1 1 100%; }
-    .subir input[type=file], .subir input[type=text] { width: 100%; }
-    header h1 { font-size: 24px; }
+    .fila-enlace .btn { flex: 1 1 auto; }
+
+    /* El dominio del enlace, a su línea: si no, estruja el título a una
+       palabra por renglón */
+    .enlaces li { flex-wrap: wrap; }
+    .enlaces li .dom { flex: 1 1 100%; margin-left: 18px; }
+
+    .archivos li { align-items: flex-start; }
+    .archivos li input[type=text] { flex: 1 1 100%; }
+    .archivos li form { flex: 1 1 100%; }
+
+    /* La foto y su descripción: la foto entera, no recortada */
+    .pareja img { height: auto; max-height: 300px; object-fit: contain; }
+
+    /* Tablas: que se puedan empujar de lado en vez de reventar la página */
+    .tabla-ancha { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabla-ancha table { min-width: 520px; }
+
+    /* Las menciones del guión, apiladas: se leen grabando, no se comparan */
+    .menciones tr { display: block; border-bottom: 1px solid var(--linea); padding: 10px 0; }
+    .menciones td { display: block; width: auto !important; border: 0; padding: 0 0 4px; }
+    .menciones td.n { text-align: left; font-weight: 700; }
   }
 
   @media print {
