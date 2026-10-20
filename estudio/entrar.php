@@ -60,9 +60,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         } elseif ($clave !== (string) ($_POST['clave2'] ?? '')) {
             $error = 'Las dos contraseñas no coinciden.';
         } else {
-            $bd->prepare('INSERT INTO pod_usuarios (usuario, nombre, hash, rol, creado) VALUES (?, ?, ?, ?, ?)')
+            /* Darse de alta es entrar: si no, el panel diría «no ha entrado
+               todavía» de alguien que está dentro en ese mismo momento. */
+            $bd->prepare('INSERT INTO pod_usuarios (usuario, nombre, hash, rol, creado, ultimo)
+                          VALUES (?, ?, ?, ?, ?, ?)')
                ->execute([$usuario, ane_recorta((string) ($_POST['nombre'] ?? ''), 80),
-                          password_hash($clave, PASSWORD_DEFAULT), 'socio', ane_ahora()]);
+                          password_hash($clave, PASSWORD_DEFAULT), 'socio', ane_ahora(), ane_ahora()]);
             @unlink($senal);   /* la señal vale para un alta y se acabó */
             $u = ane_pod_por_usuario($bd, $usuario);
             ane_pod_abre_sesion($u);
