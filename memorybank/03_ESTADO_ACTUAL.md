@@ -237,6 +237,9 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   (la columna `seguimiento` sigue en la base, sin usar). **Lo mismo en la
   ficha de cada proyecto:** cada acuerdo es una línea (marca, estado, dinero,
   episodios, contratos y tipos) que se despliega, y «+ Nuevo acuerdo», plegado.
+- **Proyectos sin estado «Idea» (20/10/2026):** un proyecto creado se da por en
+  marcha (lo dice Eduardo). Fuera la etiqueta junto a «Abrir»; solo se ve
+  «Cerrado» si se cierra. Los que estaban en «idea» pasaron a «abierto».
 - **Contratos (D25):** en la ficha de la marca (y del acuerdo, en su proyecto),
   también al firmar. PDF, Word o foto, comprobados por dentro. Ficheros en
   `~/datos/estudio/contratos/`, **solo socios** (`estudio/contrato.php`; el

@@ -19,7 +19,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $bd->prepare('INSERT INTO pod_proyectos (nombre, detalle, estado, objetivo, coste, orden, creado, actualizado)
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
            ->execute([ane_recorta((string) ($_POST['nombre'] ?? ''), 160) ?: 'Proyecto sin nombre',
-                      ane_recorta((string) ($_POST['detalle'] ?? ''), 160), 'idea',
+                      ane_recorta((string) ($_POST['detalle'] ?? ''), 160), 'abierto',
                       max(0, (int) ($_POST['objetivo'] ?? 0)), max(0, (int) ($_POST['coste'] ?? 0)),
                       $orden, $ahora, $ahora]);
         header('Location: /estudio/proyecto.php?id=' . (int) $bd->lastInsertId() . '&ok=creado', true, 303);
@@ -78,7 +78,8 @@ ane_pod_cabecera('proyectos');
           </div>
           <div class="acciones">
             <?php if ((int) $p['fijo']): ?><span class="chip">fijo · episodios sueltos</span><?php endif; ?>
-            <?= ane_pod_chip($p['estado'], ANE_POD_PROY_ESTADOS) ?>
+            <?php /* Un proyecto creado está en marcha: solo se avisa si ya se cerró */
+              if ($p['estado'] === 'cerrado'): ?><?= ane_pod_chip('cerrado', ANE_POD_PROY_ESTADOS) ?><?php endif; ?>
             <a class="btn pequeno" href="/estudio/proyecto.php?id=<?= (int) $p['id'] ?>">Abrir</a>
           </div>
         </div>

@@ -38,7 +38,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                             objetivo = ?, coste = ?, notas = ?, actualizado = ? WHERE id = ?')
                ->execute([ane_recorta((string) ($_POST['nombre'] ?? ''), 160) ?: 'Proyecto sin nombre',
                           ane_recorta((string) ($_POST['detalle'] ?? ''), 160),
-                          isset(ANE_POD_PROY_ESTADOS[(string) ($_POST['estado'] ?? '')]) ? (string) $_POST['estado'] : 'idea',
+                          isset(ANE_POD_PROY_ESTADOS[(string) ($_POST['estado'] ?? '')]) ? (string) $_POST['estado'] : 'abierto',
                           ane_recorta((string) ($_POST['descripcion'] ?? ''), 6000),
                           max(0, (int) ($_POST['objetivo'] ?? 0)), max(0, (int) ($_POST['coste'] ?? 0)),
                           ane_recorta((string) ($_POST['notas'] ?? ''), 6000), ane_ahora(), $id]);
@@ -134,7 +134,7 @@ ane_pod_cabecera('proyectos');
     <h2 class="display" style="font-size:30px"><?= ane_h($pr['nombre']) ?></h2>
     <div class="acciones">
       <?php if ((int) $pr['fijo']): ?><span class="chip">fijo</span><?php endif; ?>
-      <?= ane_pod_chip($pr['estado'], ANE_POD_PROY_ESTADOS) ?>
+      <?php if ($pr['estado'] === 'cerrado'): ?><?= ane_pod_chip('cerrado', ANE_POD_PROY_ESTADOS) ?><?php endif; ?>
     </div>
   </div>
 

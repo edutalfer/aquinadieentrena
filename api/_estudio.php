@@ -45,8 +45,9 @@ const ANE_POD_PATRO_ESTADOS = [
     'descartado'  => 'Descartado',
 ];
 
+/* Un proyecto creado se da por en marcha (lo decidió Eduardo el 20/10/2026:
+   fuera el estado «Idea»). Solo se marca cuando se cierra. */
 const ANE_POD_PROY_ESTADOS = [
-    'idea'     => 'Idea',
     'abierto'  => 'En marcha',
     'cerrado'  => 'Cerrado',
 ];
@@ -194,7 +195,7 @@ function ane_pod_bd(): PDO
             id          INTEGER PRIMARY KEY,
             nombre      TEXT    NOT NULL,
             detalle     TEXT    NOT NULL DEFAULT \'\',   -- «Marzo 2027 · Sudáfrica»
-            estado      TEXT    NOT NULL DEFAULT \'idea\',
+            estado      TEXT    NOT NULL DEFAULT \'abierto\',   -- abierto | cerrado
             descripcion TEXT    NOT NULL DEFAULT \'\',
             objetivo    INTEGER NOT NULL DEFAULT 0,     -- euros que hay que levantar
             coste       INTEGER NOT NULL DEFAULT 0,     -- euros que cuesta
@@ -303,6 +304,8 @@ function ane_pod_bd(): PDO
     ane_pod_columna($bd, 'pod_proy_marcas', 'texto', "TEXT NOT NULL DEFAULT ''");
     ane_pod_columna($bd, 'pod_menciones', 'acuerdo_id', 'INTEGER NOT NULL DEFAULT 0');
     ane_pod_proyecto_podcast($bd);
+    /* Los que quedaran como «idea» pasan a en marcha */
+    $bd->exec("UPDATE pod_proyectos SET estado = 'abierto' WHERE estado NOT IN ('abierto', 'cerrado')");
 
     /* 20/10/2026: tipos nuevos de cuña, y se pueden marcar varios */
     if (!$bd->query("SELECT valor FROM ajustes WHERE clave = 'pod_tipos_v2'")->fetchColumn()) {

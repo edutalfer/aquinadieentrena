@@ -76,7 +76,7 @@ $proyectos = [
      'Ocho etapas con Eduardo y Cristóbal. Episodio diario post etapa y vlogs sueltos.'],
     ['ANE House 2027', 'Julio 2027 · Tour de Francia', 'abierto', 24000, 19000, 20,
      'Casa en el Tour: episodio post etapa con invitados y vlogs.'],
-    ['Mediterranean Epic', 'Febrero 2027 · Castellón', 'idea', 6000, 4500, 30, ''],
+    ['Mediterranean Epic', 'Febrero 2027 · Castellón', 'abierto', 6000, 4500, 30, ''],
 ];
 $st = $bd->prepare('INSERT INTO pod_proyectos (nombre, detalle, estado, objetivo, coste, orden, descripcion, creado, actualizado)
                     VALUES (?,?,?,?,?,?,?,?,?)');
