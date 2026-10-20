@@ -17,7 +17,7 @@ No está enlazada desde la web pública y va con `noindex`.
 | Enlaces, imágenes y archivos del guión | Sí | Sí, y se los descarga |
 | Temas marcados «internos» | Sí | **No** |
 | Notas internas del episodio | Sí | **No** |
-| Patrocinadores y menciones | Sí | **No** |
+| Patrocinios (también los intercalados en el guión) | Sí | **No** |
 | Proyectos y presupuestos | Sí | **No** |
 | Accesos | Sí | **No** |
 
@@ -35,6 +35,19 @@ partes (`ane_pod_etiqueta()`). Lo que no puede ser es no poner ninguna de las
 dos cosas. Cada tema lleva título, lo que se cuenta, **los enlaces que
 hagan falta** y **las imágenes y archivos** que quieras: de las dos cosas,
 tantas como necesites, y se pueden subir varias de una vez.
+
+**Temas y patrocinios van en la misma lista.** Un patrocinio (la cuña de una
+marca) se mete entre dos temas igual que se ordena un tema: con las flechas o
+con «Llevarlo a…». En el guión sale en su sitio, en rojo (verde cuando ya está
+hecho), y los temas se numeran 1, 2, 3 saltándose las cuñas. Por dentro, las
+dos tablas (`pod_bloques` y `pod_menciones`) comparten la columna `orden`: lo
+manejan `ane_pod_piezas()`, `ane_pod_mueve()` y `ane_pod_coloca()`, que
+reescriben 10, 20, 30… cada vez para que no haya empates. Ver D22.
+
+Los **enlaces** de un tema se pegan **varios de golpe, uno por línea**: la
+dirección sola, o con su nombre delante («Rider Manual https://…»,
+«Perfil | https://…»). Una línea que no parezca un enlace se queda fuera y se
+avisa. Luego cada uno se puede retocar o borrar en su fila.
 
 Todo episodio acaba en una sección fija, **Bici o Cepo**, que no se borra ni se
 mueve: **cada foto con su descripción al lado**, tantas parejas como haga

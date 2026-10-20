@@ -155,7 +155,7 @@ function ane_pod_bd(): PDO
             marca_id    INTEGER NOT NULL DEFAULT 0,   -- 0 = marca escrita a mano
             marca       TEXT    NOT NULL DEFAULT \'\',
             tipo        TEXT    NOT NULL DEFAULT \'mencion\',
-            momento     TEXT    NOT NULL DEFAULT \'\',   -- «al arrancar», «con el tema 3»
+            momento     TEXT    NOT NULL DEFAULT \'\',   -- ya no se usa (21/10/2026): lo dice el sitio en el guión
             texto       TEXT    NOT NULL DEFAULT \'\',   -- lo que hay que decir
             hecho       INTEGER NOT NULL DEFAULT 0,
             orden       INTEGER NOT NULL DEFAULT 0
@@ -260,8 +260,47 @@ function ane_pod_bd(): PDO
         }
     }
 
+    ane_pod_unifica_orden($bd);
+
     $listo = true;
     return $bd;
+}
+
+/* Hasta el 21/10/2026 los temas y las menciones de patrocinio llevaban
+   órdenes separados, y las menciones iban en su propia sección. Desde
+   entonces comparten uno solo, para poder intercalar un patrocinio entre
+   dos temas. Esto lo pone en marcha una vez por base:
+   - las menciones que hubiera se colocan al principio del guión (desde ahí
+     se mueven con las flechas o con «colocar después de»);
+   - su «momento» («al arrancar», «con el tema 3») ya lo dice la posición, así
+     que el texto pasa delante de lo que hay que decir, para no perderlo. */
+function ane_pod_unifica_orden(PDO $bd): void
+{
+    if ($bd->query("SELECT valor FROM ajustes WHERE clave = 'pod_orden_unificado'")->fetchColumn()) {
+        return;
+    }
+    $bd->beginTransaction();
+    foreach ($bd->query('SELECT id FROM pod_episodios')->fetchAll(PDO::FETCH_COLUMN) as $ep) {
+        $st = $bd->prepare('SELECT id, momento, texto FROM pod_menciones WHERE episodio_id = ? ORDER BY orden, id');
+        $st->execute([(int) $ep]);
+        $lista = [];
+        foreach ($st->fetchAll() as $m) {
+            if (trim((string) $m['momento']) !== '') {
+                $bd->prepare("UPDATE pod_menciones SET texto = ?, momento = '' WHERE id = ?")
+                   ->execute([trim('**Momento:** ' . trim((string) $m['momento']) . "\n" . $m['texto']), (int) $m['id']]);
+            }
+            $lista[] = ['pod_menciones', (int) $m['id']];
+        }
+        $st = $bd->prepare("SELECT id FROM pod_bloques WHERE episodio_id = ? AND tipo <> '" . ANE_POD_CIERRE . "'
+                            ORDER BY orden, id");
+        $st->execute([(int) $ep]);
+        foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $b) {
+            $lista[] = ['pod_bloques', (int) $b];
+        }
+        ane_pod_renumera($bd, $lista);
+    }
+    $bd->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('pod_orden_unificado', '1')")->execute();
+    $bd->commit();
 }
 
 /* ---------- Acceso ---------- */
@@ -375,13 +414,34 @@ function ane_pod_asegura_cierre(PDO $bd, int $episodio): int
     return (int) $bd->lastInsertId();
 }
 
-function ane_pod_siguiente_orden(PDO $bd, string $tabla, int $episodio): int
+/* El guión es UNA lista: temas y patrocinios comparten el orden, para
+   poder meter una cuña entre dos temas. «Bici o Cepo» no entra: va
+   siempre al final. Cada pieza es [tabla, id]. */
+function ane_pod_piezas(PDO $bd, int $episodio): array
 {
-    $extra = $tabla === 'pod_bloques' ? " AND tipo <> '" . ANE_POD_CIERRE . "'" : '';
-    $st = $bd->prepare('SELECT COALESCE(MAX(orden), 0) + 10 FROM ' . ane_pod_tabla($tabla)
-                       . ' WHERE episodio_id = ?' . $extra);
-    $st->execute([$episodio]);
-    return (int) $st->fetchColumn();
+    $st = $bd->prepare("SELECT 'pod_bloques' AS t, id, orden FROM pod_bloques
+                        WHERE episodio_id = ? AND tipo <> '" . ANE_POD_CIERRE . "'
+                        UNION ALL
+                        SELECT 'pod_menciones' AS t, id, orden FROM pod_menciones WHERE episodio_id = ?
+                        ORDER BY orden, t, id");
+    $st->execute([$episodio, $episodio]);
+    return array_map(fn ($f) => [(string) $f['t'], (int) $f['id']], $st->fetchAll());
+}
+
+/* Reescribe el orden de toda la lista: 10, 20, 30... Así no hay empates
+   ni huecos raros, venga de donde venga */
+function ane_pod_renumera(PDO $bd, array $lista): void
+{
+    foreach (array_values($lista) as $i => [$tabla, $id]) {
+        $bd->prepare('UPDATE ' . ane_pod_tabla($tabla) . ' SET orden = ? WHERE id = ?')
+           ->execute([($i + 1) * 10, $id]);
+    }
+}
+
+/* Lo nuevo entra al final del guión (antes de «Bici o Cepo») */
+function ane_pod_siguiente_orden(PDO $bd, int $episodio): int
+{
+    return (count(ane_pod_piezas($bd, $episodio)) + 1) * 10;
 }
 
 /* Las únicas tablas que se pueden ordenar desde la web */
@@ -393,38 +453,124 @@ function ane_pod_tabla(string $tabla): string
     return $tabla;
 }
 
-/* Sube o baja una fila dentro de su episodio intercambiando el orden */
-function ane_pod_mueve(PDO $bd, string $tabla, int $id, int $episodio, string $hacia): void
+/* Sube o baja una pieza un puesto, sea tema o patrocinio */
+function ane_pod_mueve(PDO $bd, int $episodio, string $tabla, int $id, string $hacia): void
 {
-    $filas = ane_pod_filas_ordenadas($bd, $tabla, $episodio);
-    $pos = null;
-    foreach ($filas as $i => $f) {
-        if ((int) $f['id'] === $id) {
-            $pos = $i;
-        }
-    }
-    if ($pos === null) {
+    $lista = ane_pod_piezas($bd, $episodio);
+    $pos = array_search([$tabla, $id], $lista, true);
+    if ($pos === false) {
         return;
     }
     $otra = $hacia === 'arriba' ? $pos - 1 : $pos + 1;
-    if ($otra < 0 || $otra >= count($filas)) {
+    if ($otra < 0 || $otra >= count($lista)) {
         return;
     }
-    /* Reescribe los dos órdenes con la lista ya normalizada: así da igual
-       que vinieran empatados a 0 de un apaño anterior */
-    $st = $bd->prepare('UPDATE ' . ane_pod_tabla($tabla) . ' SET orden = ? WHERE id = ?');
-    $st->execute([($otra + 1) * 10, (int) $filas[$pos]['id']]);
-    $st->execute([($pos + 1) * 10, (int) $filas[$otra]['id']]);
+    [$lista[$pos], $lista[$otra]] = [$lista[$otra], $lista[$pos]];
+    ane_pod_renumera($bd, $lista);
 }
 
-/* «Bici o Cepo» no entra en el baile: va siempre al final */
-function ane_pod_filas_ordenadas(PDO $bd, string $tabla, int $episodio): array
+/* Coloca una pieza justo detrás de otra. $despues = '' la pone al
+   principio; 'final' la deja al final; si no, «pod_bloques:12» */
+function ane_pod_coloca(PDO $bd, int $episodio, string $tabla, int $id, string $despues): void
 {
-    $extra = $tabla === 'pod_bloques' ? " AND tipo <> '" . ANE_POD_CIERRE . "'" : '';
-    $st = $bd->prepare('SELECT id, orden FROM ' . ane_pod_tabla($tabla)
-                       . ' WHERE episodio_id = ?' . $extra . ' ORDER BY orden, id');
-    $st->execute([$episodio]);
-    return $st->fetchAll();
+    $lista = ane_pod_piezas($bd, $episodio);
+    $pos = array_search([$tabla, $id], $lista, true);
+    if ($pos === false) {
+        return;
+    }
+    $pieza = $lista[$pos];
+    array_splice($lista, $pos, 1);
+    if ($despues === 'final') {
+        $lista[] = $pieza;
+    } elseif ($despues === '') {
+        array_unshift($lista, $pieza);
+    } else {
+        [$t, $i] = array_pad(explode(':', $despues, 2), 2, '');
+        $donde = array_search([$t, (int) $i], $lista, true);
+        if ($donde === false) {
+            return;   /* destino que no está en este guión: mejor no tocar nada */
+        }
+        array_splice($lista, $donde + 1, 0, [$pieza]);
+    }
+    ane_pod_renumera($bd, $lista);
+}
+
+/* El guión que se pinta: temas y patrocinios mezclados en su orden, y
+   «Bici o Cepo» al final. Los patrocinios SOLO si mira un socio: con el
+   editor delante, la tabla de menciones ni se consulta. */
+function ane_pod_guion(PDO $bd, int $episodio, bool $conPatrocinio, bool $soloPublicos = false): array
+{
+    $piezas = [];
+    $cierre = null;
+    foreach (ane_pod_bloques($bd, $episodio, $soloPublicos) as $b) {
+        if ($b['tipo'] === ANE_POD_CIERRE) {
+            $cierre = ['clase' => 'cierre', 'fila' => $b];
+        } else {
+            $piezas[] = ['clase' => 'tema', 'fila' => $b];
+        }
+    }
+    if ($conPatrocinio) {
+        foreach (ane_pod_menciones_socio($bd, $episodio) as $m) {
+            $piezas[] = ['clase' => 'patrocinio', 'fila' => $m];
+        }
+        usort($piezas, fn ($a, $b) => [(int) $a['fila']['orden'], $a['clase'] === 'patrocinio', (int) $a['fila']['id']]
+                                  <=> [(int) $b['fila']['orden'], $b['clase'] === 'patrocinio', (int) $b['fila']['id']]);
+    }
+    if ($cierre) {
+        $piezas[] = $cierre;
+    }
+    return $piezas;
+}
+
+/* Enlaces pegados en un cuadro de texto, uno por línea. Vale la dirección
+   sola o con su nombre delante: «Meta-análisis 2024 https://…» o
+   «Meta-análisis 2024 | https://…». Devuelve [[titulo, url], ...] y
+   cuántas líneas no se entendieron. */
+function ane_pod_lineas_enlaces(string $texto): array
+{
+    $buenos = [];
+    $malos = 0;
+    foreach (preg_split('/\R/u', $texto) as $linea) {
+        $linea = trim($linea);
+        if ($linea === '') {
+            continue;
+        }
+        if (preg_match('~^(.*?)\s*[|·:–—-]?\s*((?:https?://|www\.)\S+)\s*$~iu', $linea, $m)) {
+            $url = ane_pod_url($m[2]);
+            $titulo = preg_replace('/^[\s|·:–—-]+|[\s|·:–—-]+$/u', '', $m[1]) ?? '';
+        } elseif (preg_match('~^[\w.-]+\.[a-z]{2,}(?:[/?#]\S*)?$~iu', $linea)) {
+            $url = ane_pod_url($linea);   /* «pubmed.ncbi.nlm.nih.gov/…» sin http */
+            $titulo = '';
+        } else {
+            $url = '';                    /* «hola» no es un enlace aunque https://hola valide */
+            $titulo = '';
+        }
+        if ($url === '') {
+            $malos++;
+            continue;
+        }
+        $buenos[] = [ane_recorta($titulo, 200), $url];
+    }
+    return [array_slice($buenos, 0, 30), $malos];
+}
+
+/* Añade a un tema los enlaces de un cuadro de texto. Devuelve [añadidos, malos]. */
+function ane_pod_mete_enlaces(PDO $bd, int $episodio, int $bloque, string $texto, string $tituloSuelto = ''): array
+{
+    [$lista, $malos] = ane_pod_lineas_enlaces($texto);
+    /* Si es uno solo y viene un nombre aparte, ese nombre es el suyo */
+    if (count($lista) === 1 && $lista[0][0] === '' && trim($tituloSuelto) !== '') {
+        $lista[0][0] = ane_recorta($tituloSuelto, 200);
+    }
+    $st = $bd->prepare('SELECT COALESCE(MAX(orden), 0) FROM pod_enlaces WHERE bloque_id = ?');
+    $st->execute([$bloque]);
+    $orden = (int) $st->fetchColumn();
+    $ins = $bd->prepare('INSERT INTO pod_enlaces (episodio_id, bloque_id, titulo, url, orden) VALUES (?, ?, ?, ?, ?)');
+    foreach ($lista as [$titulo, $url]) {
+        $orden += 10;
+        $ins->execute([$episodio, $bloque, $titulo, $url, $orden]);
+    }
+    return [count($lista), $malos];
 }
 
 /* Los enlaces del episodio, agrupados por tema */

@@ -66,18 +66,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         case 'bloque_nuevo':
             $bd->prepare('INSERT INTO pod_bloques (episodio_id, orden, tipo, titulo, texto, interno)
                           VALUES (?, ?, ?, ?, ?, ?)')
-               ->execute([$id, ane_pod_siguiente_orden($bd, 'pod_bloques', $id), 'tema',
+               ->execute([$id, ane_pod_siguiente_orden($bd, $id), 'tema',
                           ane_recorta((string) ($_POST['titulo'] ?? ''), 200),
                           ane_recorta((string) ($_POST['texto'] ?? ''), 20000),
                           empty($_POST['interno']) ? 0 : 1]);
             $nuevo = (int) $bd->lastInsertId();
-            /* El primer enlace, si lo escribió al crear el tema; los demás, dentro */
-            $url = ane_pod_url((string) ($_POST['enlace'] ?? ''));
-            if ($url !== '') {
-                $bd->prepare('INSERT INTO pod_enlaces (episodio_id, bloque_id, titulo, url, orden) VALUES (?, ?, ?, ?, 10)')
-                   ->execute([$id, $nuevo, ane_recorta((string) ($_POST['enlace_titulo'] ?? ''), 200), $url]);
-            }
-            ane_pod_vuelve($id, 'ok=tema#t' . $nuevo);
+            /* Los enlaces que haya pegado al crearlo, uno por línea */
+            [, $malos] = ane_pod_mete_enlaces($bd, $id, $nuevo, (string) ($_POST['enlaces'] ?? ''));
+            ane_pod_coloca($bd, $id, 'pod_bloques', $nuevo, (string) ($_POST['despues'] ?? 'final'));
+            ane_pod_vuelve($id, ($malos ? 'mal=algunos' : 'ok=tema') . '#t' . $nuevo);
 
         case 'bloque_guardar':
             $st = $bd->prepare('SELECT tipo FROM pod_bloques WHERE id = ? AND episodio_id = ?');
@@ -97,8 +94,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             ane_pod_vuelve($id, 'ok=guardado#t' . $fila);
 
         case 'bloque_mover':
-            ane_pod_mueve($bd, 'pod_bloques', $fila, $id, (string) ($_POST['hacia'] ?? ''));
+            ane_pod_mueve($bd, $id, 'pod_bloques', $fila, (string) ($_POST['hacia'] ?? ''));
             ane_pod_vuelve($id, 'guion=1#t' . $fila);
+
+        /* Temas y patrocinios comparten orden: «colocar después de» vale para los dos */
+        case 'colocar':
+            $tabla = ($_POST['tabla'] ?? '') === 'pod_menciones' ? 'pod_menciones' : 'pod_bloques';
+            ane_pod_coloca($bd, $id, $tabla, $fila, (string) ($_POST['despues'] ?? 'final'));
+            ane_pod_vuelve($id, 'ok=movido#' . ($tabla === 'pod_menciones' ? 'p' : 't') . $fila);
 
         case 'bloque_borrar':
             $st = $bd->prepare('SELECT tipo FROM pod_bloques WHERE id = ? AND episodio_id = ?');
@@ -112,21 +115,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
         /* ---- Enlaces del tema ---- */
         case 'enlace_nuevo':
-            $url = ane_pod_url((string) ($_POST['url'] ?? ''));
             $st = $bd->prepare('SELECT id FROM pod_bloques WHERE id = ? AND episodio_id = ?');
             $st->execute([$fila, $id]);
             if (!$st->fetchColumn()) {
                 ane_pod_vuelve($id);
             }
-            if ($url === '') {
+            /* Uno o varios de golpe: uno por línea, con su nombre delante o sin él */
+            [$hechos, $malos] = ane_pod_mete_enlaces($bd, $id, $fila, (string) ($_POST['enlaces'] ?? ''),
+                                                     (string) ($_POST['titulo'] ?? ''));
+            if (!$hechos) {
                 ane_pod_vuelve($id, 'mal=url#t' . $fila);
             }
-            $st = $bd->prepare('SELECT COALESCE(MAX(orden), 0) + 10 FROM pod_enlaces WHERE bloque_id = ?');
-            $st->execute([$fila]);
-            $bd->prepare('INSERT INTO pod_enlaces (episodio_id, bloque_id, titulo, url, orden) VALUES (?, ?, ?, ?, ?)')
-               ->execute([$id, $fila, ane_recorta((string) ($_POST['titulo'] ?? ''), 200), $url,
-                          (int) $st->fetchColumn()]);
-            ane_pod_vuelve($id, 'ok=enlace#t' . $fila);
+            ane_pod_vuelve($id, ($malos ? 'mal=algunos' : ($hechos > 1 ? 'ok=enlaces' : 'ok=enlace')) . '#t' . $fila);
 
         case 'enlace_guardar':
             $en = ane_pod_enlace($bd, $fila);
@@ -195,33 +195,34 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $marca = $marcaId ? (string) (ane_pod_marca($bd, $marcaId)['nombre'] ?? '')
                               : ane_recorta((string) ($_POST['marca'] ?? ''), 120);
             if ($marca === '') {
-                ane_pod_vuelve($id, 'mal=marca#menciones');
+                ane_pod_vuelve($id, 'mal=marca#nuevo-patrocinio');
             }
-            $bd->prepare('INSERT INTO pod_menciones (episodio_id, marca_id, marca, tipo, momento, texto, orden)
-                          VALUES (?, ?, ?, ?, ?, ?, ?)')
+            /* El «momento» de antes ya no hace falta: lo dice el sitio que ocupa en el guión */
+            $bd->prepare('INSERT INTO pod_menciones (episodio_id, marca_id, marca, tipo, texto, orden)
+                          VALUES (?, ?, ?, ?, ?, ?)')
                ->execute([$id, $marcaId, $marca,
                           isset(ANE_POD_MENCION_TIPOS[(string) ($_POST['tipo'] ?? '')]) ? (string) $_POST['tipo'] : 'mencion',
-                          ane_recorta((string) ($_POST['momento'] ?? ''), 120),
                           ane_recorta((string) ($_POST['texto'] ?? ''), 4000),
-                          ane_pod_siguiente_orden($bd, 'pod_menciones', $id)]);
-            ane_pod_vuelve($id, 'ok=mencion#menciones');
+                          ane_pod_siguiente_orden($bd, $id)]);
+            $nueva = (int) $bd->lastInsertId();
+            ane_pod_coloca($bd, $id, 'pod_menciones', $nueva, (string) ($_POST['despues'] ?? 'final'));
+            ane_pod_vuelve($id, 'ok=mencion#p' . $nueva);
 
         case 'mencion_guardar':
-            $bd->prepare('UPDATE pod_menciones SET tipo = ?, momento = ?, texto = ?, hecho = ?
+            $bd->prepare('UPDATE pod_menciones SET tipo = ?, texto = ?, hecho = ?
                           WHERE id = ? AND episodio_id = ?')
                ->execute([isset(ANE_POD_MENCION_TIPOS[(string) ($_POST['tipo'] ?? '')]) ? (string) $_POST['tipo'] : 'mencion',
-                          ane_recorta((string) ($_POST['momento'] ?? ''), 120),
                           ane_recorta((string) ($_POST['texto'] ?? ''), 4000),
                           empty($_POST['hecho']) ? 0 : 1, $fila, $id]);
-            ane_pod_vuelve($id, 'ok=guardado#menciones');
+            ane_pod_vuelve($id, 'ok=guardado#p' . $fila);
 
         case 'mencion_mover':
-            ane_pod_mueve($bd, 'pod_menciones', $fila, $id, (string) ($_POST['hacia'] ?? ''));
-            ane_pod_vuelve($id, 'menciones=1#menciones');
+            ane_pod_mueve($bd, $id, 'pod_menciones', $fila, (string) ($_POST['hacia'] ?? ''));
+            ane_pod_vuelve($id, 'guion=1#p' . $fila);
 
         case 'mencion_borrar':
             $bd->prepare('DELETE FROM pod_menciones WHERE id = ? AND episodio_id = ?')->execute([$fila, $id]);
-            ane_pod_vuelve($id, 'ok=borrado#menciones');
+            ane_pod_vuelve($id, 'ok=borrado#guion');
 
         /* ---- Quién ve el guión ---- */
         case 'accesos':
@@ -241,17 +242,41 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 /* ---------- Datos ---------- */
 
 ane_pod_asegura_cierre($bd, $id);
-$bloques = ane_pod_bloques($bd, $id);
+$guion = ane_pod_guion($bd, $id, true);      /* socio: temas y patrocinios juntos */
 $enlaces = ane_pod_enlaces($bd, $id);
 $ficheros = ane_pod_ficheros_de($bd, $id);
-$menciones = ane_pod_menciones_socio($bd, $id);
 $marcas = ane_pod_marcas($bd);
 $editores = $bd->query("SELECT * FROM pod_usuarios WHERE rol = 'editor' ORDER BY nombre, usuario")->fetchAll();
 $st = $bd->prepare('SELECT usuario_id FROM pod_accesos WHERE episodio_id = ?');
 $st->execute([$id]);
 $conAcceso = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
 
-$temas = array_values(array_filter($bloques, fn ($b) => $b['tipo'] !== ANE_POD_CIERRE));
+/* Las piezas que se ordenan (todo menos «Bici o Cepo»), y el número de cada tema:
+   los patrocinios no cuentan, los temas van 1, 2, 3 aunque haya una cuña en medio */
+$piezas = array_values(array_filter($guion, fn ($p) => $p['clase'] !== 'cierre'));
+$temas = array_values(array_filter($piezas, fn ($p) => $p['clase'] === 'tema'));
+$numTema = [];
+foreach ($temas as $k => $t) {
+    $numTema[(int) $t['fila']['id']] = $k + 1;
+}
+
+/* Las opciones de «colocar después de»: el principio y cada pieza del guión */
+function ane_pod_opciones_sitio(array $piezas, array $numTema, string $actual = '', string $saltar = ''): string
+{
+    $html = '<option value=""' . ($actual === '' ? ' selected' : '') . '>Al principio del guión</option>';
+    foreach ($piezas as $p) {
+        $clave = ($p['clase'] === 'tema' ? 'pod_bloques:' : 'pod_menciones:') . (int) $p['fila']['id'];
+        if ($clave === $saltar) {
+            continue;
+        }
+        $txt = $p['clase'] === 'tema'
+            ? 'Tema ' . $numTema[(int) $p['fila']['id']] . ' · ' . ($p['fila']['titulo'] !== '' ? $p['fila']['titulo'] : 'sin título')
+            : 'Patrocinio · ' . $p['fila']['marca'];
+        $html .= '<option value="' . ane_h($clave) . '"' . ($clave === $actual ? ' selected' : '') . '>Después de: '
+               . ane_h(mb_strimwidth($txt, 0, 48, '…')) . '</option>';
+    }
+    return $html . '<option value="final"' . ($actual === 'final' ? ' selected' : '') . '>Al final (antes de Bici o Cepo)</option>';
+}
 
 ane_pod_cabeza('Editar episodio');
 ane_pod_cabecera('episodios');
@@ -261,10 +286,12 @@ ane_pod_cabecera('episodios');
 
   <?php ane_pod_aviso(array_merge([
       'guardado' => 'Cambios guardados.', 'tema' => 'Tema añadido.', 'imagen' => 'Imagen subida.',
-      'mencion' => 'Mención añadida.', 'borrado' => 'Borrado.', 'accesos' => 'Accesos actualizados.',
+      'mencion' => 'Patrocinio añadido al guión.', 'borrado' => 'Borrado.', 'accesos' => 'Accesos actualizados.',
       'marca' => 'Falta la marca.', 'creado' => 'Episodio creado. Ahora los datos.',
-      'enlace' => 'Enlace añadido.', 'url' => 'Ese enlace no parece una dirección válida.',
-      'subido' => 'Subido.',
+      'enlace' => 'Enlace añadido.', 'enlaces' => 'Enlaces añadidos.',
+      'url' => 'No he encontrado ningún enlace válido. Pon uno por línea, empezando por https:// o www.',
+      'algunos' => 'Hecho, pero alguna línea no parecía un enlace y se ha quedado fuera.',
+      'movido' => 'Colocado.', 'subido' => 'Subido.',
   ], array_map('ane_pod_motivo_fichero', ['grande' => 'grande', 'formato' => 'formato',
       'subida' => 'subida', 'disco' => 'disco', 'vacio' => 'vacio']))); ?>
 
@@ -306,21 +333,95 @@ ane_pod_cabecera('episodios');
     </form>
   </section>
 
-  <!-- ---------------- Guión ---------------- -->
+  <!-- ---------------- Guión: temas y patrocinios en un solo orden ---------------- -->
   <section id="guion">
     <h2>Guión</h2>
-    <p class="nota">Temas en orden, cada uno con su enlace y sus imágenes. Un tema <b>interno</b> queda fuera
-      de lo que ve el editor. En el texto valen <code>**negrita**</code>, <code>_cursiva_</code> y líneas
-      que empiecen por <code>- </code>.</p>
+    <p class="nota">Temas y patrocinios en el orden en que se graban: una cuña puede ir entre dos temas.
+      Los <b>patrocinios</b> (en rojo) y los temas <b>internos</b> no los ve el editor. En el texto valen
+      <code>**negrita**</code>, <code>_cursiva_</code> y líneas que empiecen por <code>- </code>.</p>
 
-    <?php if (!$temas): ?>
+    <?php if (!$piezas): ?>
       <p class="vacio">Sin temas todavía.</p>
     <?php endif; ?>
 
-    <?php foreach ($bloques as $b):
+    <?php foreach ($guion as $pz):
+        $b = $pz['fila'];
+        $clase = $pz['clase'];
+        $k = $clase === 'cierre' ? null : array_search($pz, $piezas, true);
+        $primera = $k === 0;
+        $ultima = $k === count($piezas) - 1; ?>
+
+      <?php if ($clase === 'patrocinio'): $mid = (int) $b['id']; ?>
+        <!-- ---- Un patrocinio, en su sitio del guión ---- -->
+        <div id="p<?= $mid ?>" class="tema patrocinio<?= (int) $b['hecho'] ? ' hecho' : '' ?>">
+          <?php foreach (['arriba', 'abajo'] as $hacia): ?>
+            <form method="post" id="pm<?= $hacia ?><?= $mid ?>" class="escondida">
+              <?= ane_pod_csrf_campo() ?>
+              <input type="hidden" name="accion" value="mencion_mover">
+              <input type="hidden" name="id" value="<?= $id ?>">
+              <input type="hidden" name="fila" value="<?= $mid ?>">
+              <input type="hidden" name="hacia" value="<?= $hacia ?>">
+            </form>
+          <?php endforeach; ?>
+          <form method="post" id="pb<?= $mid ?>" class="escondida" onsubmit="return confirm('¿Quitar este patrocinio del guión?')">
+            <?= ane_pod_csrf_campo() ?>
+            <input type="hidden" name="accion" value="mencion_borrar">
+            <input type="hidden" name="id" value="<?= $id ?>">
+            <input type="hidden" name="fila" value="<?= $mid ?>">
+          </form>
+
+          <div class="barra" style="margin:0 0 10px">
+            <h3 style="margin:0"><span class="chip interno">Patrocinio</span> <?= ane_h($b['marca']) ?></h3>
+            <div class="acciones">
+              <button class="btn claro pequeno" type="submit" form="pmarriba<?= $mid ?>" <?= $primera ? 'disabled' : '' ?>
+                      aria-label="Subir">↑</button>
+              <button class="btn claro pequeno" type="submit" form="pmabajo<?= $mid ?>" <?= $ultima ? 'disabled' : '' ?>
+                      aria-label="Bajar">↓</button>
+            </div>
+          </div>
+          <form method="post">
+            <?= ane_pod_csrf_campo() ?>
+            <input type="hidden" name="accion" value="mencion_guardar">
+            <input type="hidden" name="id" value="<?= $id ?>">
+            <input type="hidden" name="fila" value="<?= $mid ?>">
+            <div class="campo" style="margin:0 0 10px"><label>Tipo</label>
+              <select name="tipo">
+                <?php foreach (ANE_POD_MENCION_TIPOS as $kk => $v): ?>
+                  <option value="<?= $kk ?>"<?= $b['tipo'] === $kk ? ' selected' : '' ?>><?= ane_h($v) ?></option>
+                <?php endforeach; ?>
+              </select></div>
+            <div class="campo" style="margin:0 0 10px"><label>Qué hay que decir</label>
+              <textarea name="texto" maxlength="4000" style="min-height:70px"><?= ane_h($b['texto']) ?></textarea></div>
+            <div class="barra" style="margin:0">
+              <div class="cas"><input type="checkbox" id="h<?= $mid ?>" name="hecho" value="1"
+                   <?= (int) $b['hecho'] ? 'checked' : '' ?>>
+                <label for="h<?= $mid ?>">Hecho</label></div>
+              <div class="acciones">
+                <button class="btn pequeno" type="submit">Guardar</button>
+                <button class="btn peligro pequeno" type="submit" form="pb<?= $mid ?>">Quitar</button>
+              </div>
+            </div>
+          </form>
+          <form method="post" class="mover">
+            <?= ane_pod_csrf_campo() ?>
+            <input type="hidden" name="accion" value="colocar">
+            <input type="hidden" name="id" value="<?= $id ?>">
+            <input type="hidden" name="tabla" value="pod_menciones">
+            <input type="hidden" name="fila" value="<?= $mid ?>">
+            <?php /* Arranca marcando dónde está ahora: pulsar «Mover» sin tocar no lo mueve */
+              $antes = $k > 0 ? ($piezas[$k - 1]['clase'] === 'tema' ? 'pod_bloques:' : 'pod_menciones:')
+                                . (int) $piezas[$k - 1]['fila']['id'] : ''; ?>
+            <label for="sitio<?= $mid ?>">Llevarlo a</label>
+            <select id="sitio<?= $mid ?>" name="despues">
+              <?= ane_pod_opciones_sitio($piezas, $numTema, $antes, 'pod_menciones:' . $mid) ?>
+            </select>
+            <button class="btn claro pequeno" type="submit">Mover</button>
+          </form>
+        </div>
+
+      <?php else:
         $bid = (int) $b['id'];
-        $esCierre = $b['tipo'] === ANE_POD_CIERRE;
-        $i = $esCierre ? null : array_search($bid, array_column($temas, 'id'));
+        $esCierre = $clase === 'cierre';
         $suyos = $enlaces[$bid] ?? [];
         $suyas = ane_pod_solo($ficheros[$bid] ?? [], 'imagen');
         $suyosArch = ane_pod_solo($ficheros[$bid] ?? [], 'archivo'); ?>
@@ -432,10 +533,10 @@ ane_pod_cabecera('episodios');
             <div class="campo" style="margin:0"><label>Orden</label>
               <div class="acciones">
                 <button class="btn claro pequeno" type="submit" form="mvarriba<?= $bid ?>"
-                        <?= $i === 0 ? 'disabled' : '' ?>>↑</button>
+                        <?= $primera ? 'disabled' : '' ?> aria-label="Subir">↑</button>
                 <button class="btn claro pequeno" type="submit" form="mvabajo<?= $bid ?>"
-                        <?= $i === count($temas) - 1 ? 'disabled' : '' ?>>↓</button>
-                <span class="chip"><?= (int) $i + 1 ?> de <?= count($temas) ?></span>
+                        <?= $ultima ? 'disabled' : '' ?> aria-label="Bajar">↓</button>
+                <span class="chip">Tema <?= $numTema[$bid] ?></span>
               </div>
             </div>
           </div>
@@ -449,10 +550,8 @@ ane_pod_cabecera('episodios');
             <button class="btn pequeno" type="submit">Guardar</button>
           </div>
         </form>
-        <?php endif; ?>
 
-        <?php if (!$esCierre): ?>
-          <!-- Enlaces del tema: tantos como haga falta -->
+          <!-- Enlaces del tema: los que ya hay, y debajo un cuadro para meter más -->
           <div class="lista-enlaces">
             <label>Enlaces<?= $suyos ? ' (' . count($suyos) . ')' : '' ?></label>
             <?php foreach ($suyos as $en): $enid = (int) $en['id']; ?>
@@ -474,17 +573,19 @@ ane_pod_cabecera('episodios');
                        placeholder="Cómo se llama (opcional)">
                 <input type="url" name="url" maxlength="800" value="<?= ane_h($en['url']) ?>" required>
                 <button class="btn claro pequeno" type="submit">Guardar</button>
-                <button class="btn peligro pequeno" type="submit" form="elb<?= $enid ?>">✕</button>
+                <button class="btn peligro pequeno" type="submit" form="elb<?= $enid ?>" aria-label="Borrar enlace">✕</button>
               </form>
             <?php endforeach; ?>
-            <form method="post" class="fila-enlace">
+            <form method="post" class="nuevos-enlaces">
               <?= ane_pod_csrf_campo() ?>
               <input type="hidden" name="accion" value="enlace_nuevo">
               <input type="hidden" name="id" value="<?= $id ?>">
               <input type="hidden" name="fila" value="<?= $bid ?>">
-              <input type="text" name="titulo" maxlength="200" placeholder="Cómo se llama (opcional)">
-              <input type="url" name="url" maxlength="800" placeholder="https://…" required>
-              <button class="btn claro pequeno" type="submit">Añadir enlace</button>
+              <label for="ne<?= $bid ?>"><?= $suyos ? '+ Añadir más enlaces' : '+ Añadir enlaces' ?>
+                · uno por línea, todos los que quieras</label>
+              <textarea id="ne<?= $bid ?>" name="enlaces" rows="3" maxlength="8000"
+                        placeholder="https://…&#10;El estudio de 2024 https://…&#10;Otro más | https://…"></textarea>
+              <button class="btn claro pequeno" type="submit">Añadir</button>
             </form>
           </div>
 
@@ -499,125 +600,68 @@ ane_pod_cabecera('episodios');
           </form>
         <?php endif; ?>
       </div>
+      <?php endif; ?>
     <?php endforeach; ?>
 
-    <h3>Añadir tema</h3>
-    <form method="post">
-      <?= ane_pod_csrf_campo() ?>
-      <input type="hidden" name="accion" value="bloque_nuevo">
-      <input type="hidden" name="id" value="<?= $id ?>">
-      <div class="campo" style="margin:0 0 10px"><label>Tema</label>
-        <input type="text" name="titulo" maxlength="200" placeholder="Las ruedas del mundial" required></div>
-      <div class="campo" style="margin:0 0 10px"><label>Qué se cuenta</label>
-        <textarea name="texto" maxlength="20000" style="min-height:70px"></textarea></div>
-      <div class="campos" style="margin:0 0 10px">
-        <div class="campo" style="margin:0"><label>Primer enlace (opcional)</label>
-          <input type="url" name="enlace" maxlength="800" placeholder="https://…"></div>
-        <div class="campo" style="margin:0"><label>Cómo se llama</label>
-          <input type="text" name="enlace_titulo" maxlength="200"></div>
-      </div>
-      <div class="barra" style="margin:0">
-        <div class="cas"><input type="checkbox" id="nint" name="interno" value="1">
-          <label for="nint">Interno</label></div>
-        <button class="btn azul" type="submit">Añadir tema</button>
-      </div>
-      <p class="nota" style="margin:10px 0 0">Los demás enlaces, las imágenes y los archivos se añaden desde
-        el tema, una vez creado. De todo, tantos como quieras.</p>
-    </form>
-  </section>
-
-  <!-- ---------------- Menciones ---------------- -->
-  <section id="menciones" style="border-left:4px solid var(--rojo)">
-    <h2>Patrocinadores y menciones de este episodio</h2>
-    <p class="nota">En orden, como los temas. Solo para socios: esto no aparece en el guión compartido.
-      Las marcas salen de la pestaña <a href="/estudio/marcas.php">Patrocinadores</a>.</p>
-
-    <?php if (!$menciones): ?><p class="vacio">Ninguna mención apuntada.</p><?php endif; ?>
-
-    <?php foreach ($menciones as $j => $m): $mid = (int) $m['id']; ?>
-      <div class="tema<?= (int) $m['hecho'] ? ' hecho' : '' ?>">
-        <?php foreach (['arriba' => '↑', 'abajo' => '↓'] as $hacia => $flecha): ?>
-          <form method="post" id="mm<?= $hacia ?><?= $mid ?>">
-            <?= ane_pod_csrf_campo() ?>
-            <input type="hidden" name="accion" value="mencion_mover">
-            <input type="hidden" name="id" value="<?= $id ?>">
-            <input type="hidden" name="fila" value="<?= $mid ?>">
-            <input type="hidden" name="hacia" value="<?= $hacia ?>">
-          </form>
-        <?php endforeach; ?>
+    <!-- ---- Añadir: un tema o un patrocinio, y dónde ---- -->
+    <div class="anadir">
+      <div>
+        <h3>Añadir tema</h3>
         <form method="post">
           <?= ane_pod_csrf_campo() ?>
-          <input type="hidden" name="accion" value="mencion_guardar">
+          <input type="hidden" name="accion" value="bloque_nuevo">
           <input type="hidden" name="id" value="<?= $id ?>">
-          <input type="hidden" name="fila" value="<?= $mid ?>">
-          <div class="barra" style="margin:0 0 10px">
-            <h3 style="margin:0"><?= ane_h($m['marca']) ?></h3>
-            <div class="acciones">
-              <button class="btn claro pequeno" type="submit" form="mmarriba<?= $mid ?>"
-                      <?= $j === 0 ? 'disabled' : '' ?>>↑</button>
-              <button class="btn claro pequeno" type="submit" form="mmabajo<?= $mid ?>"
-                      <?= $j === count($menciones) - 1 ? 'disabled' : '' ?>>↓</button>
-              <span class="chip"><?= $j + 1 ?> de <?= count($menciones) ?></span>
-            </div>
+          <div class="campo" style="margin:0 0 10px"><label>Tema</label>
+            <input type="text" name="titulo" maxlength="200" placeholder="Las ruedas del mundial" required></div>
+          <div class="campo" style="margin:0 0 10px"><label>Qué se cuenta</label>
+            <textarea name="texto" maxlength="20000" style="min-height:70px"></textarea></div>
+          <div class="campo" style="margin:0 0 10px"><label>Enlaces · uno por línea, todos los que quieras</label>
+            <textarea name="enlaces" rows="3" maxlength="8000"
+                      placeholder="https://…&#10;El estudio de 2024 https://…"></textarea></div>
+          <div class="campo" style="margin:0 0 10px"><label>Dónde va</label>
+            <select name="despues"><?= ane_pod_opciones_sitio($piezas, $numTema, 'final') ?></select></div>
+          <div class="barra" style="margin:0">
+            <div class="cas"><input type="checkbox" id="nint" name="interno" value="1">
+              <label for="nint">Interno</label></div>
+            <button class="btn azul" type="submit">Añadir tema</button>
           </div>
+          <p class="nota" style="margin:10px 0 0">Las imágenes y los archivos se suben desde el tema, una vez creado.</p>
+        </form>
+      </div>
+
+      <div id="nuevo-patrocinio" class="patrocinio-nuevo">
+        <h3>Añadir patrocinio</h3>
+        <form method="post">
+          <?= ane_pod_csrf_campo() ?>
+          <input type="hidden" name="accion" value="mencion_nueva">
+          <input type="hidden" name="id" value="<?= $id ?>">
           <div class="campos" style="grid-template-columns:1fr 1fr">
-            <div class="campo" style="margin:0"><label>Tipo</label>
-              <select name="tipo">
-                <?php foreach (ANE_POD_MENCION_TIPOS as $k => $v): ?>
-                  <option value="<?= $k ?>"<?= $m['tipo'] === $k ? ' selected' : '' ?>><?= ane_h($v) ?></option>
+            <div class="campo" style="margin:0"><label>Marca de la agenda</label>
+              <select name="marca_id">
+                <option value="0">— escribirla a mano —</option>
+                <?php foreach ($marcas as $m): ?>
+                  <option value="<?= (int) $m['id'] ?>"><?= ane_h($m['nombre']) ?></option>
                 <?php endforeach; ?>
               </select></div>
-            <div class="campo" style="margin:0"><label>Momento</label>
-              <input type="text" name="momento" maxlength="120" value="<?= ane_h($m['momento']) ?>"
-                     placeholder="Al arrancar · con el tema 3"></div>
+            <div class="campo" style="margin:0"><label>…o a mano</label>
+              <input type="text" name="marca" maxlength="120"></div>
           </div>
-          <div class="campo" style="margin:12px 0 10px"><label>Qué hay que decir</label>
-            <textarea name="texto" maxlength="4000" style="min-height:60px"><?= ane_h($m['texto']) ?></textarea></div>
-          <div class="barra" style="margin:0">
-            <div class="cas"><input type="checkbox" id="h<?= $mid ?>" name="hecho" value="1"
-                 <?= (int) $m['hecho'] ? 'checked' : '' ?>>
-              <label for="h<?= $mid ?>">Hecha</label></div>
-            <button class="btn pequeno" type="submit">Guardar</button>
-          </div>
-        </form>
-        <form method="post" onsubmit="return confirm('¿Borrar la mención?')" style="margin-top:10px">
-          <?= ane_pod_csrf_campo() ?>
-          <input type="hidden" name="accion" value="mencion_borrar">
-          <input type="hidden" name="id" value="<?= $id ?>">
-          <input type="hidden" name="fila" value="<?= $mid ?>">
-          <button class="btn peligro pequeno" type="submit">Borrar mención</button>
+          <div class="campo" style="margin:12px 0 10px"><label>Tipo</label>
+            <select name="tipo">
+              <?php foreach (ANE_POD_MENCION_TIPOS as $kk => $v): ?>
+                <option value="<?= $kk ?>"><?= ane_h($v) ?></option>
+              <?php endforeach; ?>
+            </select></div>
+          <div class="campo" style="margin:0 0 10px"><label>Qué hay que decir</label>
+            <textarea name="texto" maxlength="4000" style="min-height:70px"></textarea></div>
+          <div class="campo" style="margin:0 0 10px"><label>Dónde va</label>
+            <select name="despues"><?= ane_pod_opciones_sitio($piezas, $numTema, 'final') ?></select></div>
+          <button class="btn azul" type="submit">Añadir patrocinio</button>
+          <p class="nota" style="margin:10px 0 0">Las marcas salen de la pestaña
+            <a href="/estudio/marcas.php">Patrocinadores</a>. Esto no lo ve el editor.</p>
         </form>
       </div>
-    <?php endforeach; ?>
-
-    <h3>Añadir mención</h3>
-    <form method="post">
-      <?= ane_pod_csrf_campo() ?>
-      <input type="hidden" name="accion" value="mencion_nueva">
-      <input type="hidden" name="id" value="<?= $id ?>">
-      <div class="campos">
-        <div class="campo" style="margin:0"><label>Marca de la agenda</label>
-          <select name="marca_id">
-            <option value="0">— escribirla a mano —</option>
-            <?php foreach ($marcas as $m): ?>
-              <option value="<?= (int) $m['id'] ?>"><?= ane_h($m['nombre']) ?></option>
-            <?php endforeach; ?>
-          </select></div>
-        <div class="campo" style="margin:0"><label>…o a mano</label>
-          <input type="text" name="marca" maxlength="120"></div>
-        <div class="campo" style="margin:0"><label>Tipo</label>
-          <select name="tipo">
-            <?php foreach (ANE_POD_MENCION_TIPOS as $k => $v): ?>
-              <option value="<?= $k ?>"><?= ane_h($v) ?></option>
-            <?php endforeach; ?>
-          </select></div>
-        <div class="campo" style="margin:0"><label>Momento</label>
-          <input type="text" name="momento" maxlength="120" placeholder="Al arrancar"></div>
-      </div>
-      <div class="campo" style="margin:12px 0 10px"><label>Qué hay que decir</label>
-        <textarea name="texto" maxlength="4000" style="min-height:70px"></textarea></div>
-      <button class="btn azul" type="submit">Añadir mención</button>
-    </form>
+    </div>
   </section>
 
   <!-- ---------------- Accesos ---------------- -->

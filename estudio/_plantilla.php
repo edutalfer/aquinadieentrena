@@ -224,6 +224,21 @@ function ane_pod_estilo(): void
   .subir input[type=file] { width: auto; flex: 1 1 230px; font-size: 13px; padding: 6px; }
   .subir input[type=text] { width: auto; flex: 1 1 180px; }
 
+  /* ---- Un patrocinio dentro del guión: rojo, para que no se confunda con un tema ---- */
+  .tema.patrocinio { border-left-color: var(--rojo); background: #FDF7F6; }
+  .tema.patrocinio.hecho { border-left-color: var(--verde); background: #F6FBF8; }
+  .mover { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px;
+           border-top: 1px dashed var(--linea); padding-top: 10px; }
+  .mover label { margin: 0; }
+  .mover select { width: auto; flex: 1 1 220px; min-width: 0; max-width: 100%; }
+
+  /* ---- Añadir tema / añadir patrocinio, uno al lado del otro ---- */
+  .anadir { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; align-items: start; }
+  .anadir > div { border: 1px dashed var(--linea); padding: 14px 16px; }
+  .anadir h3 { margin-top: 0; }
+  .patrocinio-nuevo { border-color: #E9B8B4 !important; background: #FDF7F6; }
+  @media (max-width: 900px) { .anadir { grid-template-columns: 1fr; } }
+
   /* ---- Enlaces de un tema, en el editor ---- */
   .lista-enlaces { margin-top: 12px; border-top: 1px dashed var(--linea); padding-top: 10px; }
   .lista-enlaces > label { margin-bottom: 6px; }
@@ -231,6 +246,11 @@ function ane_pod_estilo(): void
   .fila-enlace input[type=text] { flex: 1 1 200px; }
   .fila-enlace input[type=url] { flex: 2 1 280px; }
   .escondida { display: none; }
+  .nuevos-enlaces { display: grid; gap: 6px; margin-top: 8px; border: 1px dashed var(--linea);
+                    background: #FAFBFC; padding: 10px; }
+  .nuevos-enlaces label { margin: 0; }
+  .nuevos-enlaces textarea { min-height: 70px; }
+  .nuevos-enlaces .btn { justify-self: start; }
   .subir label.suelto { flex: 1 1 100%; margin: 0; }
 
   /* ---- Una foto y su descripción, juntas ---- */
@@ -261,6 +281,10 @@ function ane_pod_estilo(): void
   .guion .cab h1 { font-size: 30px; margin: 0 0 6px; }
   .guion .cab .numero { margin: 0 0 4px; font-size: 13px; letter-spacing: .08em; color: var(--azul); }
   .bloque.cierre { border-top: 3px solid var(--negro); margin-top: 6px; }
+  .bloque.patro { background: #FDF7F6; border-left: 4px solid var(--rojo); padding-left: 12px; margin-left: -16px; }
+  .bloque.patro.hecho { background: #F6FBF8; border-left-color: var(--verde); }
+  .bloque.patro .min { color: var(--rojo); font-size: 13px; letter-spacing: .04em; }
+  .bloque.patro.hecho .min { color: var(--verde); }
   .bloque.cierre .min { color: var(--negro); }
   .bloque { border-bottom: 1px solid var(--linea); padding: 16px 0; display: grid;
             grid-template-columns: 62px 1fr; gap: 18px; }
@@ -291,6 +315,8 @@ function ane_pod_estilo(): void
     .tarjeta { grid-template-columns: 1fr; }
     .tarjeta .der { justify-items: start; text-align: left; }
     .pareja { grid-template-columns: 1fr; }
+    .mover select { flex: 1 1 100%; width: 100%; }   /* el texto de la opción es largo: que no empuje */
+    .bloque.patro { margin-left: -8px; padding-left: 8px; }
     header h1 { font-size: 24px; }
     main.caja { padding: 20px 14px 60px; }
     section { padding: 16px 14px; }
@@ -326,6 +352,7 @@ function ane_pod_estilo(): void
     /* El dominio del enlace, a su línea: si no, estruja el título a una
        palabra por renglón */
     .enlaces li { flex-wrap: wrap; }
+    .enlaces li a { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }   /* la flecha y el título, juntos */
     .enlaces li .dom { flex: 1 1 100%; margin-left: 18px; }
 
     .archivos li { align-items: flex-start; }

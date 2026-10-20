@@ -160,17 +160,19 @@ $bd->prepare('INSERT INTO pod_enlaces (episodio_id, bloque_id, titulo, url, orde
               'El reglamento de la UCI', 'https://www.uci.org/']);
 ane_pod_asegura_cierre($bd, $ep2);
 
-/* ---- Menciones del episodio de la creatina ---- */
+/* ---- Patrocinios del episodio de la creatina, intercalados entre los temas ----
+   Comparten orden con los temas (10, 20, 30...): el 15 va entre el tema 1 y el 2 */
 $menciones = [
-    [$mid['Gobik'], 'Gobik', 'cuna', 'Al arrancar', "Cuña de 30 s: mono de Cape Epic, código ANE15. **No decir precios.**", 0, 10],
-    [$mid['CMS'], 'CMS', 'integrada', 'Con el tema de Cape Epic', 'Mencionar que el seguimiento de la casa lo lleva CMS.', 0, 20],
-    [$mid['Bicilab'], 'Bicilab', 'mencion', 'En el cierre', 'Social Ride del 15 de noviembre: plazas por la web.', 1, 30],
+    [$mid['Gobik'], 'Gobik', 'cuna', "Cuña de 30 s: mono de Cape Epic, código ANE15. **No decir precios.**", 0, 15],
+    [$mid['CMS'], 'CMS', 'integrada', 'Mencionar que el seguimiento de la casa lo lleva CMS.', 0, 45],
+    [$mid['Bicilab'], 'Bicilab', 'mencion', 'Social Ride del 15 de noviembre: plazas por la web.', 1, 55],
 ];
-$st = $bd->prepare('INSERT INTO pod_menciones (episodio_id, marca_id, marca, tipo, momento, texto, hecho, orden)
-                    VALUES (?,?,?,?,?,?,?,?)');
+$st = $bd->prepare('INSERT INTO pod_menciones (episodio_id, marca_id, marca, tipo, texto, hecho, orden)
+                    VALUES (?,?,?,?,?,?,?)');
 foreach ($menciones as $m) {
     $st->execute(array_merge([$ep1], $m));
 }
+ane_pod_renumera($bd, ane_pod_piezas($bd, $ep1));   /* 10, 20, 30... sin huecos */
 
 /* ---- Fotos de ejemplo en «Bici o Cepo» (se dibujan aquí, no hace falta traerlas) ---- */
 if (function_exists('imagecreatetruecolor')) {

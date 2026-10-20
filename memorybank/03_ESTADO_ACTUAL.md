@@ -198,8 +198,15 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   haga falta (varios de cada, y se suben varios de una vez). Cada imagen lleva
   **su propia descripción**, y van juntas: foto y texto emparejados. Todo
   episodio acaba en la sección fija **«Bici o Cepo»** —parejas de foto y
-  descripción, sin texto de bloque—, que no se borra ni se mueve. Las menciones
-  de patrocinio se ordenan igual que los temas.
+  descripción, sin texto de bloque—, que no se borra ni se mueve.
+- **Temas y patrocinios van en una sola lista (21/10/2026, D22):** un patrocinio
+  se intercala entre dos temas con las flechas o con «Llevarlo a…», y en el
+  guión sale en su sitio (rojo; verde si ya está hecho). Los temas se numeran
+  1, 2, 3 saltándose las cuñas. Ya no hay sección suelta de menciones ni
+  «momento». Los **enlaces** se pegan **varios de golpe, uno por línea**, con
+  su nombre delante o sin él («Rider Manual https://…», «Perfil | https://…»).
+  La migración (una vez, `ajustes.pod_orden_unificado`) puso las menciones que
+  hubiera al principio del guión con su «momento» escrito delante del texto.
 - **Ficheros:** en `~/datos/estudio/imagenes/` (fuera del repo y del docroot),
   servidos por `estudio/fichero.php` tras comprobar quién pregunta: `?f=<id>`
   lo enseña y `?f=<id>&d=1` lo descarga. **El editor se descarga todo lo que

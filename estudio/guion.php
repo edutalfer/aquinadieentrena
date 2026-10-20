@@ -27,14 +27,20 @@ if (!$ep || !ane_pod_puede_ver($bd, $yo_pod, $id)) {
     exit;
 }
 
-$bloques = ane_pod_bloques($bd, $id, !$es_socio);
+/* Temas y patrocinios en su orden. Con el editor delante, los patrocinios ni
+   se piden a la base (segundo argumento) y los temas internos tampoco (tercero). */
+$guion = ane_pod_guion($bd, $id, $es_socio, !$es_socio);
 $enlaces = ane_pod_enlaces($bd, $id);
 $ficheros = ane_pod_ficheros_de($bd, $id);
-$menciones = $es_socio ? ane_pod_menciones_socio($bd, $id) : [];
 
 $ocultos = 0;
-foreach ($bloques as $b) {
-    $ocultos += (int) $b['interno'];
+$patrocinios = 0;
+foreach ($guion as $pz) {
+    if ($pz['clase'] === 'tema') {
+        $ocultos += (int) $pz['fila']['interno'];
+    } elseif ($pz['clase'] === 'patrocinio') {
+        $patrocinios++;
+    }
 }
 
 /* Numeración de los temas: la sección de cierre va aparte */
@@ -124,30 +130,25 @@ ane_pod_cabecera('episodios');
       </p>
     </div>
 
-    <?php if ($es_socio && $menciones): ?>
-      <section style="border-left:4px solid var(--rojo);margin:0 0 20px">
-        <h2 style="font-size:17px">Menciones de este episodio <span class="chip interno">solo socios</span></h2>
-        <table class="menciones">
-          <?php foreach ($menciones as $m): ?>
-            <tr class="<?= (int) $m['hecho'] ? 'hecho' : '' ?>">
-              <td style="width:130px"><b><?= ane_h($m['marca']) ?></b>
-                <span class="dom"><?= ane_h(ANE_POD_MENCION_TIPOS[$m['tipo']] ?? $m['tipo']) ?></span></td>
-              <td style="width:110px"><?= ane_h($m['momento']) ?></td>
-              <td><?= ane_pod_texto($m['texto']) ?></td>
-              <td class="n" style="width:70px"><?= (int) $m['hecho'] ? '✓ hecho' : '—' ?></td>
-            </tr>
-          <?php endforeach; ?>
-        </table>
-      </section>
-    <?php endif; ?>
-
-    <?php if (!$bloques): ?>
+    <?php if (count($guion) <= 1): ?>
       <p class="vacio">El guión está todavía en blanco.</p>
     <?php endif; ?>
 
-    <?php foreach ($bloques as $b):
+    <?php foreach ($guion as $pz):
+        $b = $pz['fila'];
+        if ($pz['clase'] === 'patrocinio'): ?>
+      <?php /* Solo llega aquí si mira un socio: ane_pod_guion() no los trae para el editor */ ?>
+      <div class="bloque patro<?= (int) $b['hecho'] ? ' hecho' : '' ?>">
+        <div class="min"><?= (int) $b['hecho'] ? '✓' : '€' ?></div>
+        <div>
+          <h3><span class="chip interno">Patrocinio</span> <?= ane_h($b['marca']) ?>
+            <span class="dom">· <?= ane_h(ANE_POD_MENCION_TIPOS[$b['tipo']] ?? $b['tipo']) ?><?= (int) $b['hecho'] ? ' · hecho' : '' ?></span></h3>
+          <div class="cuerpo"><?= ane_pod_texto($b['texto']) ?></div>
+        </div>
+      </div>
+      <?php continue; endif;
         $bid = (int) $b['id'];
-        $esCierre = $b['tipo'] === ANE_POD_CIERRE;
+        $esCierre = $pz['clase'] === 'cierre';
         if (!$esCierre) {
             $n++;
         } ?>
@@ -182,8 +183,17 @@ ane_pod_cabecera('episodios');
 
   <?php if ($es_socio): ?>
     <p class="nota noimprime" style="margin-top:14px">
-      Lo marcado como «solo socios»<?= $ocultos ? ($ocultos === 1 ? ' y el tema interno' : " y los $ocultos temas internos") : '' ?>
-      no sale en la versión que ve el editor.
+      <?php
+        $fuera = ['las notas'];
+        if ($patrocinios) {
+            $fuera[] = $patrocinios === 1 ? 'el patrocinio' : "los $patrocinios patrocinios";
+        }
+        if ($ocultos) {
+            $fuera[] = $ocultos === 1 ? 'el tema interno' : "los $ocultos temas internos";
+        }
+        $ultimo = array_pop($fuera);
+        echo ane_h(ucfirst(($fuera ? implode(', ', $fuera) . ' y ' : '') . $ultimo));
+      ?> no salen en la versión que ve el editor.
       <a href="/estudio/episodio.php?id=<?= $id ?>#accesos">Gestionar quién lo ve →</a>
     </p>
   <?php endif; ?>
