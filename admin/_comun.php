@@ -143,8 +143,10 @@ function ane_admin_estilo(): void
 /* $nav: botones propios de la pestaña (p. ej. los periodos de las estadísticas) */
 function ane_admin_cabecera(string $pestana, string $nav = ''): void
 {
+    /* El Estudio es otra área, con su propia entrada (usuario y contraseña
+       propios, no los del navegador): el enlace está aquí por comodidad. */
     $pestanas = ['estadisticas' => ['/admin/', 'Estadísticas'], 'formularios' => ['/admin/formularios.php', 'Formularios'],
-                 'maillot' => ['/admin/maillot.php', 'Mono']];
+                 'maillot' => ['/admin/maillot.php', 'Mono'], 'estudio' => ['/estudio/', 'Estudio ↗']];
     ?>
 <header>
   <div class="caja">

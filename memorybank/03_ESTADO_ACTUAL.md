@@ -169,6 +169,69 @@ Eduardo lo diga).
 
 ---
 
+## 🎙️ Estudio: gestor del podcast y de los proyectos (2026-10-20)
+
+Área privada **`/estudio`**, aparte del panel `/admin` (enlazada desde sus
+pestañas). Organiza la grabación y comparte el guión con el editor de vídeo sin
+enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
+
+- **Dos roles.** *Socio* (Eduardo y Cristóbal): episodios, guiones, imágenes,
+  menciones, proyectos, presupuestos y accesos. En su listado, cada episodio
+  dice **qué marcas lo patrocinan** y cuántas menciones quedan por hacer; al
+  editor eso ni se le consulta. *Editor de vídeo*: solo el
+  guión de los episodios que se le marquen, **en lectura**. No hay rol de
+  invitado: no lo necesitan.
+- **La frontera es de datos, no de CSS.** Con el editor delante, los temas
+  marcados «internos» y las menciones **no se consultan**, los ficheros de un
+  tema interno devuelven 404, y `episodio.php`, `proyectos.php`, `marcas.php` y
+  `accesos.php` responden 403. Si tocas `guion.php` o `fichero.php`, no rompas eso.
+- **Un episodio** es número, título (**opcional**: con el número basta para
+  crearlo, y entonces se le llama «Episodio 49»), fecha, duración y sitio, más
+  **temas en orden**; cada tema con **los enlaces** y **las imágenes y archivos** que
+  haga falta (varios de cada, y se suben varios de una vez). Cada imagen lleva
+  **su propia descripción**, y van juntas: foto y texto emparejados. Todo
+  episodio acaba en la sección fija **«Bici o Cepo»** —parejas de foto y
+  descripción, sin texto de bloque—, que no se borra ni se mueve. Las menciones
+  de patrocinio se ordenan igual que los temas.
+- **Ficheros:** en `~/datos/estudio/imagenes/` (fuera del repo y del docroot),
+  servidos por `estudio/fichero.php` tras comprobar quién pregunta: `?f=<id>`
+  lo enseña y `?f=<id>&d=1` lo descarga. **El editor se descarga todo lo que
+  subamos.** Las imágenes (JPG, PNG, WEBP, GIF, 12 MB) se redibujan con GD y se
+  reducen a 2000 px: así se valida que lo sean y **se borran los metadatos**
+  (incluida la ubicación). Los demás archivos (PDF, audio, texto, subtítulos,
+  hojas, zip… 32 MB) se guardan tal cual y salen **siempre como adjunto** y
+  como octet-stream, nunca inline. Para vídeo en bruto, Drive. Manda el límite
+  de PHP del hosting, que se sube en hPanel si hace falta.
+- **Entrada propia:** formulario y cookie firmada con `~/datos/secreto`, 30
+  días. Nada de sesiones de PHP (el recolector del hosting las mata a los 24
+  min). Contraseñas generadas en el panel y **enseñadas una vez**; cambiarlas o
+  desactivar a alguien cierra sus sesiones. 8 fallos = 15 min de espera.
+- **El primer acceso se crea por SSH**, no por web:
+  `php -f estudio/_alta.php eduardo socio "Eduardo"`. El alta por web solo se
+  abre si además existe la señal `~/datos/estudio_alta` (y se borra al usarla):
+  sin eso, la URL recién publicada sería un «créate el acceso de socio» para el
+  primer bot que pasara.
+- **Piezas:** `estudio/` (entrar, index, episodio, guion, fichero, proyectos,
+  proyecto, marcas, accesos, `_plantilla.php`, `_comun.php`) y
+  `api/_estudio.php`. Tablas `pod_*` en `~/datos/ane.db`.
+- **Datos personales:** contactos de empresas (`pod_marcas`, `pod_proy_marcas`)
+  y los accesos del editor. No se publica nada de esto. **Pendiente de decidir
+  con Eduardo** si hace falta una línea en `privacidad.html`: hoy son datos
+  internos, no recogidos del público.
+- **Probado en local** con PHP 8.2 y navegador: alta, entrada, permisos del
+  editor (403 en las pantallas de socio, 403 en el guión no compartido, 404 en
+  el fichero de un tema interno, cero fugas de marcas o importes en su HTML),
+  orden de temas y menciones, varios enlaces por tema, subida de dos imágenes a
+  la vez (reescalado de 2600 a 2000 px), subida de PDF, un `.sh` rechazado,
+  descarga con `Content-Disposition: attachment` y el nombre original, CSRF,
+  origen ajeno, URL con `javascript:` rechazada y HTML escapado. Probadas
+  también las dos **migraciones** (el enlace único del tema y la tabla vieja de
+  imágenes).
+- **Para verlo en local:** `ANE_DATOS=/tmp/ane-demo php -f estudio/_demo.php`
+  y `ANE_DATOS=/tmp/ane-demo php -S 127.0.0.1:8787 -t .`
+
+---
+
 ## 🏔️ App Cape Epic 2027: /capeepic (actualizado 2026-10-02)
 
 App web privada (PWA, funciona sin cobertura) para Eduardo, Cristóbal y acompañantes (15–28 mar 2027: semana previa en Stellenbosch, casa Twyfeling en Wellington del 21 al 29).

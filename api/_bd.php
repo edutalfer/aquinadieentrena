@@ -14,7 +14,9 @@
 declare(strict_types=1);
 
 /* public_html/api → public_html → aquinadieentrena.cc → domains → ~ */
-define('ANE_DATOS', dirname(__DIR__, 4) . '/datos');
+/* En producción, ~/datos. ANE_DATOS en el entorno permite levantar una
+   copia de prueba en local sin tocar los datos de verdad. */
+define('ANE_DATOS', getenv('ANE_DATOS') ?: dirname(__DIR__, 4) . '/datos');
 
 function ane_bd(): PDO
 {

@@ -100,8 +100,18 @@ empaquetado con esbuild). Si tocas la fuente, recompila (ver
 `assets/js/maillot/LEEME.md`) y sube el `?v=` en `maillot.php`.
 
 **Fuera del repo, en `~/datos/`:** la base (`ane.db`: estadísticas **y las
-inscripciones a eventos y las ofertas por el mono, que son datos personales**), las credenciales del panel
+inscripciones a eventos, las ofertas por el mono y el gestor del podcast
+(tablas `pod_*`: accesos del editor de vídeo y contactos de empresas), que son datos
+personales**), las credenciales del panel
 (`admin.php`) y la clave de firma (`secreto`). El repo es público: ahí no entra nunca.
+
+**`/estudio` es el gestor del podcast** (episodios, guiones, proyectos y
+patrocinadores), con entrada propia y dos roles: socio lo ve todo, el editor de
+vídeo solo el guión de los episodios que se le marquen. Esa frontera es de
+datos, no de CSS: con el editor delante no se leen ni las menciones ni los
+temas internos, y sus ficheros dan 404. **Las imágenes y los archivos del
+guión viven en `~/datos/estudio/imagenes/`**, fuera del repo, y solo salen por
+`estudio/fichero.php`. Antes de tocarlo, `estudio/LEEME.md`.
 
 ---
 

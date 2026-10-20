@@ -11,7 +11,9 @@ aquinadieentrena.cc
 ├── /episodios       → Archivo completo con timelines clicables
 ├── /proyectos       → proyectos.html: hechos, próximos y botones para sponsors
 ├── /f/<código>      → formulario.php: inscripción a un evento (oculto, noindex)
-└── /admin/          → panel privado: Estadísticas · Formularios
+├── /admin/          → panel privado: Estadísticas · Formularios · Mono
+└── /estudio/        → gestor del podcast: episodios, guiones, proyectos y
+                      patrocinadores. Entrada propia y dos roles (ver D21)
 ```
 
 ## ESTRUCTURA DEL REPO
