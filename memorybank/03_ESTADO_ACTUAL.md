@@ -259,6 +259,12 @@ App web privada (PWA, funciona sin cobertura) para Eduardo, Cristóbal y acompa�
 - **GitHub:** `github.com/edutalfer/aquinadieentrena` (público)
 - **Copia local de Eduardo:** `/Users/eduardotalavera/Documents/Proyectos-IA/aquinadieentrena`
 - **Servidor:** `46.202.172.3` · puerto `65002` · usuario `u527801093`
+⚠️ **20/10/2026: el servidor ya no acepta la clave del Mac.** `claude-ane-2026`
+(la que hPanel listaba como `claude-ane-mac`, termina en `…TY3qlYuCHw==`) da
+`Permission denied (publickey,password)`. Hay que volver a darla de alta en
+hPanel → Avanzado → Acceso SSH para que Claude pueda desplegar; mientras tanto,
+el `git pull` del servidor lo hace Eduardo desde el Terminal de hPanel.
+
 - **Clave SSH (24/09/2026):** `claude-ane-3` se **borró** de hPanel en una
   limpieza. La pública del Mac (privada en `~/.ssh/claude-ane-2026`) se volvió
   a dar de alta el mismo día como **`claude-ane-mac`**: es la clave fija del Mac
