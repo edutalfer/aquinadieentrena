@@ -171,6 +171,13 @@ Eduardo lo diga).
 
 ## 🎙️ Estudio: gestor del podcast y de los proyectos (2026-10-20)
 
+✅ **En producción desde el 20/10/2026.** Verificado con navegador real:
+`/estudio/` pide entrada, las librerías `_*.php` dan 403, las pantallas
+redirigen al formulario sin sesión y las cabeceras van con `noindex` y
+`no-store`. En el servidor: PHP 8.3.35, **GD sí** (y webp), subida hasta
+1536 MB, así que el límite de verdad es el nuestro (12 MB imágenes, 32 MB
+archivos).
+
 Área privada **`/estudio`**, aparte del panel `/admin` (enlazada desde sus
 pestañas). Organiza la grabación y comparte el guión con el editor de vídeo sin
 enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
@@ -259,11 +266,10 @@ App web privada (PWA, funciona sin cobertura) para Eduardo, Cristóbal y acompa�
 - **GitHub:** `github.com/edutalfer/aquinadieentrena` (público)
 - **Copia local de Eduardo:** `/Users/eduardotalavera/Documents/Proyectos-IA/aquinadieentrena`
 - **Servidor:** `46.202.172.3` · puerto `65002` · usuario `u527801093`
-⚠️ **20/10/2026: el servidor ya no acepta la clave del Mac.** `claude-ane-2026`
-(la que hPanel listaba como `claude-ane-mac`, termina en `…TY3qlYuCHw==`) da
-`Permission denied (publickey,password)`. Hay que volver a darla de alta en
-hPanel → Avanzado → Acceso SSH para que Claude pueda desplegar; mientras tanto,
-el `git pull` del servidor lo hace Eduardo desde el Terminal de hPanel.
+ℹ️ **20/10/2026:** la clave del Mac (`claude-ane-2026`, termina en
+`…TY3qlYuCHw==`) dejó de funcionar y Eduardo la volvió a dar de alta en hPanel
+ese mismo día. Si vuelve a salir `Permission denied (publickey,password)`, es
+eso: hay que pegarla otra vez en hPanel → Avanzado → Acceso SSH.
 
 - **Clave SSH (24/09/2026):** `claude-ane-3` se **borró** de hPanel en una
   limpieza. La pública del Mac (privada en `~/.ssh/claude-ane-2026`) se volvió
