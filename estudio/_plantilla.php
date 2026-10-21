@@ -283,6 +283,9 @@ function ane_pod_estilo(): void
   .pareja.lectura { border: 0; background: none; padding: 0; margin-bottom: 18px; }
   .pareja.lectura img { height: auto; max-height: 420px; object-fit: contain; background: #fff; }
   .pareja.lectura .cuerpo p { margin: 0 0 8px; }
+  /* Entre una foto con su texto y la siguiente, una raya fina: que no se lean
+     seguidas dos descripciones, sobre todo en el móvil, donde van apiladas */
+  .pareja.lectura + .pareja.lectura { border-top: 1px dashed var(--linea); padding-top: 18px; }
   .pareja .descarga, .pareja.lectura .descarga { font-size: 12px; font-weight: 700; letter-spacing: .04em;
             text-transform: uppercase; }
 
