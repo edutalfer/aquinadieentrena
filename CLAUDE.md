@@ -109,9 +109,9 @@ personales**), las credenciales del panel
 patrocinadores), con entrada propia y dos roles: socio lo ve todo, el editor de
 vídeo solo el **guión definitivo** de los episodios que se le marquen, en
 lectura, **cuñas de patrocinio incluidas** (las tiene que montar). Lo que no ve
-nunca: proyectos, la agenda de patrocinadores, accesos, notas ni temas
-internos. Esa frontera es de datos, no de CSS: con el editor delante eso no se
-lee de la base, sus pantallas dan 403 y los ficheros de un tema interno, 404. **Las imágenes y los archivos del
+nunca: proyectos, la agenda de patrocinadores, accesos, notas privadas ni temas
+internos o descartados. Esa frontera es de datos, no de CSS: con el editor delante eso no se
+lee de la base, sus pantallas dan 403 y los ficheros de un tema interno o descartado, 404. **Las imágenes y los archivos del
 guión viven en `~/datos/estudio/imagenes/`**, fuera del repo, y solo salen por
 `estudio/fichero.php`. **Los contratos con las marcas viven en
 `~/datos/estudio/contratos/`** y solo los sirve `estudio/contrato.php`, solo a

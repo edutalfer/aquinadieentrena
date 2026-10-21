@@ -5,7 +5,7 @@
    Los ficheros viven en ~/datos/estudio/imagenes/, fuera del
    repo y del docroot: nadie llega a ellos por URL directa. Aquí
    se comprueba quién pregunta antes de soltar un byte, y los de
-   un tema interno no existen para el editor.
+   un tema interno o descartado no existen para el editor.
 
      fichero.php?f=12&v=…        la imagen, para verla en el guión
      fichero.php?f=12&v=…&d=1    el fichero, para descargarlo
@@ -34,7 +34,7 @@ if (!$f || !ane_pod_puede_ver($bd, $yo_pod, (int) $f['episodio_id'])) {
 }
 
 if (!$es_socio) {
-    $st = $bd->prepare('SELECT interno FROM pod_bloques WHERE id = ?');
+    $st = $bd->prepare('SELECT interno OR descartado FROM pod_bloques WHERE id = ?');
     $st->execute([(int) $f['bloque_id']]);
     if ((int) $st->fetchColumn()) {
         ane_pod_no_hay();

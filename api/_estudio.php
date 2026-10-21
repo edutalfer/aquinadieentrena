@@ -115,7 +115,8 @@ function ane_pod_bd(): PDO
 
         -- El guión: temas en orden, cada uno con su enlace y sus imágenes.
         -- «interno» = no lo ve el editor. tipo «bicicepo» = la sección de
-        -- cierre, siempre la última y no se borra.
+        -- cierre, siempre la última y no se borra. «descartado» = se tachó
+        -- durante la grabación: el editor no lo ve y se puede recuperar.
         CREATE TABLE IF NOT EXISTS pod_bloques (
             id          INTEGER PRIMARY KEY,
             episodio_id INTEGER NOT NULL,
@@ -123,7 +124,8 @@ function ane_pod_bd(): PDO
             tipo        TEXT    NOT NULL DEFAULT \'tema\',
             titulo      TEXT    NOT NULL DEFAULT \'\',
             texto       TEXT    NOT NULL DEFAULT \'\',
-            interno     INTEGER NOT NULL DEFAULT 0
+            interno     INTEGER NOT NULL DEFAULT 0,
+            descartado  INTEGER NOT NULL DEFAULT 0
         );
         CREATE INDEX IF NOT EXISTS i_pod_bloques ON pod_bloques (episodio_id, orden);
 
@@ -349,6 +351,8 @@ function ane_pod_bd(): PDO
                    WHERE coste > 0 AND NOT EXISTS (SELECT 1 FROM pod_gastos g WHERE g.proyecto_id = p.id)");
         $bd->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('pod_gastos_v1', '1')")->execute();
     }
+    /* 21/10/2026: un tema se puede descartar en plena grabación (D28) */
+    ane_pod_columna($bd, 'pod_bloques', 'descartado', 'INTEGER NOT NULL DEFAULT 0');
     /* Los gastos admiten céntimos: pasan de euros enteros («importe») a céntimos */
     ane_pod_columna($bd, 'pod_gastos', 'centimos', 'INTEGER NOT NULL DEFAULT 0');
     if (!$bd->query("SELECT valor FROM ajustes WHERE clave = 'pod_gastos_v2'")->fetchColumn()) {
@@ -506,10 +510,11 @@ function ane_pod_etiqueta(array $ep): string
 
 /* ---------- Guión ---------- */
 
-/* Los temas, con «Bici o Cepo» siempre al final */
+/* Los temas, con «Bici o Cepo» siempre al final. Con $soloPublicos (el
+   editor), ni los internos ni los descartados */
 function ane_pod_bloques(PDO $bd, int $episodio, bool $soloPublicos = false): array
 {
-    $sql = 'SELECT * FROM pod_bloques WHERE episodio_id = ?' . ($soloPublicos ? ' AND interno = 0' : '');
+    $sql = 'SELECT * FROM pod_bloques WHERE episodio_id = ?' . ($soloPublicos ? ' AND interno = 0 AND descartado = 0' : '');
     $st = $bd->prepare($sql . " ORDER BY (tipo = '" . ANE_POD_CIERRE . "'), orden, id");
     $st->execute([$episodio]);
     return $st->fetchAll();
@@ -608,6 +613,47 @@ function ane_pod_coloca(PDO $bd, int $episodio, string $tabla, int $id, string $
         array_splice($lista, $donde + 1, 0, [$pieza]);
     }
     ane_pod_renumera($bd, $lista);
+}
+
+/* Un tema que no da tiempo pasa TAL CUAL al episodio siguiente (número + 1),
+   con sus enlaces, fotos, archivos y notas, y entra al final de su guión,
+   antes de «Bici o Cepo». Si ese episodio no existe, se crea. Devuelve el
+   episodio de destino, o null si no se puede (no es un tema, o el episodio
+   no tiene número y no hay «siguiente»). */
+function ane_pod_pasa_tema(PDO $bd, int $bloque): ?array
+{
+    $st = $bd->prepare("SELECT b.id, b.episodio_id, e.numero FROM pod_bloques b
+                        JOIN pod_episodios e ON e.id = b.episodio_id WHERE b.id = ? AND b.tipo = 'tema'");
+    $st->execute([$bloque]);
+    $b = $st->fetch();
+    if (!$b || (int) $b['numero'] <= 0) {
+        return null;
+    }
+    $origen = (int) $b['episodio_id'];
+    $bd->beginTransaction();
+    $destino = (int) ane_pod_episodio_numero($bd, (int) $b['numero'] + 1, true);
+    $bd->prepare('UPDATE pod_bloques SET episodio_id = ?, descartado = 0, orden = 999998 WHERE id = ?')
+       ->execute([$destino, $bloque]);
+    foreach (['pod_enlaces', 'pod_ficheros', 'pod_notas'] as $t) {
+        $bd->prepare("UPDATE $t SET episodio_id = ? WHERE bloque_id = ?")->execute([$destino, $bloque]);
+    }
+    ane_pod_coloca($bd, $destino, 'pod_bloques', $bloque, 'final');
+    ane_pod_renumera($bd, ane_pod_piezas($bd, $origen));
+    $ahora = ane_ahora();
+    $bd->prepare('UPDATE pod_episodios SET actualizado = ? WHERE id IN (?, ?)')->execute([$ahora, $origen, $destino]);
+    $bd->commit();
+    return ane_pod_episodio($bd, $destino);
+}
+
+/* Descartar (o recuperar) un tema. No se borra nada: sale del guión del
+   editor y, para los socios, queda tachado con «Recuperar». Devuelve el tema. */
+function ane_pod_descarta_tema(PDO $bd, int $bloque, bool $descartar): ?array
+{
+    $bd->prepare("UPDATE pod_bloques SET descartado = ? WHERE id = ? AND tipo = 'tema'")
+       ->execute([$descartar ? 1 : 0, $bloque]);
+    $st = $bd->prepare("SELECT * FROM pod_bloques WHERE id = ? AND tipo = 'tema'");
+    $st->execute([$bloque]);
+    return $st->fetch() ?: null;
 }
 
 /* El guión que se pinta: temas y patrocinios mezclados en su orden, y

@@ -141,6 +141,24 @@ Se guarda **sin recargar** la página, para no perder el sitio.
 - Al borrar un tema, sus notas pasan a las generales. El editor del episodio
   avisa de cuántas hay, para repasarlas después de grabar.
 
+## Pasar un tema al siguiente o descartarlo
+
+Junto a «+ Nota», cada tema lleva dos botones más (solo socios, solo temas: ni
+*Bici o Cepo* ni las notas generales). Los dos van **sin recargar**:
+
+- **«Pasar al #57»**: no da tiempo. El tema se va **tal cual** al episodio
+  siguiente (número + 1) con sus enlaces, fotos, archivos y notas, y entra al
+  final de su guión, antes de *Bici o Cepo*. Si ese episodio no existe, se
+  crea («Episodio 57»). Pide confirmación. Un episodio sin número (una idea)
+  no tiene «siguiente» y no lleva el botón. `ane_pod_pasa_tema()`.
+- **«✕»**: ya no interesa. **No se borra**: queda tachado, sin número, con
+  «↺ Recuperar» (`pod_bloques.descartado`). El editor no lo ve ni puede bajar
+  sus ficheros, y no cuenta en los temas de la portada. En la página de
+  edición sale en gris con su «Recuperar»; para quitarlo del todo, «Borrar
+  tema» como siempre. `ane_pod_descarta_tema()`.
+
+Los escribe `estudio/tema.php`, **solo socios**, como `nota.php`.
+
 ## Bici o Cepo
 
 Todo episodio acaba en una sección fija, **Bici o Cepo**, que no se borra ni se
@@ -162,6 +180,8 @@ archivos salen como lista de descargas.
 | `estudio/index.php` | Episodios (socio) · Mis guiones (invitado) |
 | `estudio/episodio.php` | Edición (solo socios): datos, temas con enlaces e imágenes, cuñas y quién lo ve |
 | `estudio/guion.php` | El guión. Lo que ve el editor de vídeo, y la hoja de grabación del socio (imprimible) |
+| `estudio/nota.php` | Notas de grabación: apuntar, borrar, quién la ve (solo socios) |
+| `estudio/tema.php` | Pasar un tema al siguiente episodio, descartarlo o recuperarlo (solo socios) |
 | `estudio/fichero.php` | Enseña o descarga un fichero tras comprobar quién pregunta |
 | `estudio/proyectos.php` · `proyecto.php` | Proyectos, patrocinadores y presupuesto |
 | `estudio/marcas.php` | Agenda de patrocinadores: estado, siguiente paso y dónde aparece cada marca |

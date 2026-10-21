@@ -284,9 +284,10 @@ $st->execute([$id]);
 $conAcceso = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
 
 /* Las piezas que se ordenan (todo menos «Bici o Cepo»), y el número de cada tema:
-   los patrocinios no cuentan, los temas van 1, 2, 3 aunque haya una cuña en medio */
+   los patrocinios no cuentan, los temas van 1, 2, 3 aunque haya una cuña en medio.
+   Los descartados tampoco cuentan: no salen en el guión */
 $piezas = array_values(array_filter($guion, fn ($p) => $p['clase'] !== 'cierre'));
-$temas = array_values(array_filter($piezas, fn ($p) => $p['clase'] === 'tema'));
+$temas = array_values(array_filter($piezas, fn ($p) => $p['clase'] === 'tema' && !(int) $p['fila']['descartado']));
 $numTema = [];
 foreach ($temas as $k => $t) {
     $numTema[(int) $t['fila']['id']] = $k + 1;
@@ -302,7 +303,8 @@ function ane_pod_opciones_sitio(array $piezas, array $numTema, string $actual = 
             continue;
         }
         $txt = $p['clase'] === 'tema'
-            ? 'Tema ' . $numTema[(int) $p['fila']['id']] . ' · ' . ($p['fila']['titulo'] !== '' ? $p['fila']['titulo'] : 'sin título')
+            ? (isset($numTema[(int) $p['fila']['id']]) ? 'Tema ' . $numTema[(int) $p['fila']['id']] : 'Descartado')
+              . ' · ' . ($p['fila']['titulo'] !== '' ? $p['fila']['titulo'] : 'sin título')
             : 'Patrocinio · ' . $p['fila']['marca'];
         $html .= '<option value="' . ane_h($clave) . '"' . ($clave === $actual ? ' selected' : '') . '>Después de: '
                . ane_h(mb_strimwidth($txt, 0, 48, '…')) . '</option>';
@@ -319,6 +321,7 @@ ane_pod_cabecera('episodios');
   <?php ane_pod_aviso(array_merge([
       'guardado' => 'Cambios guardados.', 'tema' => 'Tema añadido.', 'imagen' => 'Imagen subida.',
       'mencion' => 'Patrocinio añadido al guión.', 'borrado' => 'Borrado.', 'accesos' => 'Accesos actualizados.',
+      'recuperado' => 'Tema recuperado: vuelve a salir en el guión.',
       'marca' => 'Falta la marca.', 'creado' => 'Episodio creado. Ahora los datos.',
       'enlace' => 'Enlace añadido.', 'enlaces' => 'Enlaces añadidos.',
       'url' => 'No he encontrado ningún enlace válido. Pon uno por línea, empezando por https:// o www.',
@@ -474,7 +477,19 @@ ane_pod_cabecera('episodios');
         $suyos = $enlaces[$bid] ?? [];
         $suyas = ane_pod_solo($ficheros[$bid] ?? [], 'imagen');
         $suyosArch = ane_pod_solo($ficheros[$bid] ?? [], 'archivo'); ?>
-      <div id="t<?= $bid ?>" class="tema<?= $esCierre ? ' cierre' : ((int) $b['interno'] ? ' interno' : '') ?>">
+      <div id="t<?= $bid ?>" class="tema<?= $esCierre ? ' cierre' : ((int) $b['interno'] ? ' interno' : '') . ((int) $b['descartado'] ? ' descartado' : '') ?>">
+        <?php if (!$esCierre && (int) $b['descartado']): ?>
+          <div class="aviso-descartado">
+            <span><b>Descartado</b> durante la grabación: no sale en el guión y el editor no lo ve.</span>
+            <form method="post" action="/estudio/tema.php" class="enlinea">
+              <?= ane_pod_csrf_campo() ?>
+              <input type="hidden" name="accion" value="recuperar">
+              <input type="hidden" name="fila" value="<?= $bid ?>">
+              <input type="hidden" name="volver" value="editor">
+              <button class="btn claro pequeno" type="submit">↺ Recuperar</button>
+            </form>
+          </div>
+        <?php endif; ?>
 
         <?php if ($esCierre): ?>
           <div class="barra" style="margin:0 0 12px">
@@ -585,7 +600,7 @@ ane_pod_cabecera('episodios');
                         <?= $primera ? 'disabled' : '' ?> aria-label="Subir">↑</button>
                 <button class="btn claro pequeno" type="submit" form="mvabajo<?= $bid ?>"
                         <?= $ultima ? 'disabled' : '' ?> aria-label="Bajar">↓</button>
-                <span class="chip">Tema <?= $numTema[$bid] ?></span>
+                <span class="chip"><?= isset($numTema[$bid]) ? 'Tema ' . $numTema[$bid] : 'Descartado' ?></span>
               </div>
             </div>
           </div>

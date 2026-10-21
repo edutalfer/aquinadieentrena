@@ -35,11 +35,41 @@ $ficheros = ane_pod_ficheros_de($bd, $id);
 /* Notas de grabación: el editor solo recibe las marcadas para él */
 $notas = ane_pod_notas($bd, $id, !$es_socio);
 
-/* Las notas de un tema (o las generales, bloque 0). Al socio siempre se le
-   pinta la lista, aunque esté vacía, para que «+ Nota» tenga dónde dejarlas. */
-/* El botón «+ Nota» de un tema (bloque 0 = notas generales). Va junto al
-   título: pulsas, escribes y la nota se queda en ese tema, sin elegir nada.
-   Solo socios. */
+/* Los botones de grabación, junto al título de cada tema. Solo socios:
+     + Nota          apuntar algo en ese tema (bloque 0 = notas generales)
+     Pasar al #57    no da tiempo: el tema se va tal cual al siguiente
+     ✕               ya no interesa: se descarta (se puede recuperar)
+   Los dos últimos, solo en los temas: ni en «Bici o Cepo» ni en las notas. */
+function ane_pod_botones_tema(array $ep, int $bloque, bool $esTema, string $titulo = ''): string
+{
+    global $es_socio;
+    if (!$es_socio) {
+        return '';
+    }
+    $html = '<div class="tema-botones noimprime">'
+          . '<button type="button" class="tema-boton nota" aria-controls="dn' . $bloque . '" aria-expanded="false"'
+          . ' title="Apuntar una nota en este tema">+ Nota</button>';
+    if ($esTema) {
+        $campos = ane_pod_csrf_campo() . '<input type="hidden" name="fila" value="' . $bloque . '">';
+        $siguiente = (int) $ep['numero'] > 0 ? (int) $ep['numero'] + 1 : 0;
+        if ($siguiente) {
+            $aviso = '¿Pasar «' . ($titulo !== '' ? $titulo : 'este tema') . '» al episodio ' . $siguiente
+                   . '? Se va tal cual: enlaces, fotos, archivos y notas.';
+            $html .= '<form method="post" action="/estudio/tema.php" class="enlinea form-tema" data-confirma="' . ane_h($aviso) . '">'
+                   . $campos . '<input type="hidden" name="accion" value="pasar">'
+                   . '<button class="tema-boton pasar" type="submit" title="No da tiempo: pasarlo al episodio ' . $siguiente . '">'
+                   . 'Pasar al #' . $siguiente . '</button></form>';
+        }
+        $html .= '<form method="post" action="/estudio/tema.php" class="enlinea form-tema">'
+               . $campos . '<input type="hidden" name="accion" value="descartar">'
+               . '<button class="tema-boton descartar" type="submit" title="Descartar el tema (se puede recuperar)"'
+               . ' aria-label="Descartar el tema">✕</button></form>';
+    }
+    return $html . '</div>';
+}
+
+/* El formulario de «+ Nota»: se abre debajo del título al pulsar el botón.
+   Pulsas, escribes y la nota se queda en ese tema, sin elegir nada. */
 function ane_pod_boton_nota(int $episodio, int $bloque): void
 {
     global $es_socio;
@@ -47,8 +77,8 @@ function ane_pod_boton_nota(int $episodio, int $bloque): void
         return;
     }
     ?>
-          <details class="nota-tema noimprime">
-            <summary aria-label="Apuntar una nota en este tema">+ Nota</summary>
+          <details class="nota-tema noimprime" id="dn<?= $bloque ?>">
+            <summary>+ Nota</summary>
             <form method="post" action="/estudio/nota.php" class="form-nota">
               <?= ane_pod_csrf_campo() ?>
               <input type="hidden" name="accion" value="nueva">
@@ -69,6 +99,8 @@ function ane_pod_boton_nota(int $episodio, int $bloque): void
     <?php
 }
 
+/* Las notas de un tema (o las generales, bloque 0). Al socio siempre se le
+   pinta la lista, aunque esté vacía, para que «+ Nota» tenga dónde dejarlas. */
 function ane_pod_pinta_notas(array $lista, int $bloque): void
 {
     global $es_socio;
@@ -83,10 +115,12 @@ function ane_pod_pinta_notas(array $lista, int $bloque): void
 }
 
 $ocultos = 0;
+$descartados = 0;
 $patrocinios = 0;
 foreach ($guion as $pz) {
     if ($pz['clase'] === 'tema') {
-        $ocultos += (int) $pz['fila']['interno'];
+        $descartados += (int) $pz['fila']['descartado'];
+        $ocultos += (int) $pz['fila']['interno'] && !(int) $pz['fila']['descartado'];
     } elseif ($pz['clase'] === 'patrocinio') {
         $patrocinios++;
     }
@@ -158,7 +192,10 @@ ane_pod_cabecera('episodios');
   <?php ane_pod_aviso(['nota' => 'Nota apuntada.', 'nota_borrada' => 'Nota borrada.',
                        'nota_editor' => 'Cambiado quién ve la nota.',
                        'nota_url' => 'Ese enlace no parece una dirección válida.',
-                       'nota_vacia' => 'Escribe algo o pega un enlace.']); ?>
+                       'nota_vacia' => 'Escribe algo o pega un enlace.',
+                       'pasado' => 'Tema pasado al episodio ' . (int) ($_GET['a'] ?? 0) . '.',
+                       'descartado' => 'Tema descartado.', 'recuperado' => 'Tema recuperado.',
+                       'sin_siguiente' => 'Este episodio no tiene número: no hay «siguiente» al que pasarlo.']); ?>
   <div class="barra noimprime">
     <p class="nota" style="margin:0"><a href="/estudio/">← <?= $es_socio ? 'Episodios' : 'Mis guiones' ?></a></p>
     <div class="acciones">
@@ -202,15 +239,23 @@ ane_pod_cabecera('episodios');
       <?php continue; endif;
         $bid = (int) $b['id'];
         $esCierre = $pz['clase'] === 'cierre';
+        /* Descartado: una línea tachada, sin número (solo socios: al editor ni le llega) */
+        if (!$esCierre && (int) $b['descartado']) {
+            echo ane_pod_html_descartado($b);
+            continue;
+        }
         if (!$esCierre) {
             $n++;
         } ?>
-      <div class="bloque<?= $esCierre ? ' cierre' : ((int) $b['interno'] ? ' esinterno' : '') ?>">
+      <div class="bloque<?= $esCierre ? ' cierre' : ' es-tema' . ((int) $b['interno'] ? ' esinterno' : '') ?>" id="b<?= $bid ?>">
         <div class="min"><?= $esCierre ? '★' : $n ?></div>
         <div>
-          <h3<?= $es_socio ? ' class="con-nota"' : '' ?>><?= ane_h($esCierre ? ANE_POD_CIERRE_TITULO
+          <div class="tema-cab">
+          <h3><?= ane_h($esCierre ? ANE_POD_CIERRE_TITULO
                                   : ($b['titulo'] !== '' ? $b['titulo'] : 'Tema ' . $n)) ?>
             <?php if ((int) $b['interno']): ?> <span class="chip interno">no compartido</span><?php endif; ?></h3>
+          <?= ane_pod_botones_tema($ep, $bid, !$esCierre, (string) $b['titulo']) ?>
+          </div>
           <?php ane_pod_boton_nota($id, $bid); ?>
           <?php $fotos = ane_pod_solo($ficheros[$bid] ?? [], 'imagen');
                 $archivos = ane_pod_solo($ficheros[$bid] ?? [], 'archivo');
@@ -232,7 +277,7 @@ ane_pod_cabecera('episodios');
       if ($generales || $es_socio): ?>
       <div class="bloque notas" id="notas">
         <div class="min">✎</div>
-        <div><h3<?= $es_socio ? ' class="con-nota"' : '' ?>>Notas de grabación</h3>
+        <div><div class="tema-cab"><h3>Notas de grabación</h3><?= ane_pod_botones_tema($ep, 0, false) ?></div>
           <?php ane_pod_boton_nota($id, 0); ?>
           <?php if (!$generales && $es_socio): ?><p class="dom noimprime" style="margin:0">Lo que no va con ningún tema.</p><?php endif; ?>
           <?php ane_pod_pinta_notas($generales, 0); ?></div>
@@ -254,6 +299,37 @@ ane_pod_cabecera('episodios');
          y sigues leyendo donde estabas. Sin JavaScript, el formulario se envía
          normal y vuelve al guión. */
       (function () {
+        /* El botón «+ Nota» de cada tema abre y cierra su formulario */
+        document.querySelectorAll('.tema-boton.nota').forEach(function (boton) {
+          var caja = document.getElementById(boton.getAttribute('aria-controls'));
+          boton.addEventListener('click', function () { caja.open = !caja.open; });
+          caja.addEventListener('toggle', function () { boton.setAttribute('aria-expanded', caja.open ? 'true' : 'false'); });
+        });
+
+        /* «Pasar al #57» y «✕»: sin recargar. El tema se cambia por una línea
+           que dice adónde fue (o tachado, con «Recuperar») y los temas que
+           quedan se vuelven a numerar */
+        function renumera() {
+          document.querySelectorAll('.bloque.es-tema > .min').forEach(function (m, i) { m.textContent = i + 1; });
+        }
+        document.querySelectorAll('form.form-tema').forEach(function (form) {
+          form.addEventListener('submit', function (ev) {
+            ev.preventDefault();
+            if (form.dataset.confirma && !confirm(form.dataset.confirma)) { return; }
+            var boton = form.querySelector('button');
+            boton.disabled = true;
+            fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Estudio': 'fetch' },
+                                 credentials: 'same-origin' })
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                if (!d.ok) { boton.disabled = false; alert(d.error || 'No se ha podido.'); return; }
+                form.closest('.bloque').outerHTML = d.html;
+                renumera();
+              })
+              .catch(function () { boton.disabled = false; alert('Sin conexión: no se ha hecho.'); });
+          });
+        });
+
         document.querySelectorAll('form.form-nota').forEach(function (form) {
           var estado = form.querySelector('.nota-estado');
           var caja = form.closest('details');
@@ -282,9 +358,12 @@ ane_pod_cabecera('episodios');
   <?php if ($es_socio): ?>
     <p class="nota noimprime" style="margin-top:14px">
       <?php
-        $fuera = ['las notas'];
+        $fuera = ['las notas privadas'];
         if ($ocultos) {
             $fuera[] = $ocultos === 1 ? 'el tema interno' : "los $ocultos temas internos";
+        }
+        if ($descartados) {
+            $fuera[] = $descartados === 1 ? 'el tema descartado' : "los $descartados temas descartados";
         }
         $ultimo = array_pop($fuera);
         echo ane_h(ucfirst(($fuera ? implode(', ', $fuera) . ' y ' : '') . $ultimo));

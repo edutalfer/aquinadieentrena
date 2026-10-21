@@ -218,6 +218,10 @@ function ane_pod_estilo(): void
   .tema { border: 1px solid var(--linea); border-left: 4px solid var(--azul); padding: 14px 16px; margin-bottom: 12px; }
   .tema.interno { border-left-color: var(--rojo); background: #FDFBFB; }
   .tema.cierre { border-left-color: var(--negro); background: #FAFAFB; }
+  .tema.descartado { border-left-color: var(--gris); background: #F6F6F4; }
+  .tema.descartado input[name="titulo"] { text-decoration: line-through; color: var(--gris); }
+  .aviso-descartado { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between;
+                      font-size: 14px; margin: -4px 0 12px; padding: 8px 10px; background: #fff; border: 1px dashed var(--gris); }
   .tema.hecho { border-left-color: var(--verde); }
   .tema h3 { margin: 0; font-size: 17px; }
   .subir { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px;
@@ -350,15 +354,29 @@ function ane_pod_estilo(): void
   .bloque.notas .min { color: #B08A00; }
   .bloque[hidden] { display: none; }   /* si no, el display:grid de .bloque gana al atributo */
 
-  /* «+ Nota» junto al título de cada tema; el formulario se abre debajo del título */
-  .bloque > div { position: relative; }
-  .bloque h3.con-nota { padding-right: 84px; }
+  /* Junto al título de cada tema: «+ Nota», «Pasar al #57» y «✕». El
+     formulario de la nota se abre debajo del título (lo abre el botón: el
+     summary del details no se ve) */
+  .tema-cab { display: flex; gap: 8px 12px; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+  .bloque .tema-cab h3 { margin: 0; }
+  .tema-botones { display: flex; flex-wrap: wrap; gap: 6px; flex: none; justify-content: flex-end; }
+  .tema-boton { font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+                line-height: 1.2; padding: 6px 10px; border: 1px solid var(--linea); background: #fff; color: var(--gris);
+                cursor: pointer; white-space: nowrap; }
+  .tema-boton.nota { background: #FFF8DB; border-color: #E0B400; color: #6B5300; }
+  .tema-boton.nota[aria-expanded="true"] { background: #E0B400; color: #fff; }
+  .tema-boton.pasar { background: #EDF2FC; border-color: var(--azul); color: var(--profundo); }
+  .tema-boton.descartar { color: var(--rojo); border-color: #E9B8B4; padding-left: 9px; padding-right: 9px; }
+  .tema-boton:hover { filter: brightness(.96); }
+  .tema-boton:disabled { opacity: .5; cursor: wait; }
   details.nota-tema { margin: 0 0 8px; }
-  details.nota-tema > summary { position: absolute; top: 0; right: 0; list-style: none; cursor: pointer;
-                                font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
-                                padding: 6px 10px; background: #FFF8DB; border: 1px solid #E0B400; color: #6B5300; }
-  details.nota-tema > summary::-webkit-details-marker { display: none; }
-  details.nota-tema[open] > summary { background: #E0B400; color: #fff; }
+  details.nota-tema > summary { display: none; }
+  /* Un tema descartado o pasado al siguiente: una línea, sin número */
+  .bloque.descartado, .bloque.movido { padding: 8px 0; color: var(--gris); }
+  .bloque.descartado .min, .bloque.movido .min { color: var(--gris); font-size: 15px; }
+  .bloque.descartado .titulo-descartado { text-decoration: line-through; }
+  .bloque.descartado form { margin-left: 4px; }
+  .bloque.movido .min { color: var(--azul); }
   details.nota-tema form { display: grid; gap: 8px; background: #FFFDF2; border: 1px solid #E0B400; padding: 10px; }
   details.nota-tema textarea { min-height: 64px; }
   details.nota-tema .cas { font-size: 13px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--negro); margin: 0; }
@@ -422,7 +440,11 @@ function ane_pod_estilo(): void
     .tarjeta .der { justify-items: start; text-align: left; }
     .pareja { grid-template-columns: 1fr; }
     .mover select { flex: 1 1 100%; width: 100%; }   /* el texto de la opción es largo: que no empuje */
-    .bloque h3.con-nota { padding-right: 78px; }
+    /* En el móvil, los botones van en fila debajo del título: el título entero
+       y botones donde cabe el dedo */
+    .tema-cab { flex-wrap: wrap; }
+    .tema-botones { flex-basis: 100%; justify-content: flex-start; }
+    .tema-boton { padding: 8px 12px; }
     .bloque.patro { margin-left: -8px; padding-left: 8px; }
     header h1 { font-size: 24px; }
     main.caja { padding: 20px 14px 60px; }

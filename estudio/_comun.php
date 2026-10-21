@@ -89,6 +89,21 @@ function ane_pod_csrf_exige(): void
 /* ---------- Una nota de grabación, pintada ----------
    La usan guion.php (al cargar) y nota.php (al apuntar una sin recargar).
    Los botones solo salen a los socios: el editor solo lee. */
+/* Un tema descartado en el guión: tachado, sin número y con «Recuperar».
+   Solo lo ven los socios (al editor ni se le pide a la base). Lo usan
+   guion.php (al cargar) y tema.php (al descartar sin recargar). */
+function ane_pod_html_descartado(array $b): string
+{
+    $bid = (int) $b['id'];
+    return '<div class="bloque descartado noimprime" id="b' . $bid . '"><div class="min">✕</div><div>'
+         . '<span class="titulo-descartado">' . ane_h((string) $b['titulo'] !== '' ? (string) $b['titulo'] : 'Tema sin título') . '</span> '
+         . '<span class="dom">descartado</span> '
+         . '<form method="post" action="/estudio/tema.php" class="enlinea">' . ane_pod_csrf_campo()
+         . '<input type="hidden" name="accion" value="recuperar"><input type="hidden" name="fila" value="' . $bid . '">'
+         . '<button class="chip-boton si" type="submit">↺ Recuperar</button></form>'
+         . '</div></div>';
+}
+
 function ane_pod_html_nota(array $n): string
 {
     global $es_socio;

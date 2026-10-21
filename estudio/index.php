@@ -86,7 +86,7 @@ if ($es_socio) {
 /* Cuántos temas tiene cada episodio (una consulta, no una por fila).
    «Bici o Cepo» no cuenta como tema: está siempre. Al editor se le cuentan
    solo los que ve: si no, le saldrían más temas que en su guión. */
-$bloques = $bd->query("SELECT episodio_id, COUNT(*) AS n FROM pod_bloques WHERE tipo <> '" . ANE_POD_CIERRE . "'"
+$bloques = $bd->query("SELECT episodio_id, COUNT(*) AS n FROM pod_bloques WHERE tipo <> '" . ANE_POD_CIERRE . "' AND descartado = 0"
                       . ($es_socio ? '' : ' AND interno = 0') . ' GROUP BY episodio_id')->fetchAll(PDO::FETCH_KEY_PAIR);
 
 /* Una tarjeta de episodio: la misma en «Próximos» y en «Pasados» */
