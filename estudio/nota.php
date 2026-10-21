@@ -60,7 +60,7 @@ if ($accion === 'nueva') {
         ane_pod_responde($json, $id, 'mal=nota_vacia#notas', ['ok' => false, 'error' => 'Escribe algo o pega un enlace.'], 400);
     }
     $bd->prepare('INSERT INTO pod_notas (episodio_id, bloque_id, texto, url, editor, autor, creado) VALUES (?, ?, ?, ?, ?, ?, ?)')
-       ->execute([$id, $bloque, $texto, $url, empty($_POST['editor']) ? 0 : 1,
+       ->execute([$id, $bloque, $texto, $url, empty($_POST['privada']) ? 1 : 0,   /* por defecto, la ve el editor */
                   $yo_pod['nombre'] !== '' ? $yo_pod['nombre'] : $yo_pod['usuario'], ane_ahora()]);
     $nota = ane_pod_nota($bd, (int) $bd->lastInsertId());
     ane_pod_responde($json, $id, 'ok=nota#n' . (int) $nota['id'],

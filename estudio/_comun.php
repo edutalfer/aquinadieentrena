@@ -94,7 +94,8 @@ function ane_pod_html_nota(array $n): string
     global $es_socio;
     $nid = (int) $n['id'];
     $url = ane_pod_url((string) $n['url']);
-    $html = '<li class="nota-grab' . ((int) $n['editor'] ? ' para-editor' : '') . '" id="n' . $nid . '">';
+    /* Por defecto las ve el editor: lo que se distingue a la vista son las privadas */
+    $html = '<li class="nota-grab' . ((int) $n['editor'] ? '' : ' privada') . '" id="n' . $nid . '">';
     if ((string) $n['texto'] !== '') {
         $html .= '<div class="nota-texto">' . ane_pod_texto((string) $n['texto']) . '</div>';
     }
@@ -110,8 +111,8 @@ function ane_pod_html_nota(array $n): string
         $campos = ane_pod_csrf_campo() . '<input type="hidden" name="fila" value="' . $nid . '">';
         $html .= '<form method="post" action="/estudio/nota.php" class="enlinea noimprime">' . $campos
                . '<input type="hidden" name="accion" value="editor">'
-               . '<button class="chip-boton' . ((int) $n['editor'] ? ' si' : '') . '" type="submit" title="Cambiar si la ve el editor">'
-               . ((int) $n['editor'] ? '✓ la ve el editor' : 'solo socios') . '</button></form>'
+               . '<button class="chip-boton' . ((int) $n['editor'] ? ' si' : ' privada') . '" type="submit" title="Cambiar si la ve el editor">'
+               . ((int) $n['editor'] ? '✓ la ve el editor' : '🔒 solo nosotros') . '</button></form>'
                . '<form method="post" action="/estudio/nota.php" class="enlinea noimprime" onsubmit="return confirm(\'¿Borrar la nota?\')">'
                . $campos . '<input type="hidden" name="accion" value="borrar">'
                . '<button class="chip-boton peligro" type="submit" aria-label="Borrar la nota">✕</button></form>';

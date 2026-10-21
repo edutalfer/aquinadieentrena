@@ -318,7 +318,7 @@ function ane_pod_estilo(): void
   .notas-grab { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
   .notas-grab:empty { display: none; }
   .nota-grab { background: #FFF8DB; border-left: 3px solid #E0B400; padding: 6px 10px; font-size: 14px; }
-  .nota-grab.para-editor { border-left-color: var(--azul); }
+  .nota-grab.privada { border-left-color: var(--negro); background: #F1F1EE; }
   .nota-grab .nota-texto p { margin: 0 0 4px; }
   .nota-grab .nota-enlace { overflow-wrap: anywhere; margin-bottom: 2px; }
   .nota-pie { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -326,6 +326,7 @@ function ane_pod_estilo(): void
                 border: 1px solid var(--linea); background: #fff; color: var(--gris); padding: 2px 7px; cursor: pointer; }
   .chip-boton.si { border-color: var(--azul); color: var(--profundo); background: #EDF2FC; }
   .chip-boton.peligro { color: var(--rojo); border-color: #E9B8B4; }
+  .chip-boton.privada { border-color: var(--negro); color: var(--negro); }
   .bloque.notas .min { color: #B08A00; }
   .bloque[hidden] { display: none; }   /* si no, el display:grid de .bloque gana al atributo */
 

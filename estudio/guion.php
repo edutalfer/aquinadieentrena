@@ -58,7 +58,7 @@ function ane_pod_boton_nota(int $episodio, int $bloque): void
                         placeholder="Qué hay que apuntar"></textarea>
               <input type="url" name="url" maxlength="800" placeholder="Enlace (opcional)" inputmode="url" aria-label="Enlace">
               <div class="barra" style="margin:0">
-                <label class="cas"><input type="checkbox" name="editor" value="1"> Que la vea el editor</label>
+                <label class="cas"><input type="checkbox" name="privada" value="1"> Que no la vea el editor</label>
                 <div class="acciones">
                   <span class="nota-estado" role="status"></span>
                   <button class="btn azul pequeno" type="submit">Apuntar</button>
@@ -268,7 +268,7 @@ ane_pod_cabecera('episodios');
                 if (!d.ok) { estado.textContent = d.error || 'No se ha podido guardar.'; return; }
                 var lista = document.getElementById('nb' + d.bloque) || document.getElementById('nb0');
                 lista.insertAdjacentHTML('beforeend', d.html);
-                form.texto.value = ''; form.url.value = ''; form.editor.checked = false;
+                form.texto.value = ''; form.url.value = ''; form.privada.checked = false;
                 estado.textContent = '✓ Apuntada';
                 setTimeout(function () { estado.textContent = ''; caja.open = false; }, 900);
               })

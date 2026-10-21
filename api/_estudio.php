@@ -241,14 +241,15 @@ function ane_pod_bd(): PDO
         CREATE INDEX IF NOT EXISTS i_pod_contratos ON pod_contratos (marca_id, acuerdo_id);
 
         -- Notas apuntadas mientras se graba: un texto, un enlace opcional, el
-        -- tema al que van (0 = general) y si las ve el editor (por defecto, no).
+        -- tema al que van (0 = general) y si las ve el editor (por defecto, SÍ:
+        -- se marca cuando una es solo para los socios).
         CREATE TABLE IF NOT EXISTS pod_notas (
             id          INTEGER PRIMARY KEY,
             episodio_id INTEGER NOT NULL,
             bloque_id   INTEGER NOT NULL DEFAULT 0,
             texto       TEXT    NOT NULL DEFAULT \'\',
             url         TEXT    NOT NULL DEFAULT \'\',
-            editor      INTEGER NOT NULL DEFAULT 0,
+            editor      INTEGER NOT NULL DEFAULT 1,
             autor       TEXT    NOT NULL DEFAULT \'\',
             creado      TEXT    NOT NULL
         );
@@ -318,6 +319,12 @@ function ane_pod_bd(): PDO
     ane_pod_columna($bd, 'pod_proy_marcas', 'texto', "TEXT NOT NULL DEFAULT ''");
     ane_pod_columna($bd, 'pod_menciones', 'acuerdo_id', 'INTEGER NOT NULL DEFAULT 0');
     ane_pod_proyecto_podcast($bd);
+    /* 21/10/2026: las notas las ve el editor salvo que se diga lo contrario. Las
+       apuntadas antes nacieron ocultas por la regla vieja: pasan a visibles */
+    if (!$bd->query("SELECT valor FROM ajustes WHERE clave = 'pod_notas_v2'")->fetchColumn()) {
+        $bd->exec('UPDATE pod_notas SET editor = 1');
+        $bd->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('pod_notas_v2', '1')")->execute();
+    }
     /* Los que quedaran como «idea» pasan a en marcha */
     $bd->exec("UPDATE pod_proyectos SET estado = 'abierto' WHERE estado NOT IN ('abierto', 'cerrado')");
 

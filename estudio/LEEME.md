@@ -118,8 +118,9 @@ Se guarda **sin recargar** la página, para no perder el sitio.
 
 - Las escribe `estudio/nota.php`, **solo socios**: `guion.php` lo ve el editor y
   sigue sin atender POST. Sin JavaScript, el formulario funciona igual.
-- Cada nota tiene la casilla **«que la vea el editor»**, desmarcada por
-  defecto. El editor solo recibe las marcadas, y nunca las de un tema interno.
+- **Por defecto, las notas las ve el editor.** La casilla es **«que no la vea
+  el editor»**, para lo que es solo vuestro (sale en gris, con 🔒). El editor
+  nunca ve las privadas ni las de un tema interno.
 - Al borrar un tema, sus notas pasan a las generales. El editor del episodio
   avisa de cuántas hay, para repasarlas después de grabar.
 

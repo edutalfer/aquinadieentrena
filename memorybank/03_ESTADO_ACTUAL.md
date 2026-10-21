@@ -232,8 +232,9 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   `ajustes.pod_tipos_v2`.
 - **Notas de grabación (21/10/2026, D26):** botón **«+ Nota»** junto al título
   de cada tema (y de *Bici o Cepo*; solo socios): la nota se queda en ese tema.
-  Las generales, con el de «Notas de grabación». Se guarda sin recargar. Casilla
-  «que la vea el editor», desmarcada por defecto. Las escribe
+  Las generales, con el de «Notas de grabación». Se guarda sin recargar. **El
+  editor ve todas las notas por defecto**; la casilla es «que no la vea el
+  editor», para las privadas (que salen en gris con 🔒). Las escribe
   `estudio/nota.php`; `guion.php` sigue siendo solo lectura.
 - **Agenda de marcas recogida (20/10/2026):** cada marca es una línea (estado,
   dinero firmado, acuerdos, contratos, contacto y siguiente paso) que se
