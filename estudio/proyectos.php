@@ -44,7 +44,7 @@ foreach ($proyectos as $p) {
     }
     $c = ane_pod_cuentas($porProyecto[(int) $p['id']] ?? []);
     $totales['objetivo'] += (int) $p['objetivo'];
-    $totales['gastos'] += (int) $p['gastos'];
+    $totales['gastos'] += (int) $p['gastos_cent'];   /* céntimos */
     $totales['confirmado'] += $c['confirmado'];
     $totales['negociando'] += $c['negociando'];
 }
@@ -59,7 +59,7 @@ ane_pod_cabecera('proyectos');
     <div class="cifra"><b><?= ane_pod_euros($totales['confirmado']) ?></b><span>Confirmado (proyectos vivos)</span></div>
     <div class="cifra"><b><?= ane_pod_euros($totales['negociando']) ?></b><span>En conversaciones</span></div>
     <div class="cifra"><b><?= ane_pod_euros($totales['objetivo']) ?></b><span>Objetivo</span></div>
-    <div class="cifra"><b><?= ane_pod_euros($totales['gastos']) ?></b><span>Gastos</span></div>
+    <div class="cifra"><b><?= ane_pod_euros_c($totales['gastos']) ?></b><span>Gastos</span></div>
   </div>
 
   <?php if (!$proyectos): ?>
@@ -93,7 +93,7 @@ ane_pod_cabecera('proyectos');
             <td class="n"><b><?= ane_pod_euros($c['confirmado']) ?></b></td>
             <td class="n"><?= ane_pod_euros($c['negociando']) ?></td>
             <td class="n"><?= $objetivo ? ane_pod_euros($objetivo) : '—' ?></td>
-            <td class="n"><?= (int) $p['gastos'] ? ane_pod_euros((int) $p['gastos']) : '—' ?></td>
+            <td class="n"><?= (int) $p['gastos_cent'] ? ane_pod_euros_c((int) $p['gastos_cent']) : '—' ?></td>
             <td class="n"><?= count($porProyecto[(int) $p['id']] ?? []) ?></td>
           </tr>
         </table>
@@ -103,8 +103,8 @@ ane_pod_cabecera('proyectos');
             <div style="width:<?= $pct ?>%;height:100%;background:var(--azul)"></div>
           </div>
           <p class="nota" style="margin:6px 0 0"><?= $pct ?> % del objetivo cubierto.
-            <?php if ($c['confirmado'] < (int) $p['gastos']): ?>
-              Faltan <?= ane_pod_euros((int) $p['gastos'] - $c['confirmado']) ?> para cubrir los gastos.
+            <?php if ($c['confirmado'] * 100 < (int) $p['gastos_cent']): ?>
+              Faltan <?= ane_pod_euros_c((int) $p['gastos_cent'] - $c['confirmado'] * 100) ?> para cubrir los gastos.
             <?php endif; ?></p>
         <?php endif; ?>
       </section>

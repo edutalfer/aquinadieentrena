@@ -89,16 +89,16 @@ $pid = $bd->query('SELECT nombre, id FROM pod_proyectos')->fetchAll(PDO::FETCH_K
 /* ---- Gastos: su suma es el coste de cada proyecto ---- */
 $gastos = [
     ['Cape Epic 2027', 'Inscripción', 9800, 1, 'Pareja, categoría master'],
-    ['Cape Epic 2027', 'Vuelos', 2600, 0, 'Valencia–Ciudad del Cabo, ida y vuelta, dos personas y bicis'],
+    ['Cape Epic 2027', 'Vuelos', 2612.40, 0, 'Valencia–Ciudad del Cabo, ida y vuelta, dos personas y bicis'],
     ['Cape Epic 2027', 'Alojamiento', 4200, 0, 'Casa en Stellenbosch, 10 noches'],
     ['Cape Epic 2027', 'Producción', 7500, 0, 'Cámara y editor allí toda la semana'],
     ['ANE House 2027', 'Alojamiento', 11000, 1, 'Casa en los Alpes, 12 noches'],
     ['ANE House 2027', 'Transporte', 2400, 0, 'Furgoneta de alquiler'],
     ['Mediterranean Epic', 'Inscripción', 1100, 0, ''],
 ];
-$st = $bd->prepare('INSERT INTO pod_gastos (proyecto_id, concepto, importe, pagado, nota, creado) VALUES (?,?,?,?,?,?)');
+$st = $bd->prepare('INSERT INTO pod_gastos (proyecto_id, concepto, centimos, pagado, nota, creado) VALUES (?,?,?,?,?,?)');
 foreach ($gastos as $g) {
-    $st->execute([$pid[$g[0]], $g[1], $g[2], $g[3], $g[4], $ahora]);
+    $st->execute([$pid[$g[0]], $g[1], (int) round($g[2] * 100), $g[3], $g[4], $ahora]);
 }
 /* Los acuerdos van más abajo, cuando ya existen los episodios: si no, crearían los suyos */
 

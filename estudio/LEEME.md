@@ -75,10 +75,15 @@ va el primero y no se borra. Ahí van las marcas que patrocinan episodios suelto
 ### Gastos de un proyecto
 
 Cada proyecto lleva su lista de **gastos** (`pod_gastos`): concepto («Casa»,
-«Vuelos»…), importe en euros enteros, si ya está pagado y una nota opcional. El
+«Vuelos»…), importe **con céntimos**, si ya está pagado y una nota opcional. El
 **coste del proyecto es la suma de sus gastos**: no se teclea en ningún sitio.
-`ane_pod_proyectos()` y `ane_pod_proyecto()` la traen en la columna `gastos`
-(`ANE_POD_SUMA_GASTOS`); la vieja `pod_proyectos.coste` ya no se usa. Arriba,
+`ane_pod_proyectos()` y `ane_pod_proyecto()` la traen en la columna
+`gastos_cent` (`ANE_POD_SUMA_GASTOS`); la vieja `pod_proyectos.coste` ya no se usa.
+
+⚠️ Los gastos van **en céntimos** (`pod_gastos.centimos`: 312,40 € = 31240) y
+se pintan con `ane_pod_euros_c()`; los acuerdos siguen en **euros enteros**
+(`ane_pod_euros()`). Al compararlos, multiplica los euros por 100. La columna
+`pod_gastos.importe` (euros, primera versión) ya no se usa. Arriba,
 en la ficha, salen los gastos y lo que falta para cubrirlos con lo confirmado
 (o lo que sobra). El concepto sugiere los habituales y los ya usados
 (`ANE_POD_CONCEPTOS`), pero se puede escribir cualquiera. Solo socios, como

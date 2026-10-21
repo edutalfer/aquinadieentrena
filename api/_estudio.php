@@ -225,12 +225,14 @@ function ane_pod_bd(): PDO
         CREATE INDEX IF NOT EXISTS i_pod_proy_marcas ON pod_proy_marcas (proyecto_id);
 
         -- Lo que cuesta un proyecto, partida a partida («Casa», «Vuelos»...).
-        -- La suma es el coste del proyecto. Euros enteros, como los acuerdos.
+        -- La suma es el coste del proyecto. En CÉNTIMOS (312,40 € = 31240):
+        -- «importe» (euros enteros) fue la primera versión y ya no se usa.
         CREATE TABLE IF NOT EXISTS pod_gastos (
             id          INTEGER PRIMARY KEY,
             proyecto_id INTEGER NOT NULL,
             concepto    TEXT    NOT NULL,
             importe     INTEGER NOT NULL DEFAULT 0,
+            centimos    INTEGER NOT NULL DEFAULT 0,
             pagado      INTEGER NOT NULL DEFAULT 0,
             nota        TEXT    NOT NULL DEFAULT \'\',
             creado      TEXT    NOT NULL
@@ -346,6 +348,12 @@ function ane_pod_bd(): PDO
                    FROM pod_proyectos p
                    WHERE coste > 0 AND NOT EXISTS (SELECT 1 FROM pod_gastos g WHERE g.proyecto_id = p.id)");
         $bd->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('pod_gastos_v1', '1')")->execute();
+    }
+    /* Los gastos admiten céntimos: pasan de euros enteros («importe») a céntimos */
+    ane_pod_columna($bd, 'pod_gastos', 'centimos', 'INTEGER NOT NULL DEFAULT 0');
+    if (!$bd->query("SELECT valor FROM ajustes WHERE clave = 'pod_gastos_v2'")->fetchColumn()) {
+        $bd->exec('UPDATE pod_gastos SET centimos = importe * 100 WHERE centimos = 0');
+        $bd->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('pod_gastos_v2', '1')")->execute();
     }
     /* Los que quedaran como «idea» pasan a en marcha */
     $bd->exec("UPDATE pod_proyectos SET estado = 'abierto' WHERE estado NOT IN ('abierto', 'cerrado')");
@@ -1006,9 +1014,9 @@ function ane_pod_marca(PDO $bd, int $id): ?array
     return $st->fetch() ?: null;
 }
 
-/* El coste de un proyecto es la suma de sus gastos: va en la columna «gastos»
-   (la vieja «coste» ya no se usa, ver la migración pod_gastos_v1) */
-const ANE_POD_SUMA_GASTOS = '(SELECT COALESCE(SUM(importe), 0) FROM pod_gastos g WHERE g.proyecto_id = p.id) AS gastos';
+/* El coste de un proyecto es la suma de sus gastos, EN CÉNTIMOS: va en la
+   columna «gastos_cent» (la vieja «coste» ya no se usa, ver pod_gastos_v1) */
+const ANE_POD_SUMA_GASTOS = '(SELECT COALESCE(SUM(centimos), 0) FROM pod_gastos g WHERE g.proyecto_id = p.id) AS gastos_cent';
 
 function ane_pod_proyectos(PDO $bd): array
 {
@@ -1067,13 +1075,13 @@ function ane_pod_gasto(PDO $bd, int $id): ?array
     return $st->fetch() ?: null;
 }
 
-/* Total, pagado y lo que queda por pagar */
+/* Total, pagado y lo que queda por pagar, en céntimos */
 function ane_pod_suma_gastos(array $gastos): array
 {
     $s = ['total' => 0, 'pagado' => 0, 'pendiente' => 0];
     foreach ($gastos as $g) {
-        $s['total'] += (int) $g['importe'];
-        $s[(int) $g['pagado'] ? 'pagado' : 'pendiente'] += (int) $g['importe'];
+        $s['total'] += (int) $g['centimos'];
+        $s[(int) $g['pagado'] ? 'pagado' : 'pendiente'] += (int) $g['centimos'];
     }
     return $s;
 }
@@ -1086,13 +1094,13 @@ function ane_pod_conceptos_gasto(PDO $bd): array
 }
 
 /* Lo que llega del formulario, ya limpio. El campo es numérico: llega con
-   punto decimal («312.5»). Se guardan euros enteros, redondeando */
+   punto decimal («312.4»); por si acaso, también vale la coma. En céntimos */
 function ane_pod_datos_gasto(array $post): array
 {
     $importe = str_replace(',', '.', (string) ($post['importe'] ?? '0'));
     return [
         'concepto' => ane_recorta((string) ($post['concepto'] ?? ''), 120),
-        'importe'  => max(0, min(10000000, (int) round((float) $importe))),
+        'centimos' => max(0, min(1000000000, (int) round((float) $importe * 100))),
         'pagado'   => empty($post['pagado']) ? 0 : 1,
         'nota'     => ane_recorta((string) ($post['nota'] ?? ''), 500),
     ];
@@ -1511,6 +1519,18 @@ function ane_pod_grabado(array $ep): bool
 function ane_pod_euros(int $n): string
 {
     return number_format($n, 0, ',', '.') . ' €';
+}
+
+/* Céntimos → «1.450,50 €»; si son euros redondos, sin decimales: «4.500 €» */
+function ane_pod_euros_c(int $c): string
+{
+    return number_format($c / 100, $c % 100 ? 2 : 0, ',', '.') . ' €';
+}
+
+/* Céntimos → valor para un <input type="number">: «1450.50» o «4500» */
+function ane_pod_valor_c(int $c): string
+{
+    return $c % 100 ? sprintf('%d.%02d', intdiv($c, 100), $c % 100) : (string) intdiv($c, 100);
 }
 
 function ane_pod_fecha_larga(?string $utc): string

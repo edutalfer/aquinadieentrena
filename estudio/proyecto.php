@@ -91,18 +91,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if ($g['concepto'] === '') {
                 ane_pod_vuelve_pr($id, 'mal=gasto_falta#gastos');
             }
-            $bd->prepare('INSERT INTO pod_gastos (proyecto_id, concepto, importe, pagado, nota, creado) VALUES (?, ?, ?, ?, ?, ?)')
-               ->execute([$id, $g['concepto'], $g['importe'], $g['pagado'], $g['nota'], ane_ahora()]);
+            $bd->prepare('INSERT INTO pod_gastos (proyecto_id, concepto, centimos, pagado, nota, creado) VALUES (?, ?, ?, ?, ?, ?)')
+               ->execute([$id, $g['concepto'], $g['centimos'], $g['pagado'], $g['nota'], ane_ahora()]);
             ane_pod_vuelve_pr($id, 'ok=gasto#gastos');
 
         case 'gasto_guardar':
             $g = ane_pod_gasto($bd, $fila);
             if ($g && (int) $g['proyecto_id'] === $id) {
                 $d = ane_pod_datos_gasto($_POST);
-                $bd->prepare('UPDATE pod_gastos SET concepto = ?, importe = ?, pagado = ?, nota = ? WHERE id = ?')
-                   ->execute([$d['concepto'] ?: $g['concepto'], $d['importe'], $d['pagado'], $d['nota'], $fila]);
+                $bd->prepare('UPDATE pod_gastos SET concepto = ?, centimos = ?, pagado = ?, nota = ? WHERE id = ?')
+                   ->execute([$d['concepto'] ?: $g['concepto'], $d['centimos'], $d['pagado'], $d['nota'], $fila]);
             }
-            ane_pod_vuelve_pr($id, 'ok=guardado#gastos');
+            ane_pod_vuelve_pr($id, 'ok=gasto_guardado#gastos');
 
         case 'gasto_borrar':
             $bd->prepare('DELETE FROM pod_gastos WHERE id = ? AND proyecto_id = ?')->execute([$fila, $id]);
@@ -139,7 +139,8 @@ $marcas = ane_pod_marcas($bd);
 $objetivo = (int) $pr['objetivo'];
 $gastos = ane_pod_gastos($bd, $id);
 $suma = ane_pod_suma_gastos($gastos);
-$coste = $suma['total'];
+$coste = $suma['total'];                       /* céntimos */
+$confirmadoC = $cuentas['confirmado'] * 100;   /* los acuerdos van en euros */
 
 ane_pod_cabeza('Proyecto · ' . $pr['nombre']);
 ane_pod_cabecera('proyectos');
@@ -150,7 +151,7 @@ ane_pod_cabecera('proyectos');
                        'marca' => 'Acuerdo apuntado. Si está firmado, sus episodios ya llevan la cuña.',
                        'borrado' => 'Borrado.', 'creado' => 'Proyecto creado.', 'marca_falta' => 'Falta la marca.',
                        'fijo' => '«Podcast» es fijo: no se puede borrar.',
-                       'gasto' => 'Gasto apuntado.', 'gasto_falta' => 'Falta el concepto: casa, vuelos…',
+                       'gasto' => 'Gasto apuntado.', 'gasto_guardado' => 'Gasto guardado.', 'gasto_falta' => 'Falta el concepto: casa, vuelos…',
                        'contrato' => 'Contrato guardado.', 'contrato_borrado' => 'Contrato borrado.',
                        'contrato_formato' => 'Eso no entra como contrato: tiene que ser PDF, Word (docx, doc, odt) o una foto (jpg, png), y serlo de verdad.',
                        'contrato_grande' => 'El contrato pesa demasiado: hasta 32 MB.',
@@ -170,11 +171,11 @@ ane_pod_cabecera('proyectos');
     <div class="cifra"><b><?= ane_pod_euros($cuentas['confirmado']) ?></b><span>Confirmado</span></div>
     <div class="cifra"><b><?= ane_pod_euros($cuentas['negociando']) ?></b><span>En conversaciones</span></div>
     <div class="cifra"><b><?= $objetivo ? ane_pod_euros($objetivo) : '—' ?></b><span>Objetivo</span></div>
-    <div class="cifra"><b><?= $coste ? ane_pod_euros($coste) : '—' ?></b><span>Gastos</span></div>
-    <?php if ($coste && $cuentas['confirmado'] >= $coste): ?>
-      <div class="cifra"><b><?= ane_pod_euros($cuentas['confirmado'] - $coste) ?></b><span>Sobra tras los gastos</span></div>
+    <div class="cifra"><b><?= $coste ? ane_pod_euros_c($coste) : '—' ?></b><span>Gastos</span></div>
+    <?php if ($coste && $confirmadoC >= $coste): ?>
+      <div class="cifra"><b><?= ane_pod_euros_c($confirmadoC - $coste) ?></b><span>Sobra tras los gastos</span></div>
     <?php else: ?>
-      <div class="cifra"><b><?= $coste ? ane_pod_euros($coste - $cuentas['confirmado']) : '—' ?></b>
+      <div class="cifra"><b><?= $coste ? ane_pod_euros_c($coste - $confirmadoC) : '—' ?></b>
         <span>Falta para cubrir gastos</span></div>
     <?php endif; ?>
   </div>
@@ -370,7 +371,7 @@ ane_pod_cabecera('proyectos');
         <summary>
           <span class="marca-nombre"><?= ane_h($g['concepto']) ?></span>
           <span class="marca-datos">
-            <b><?= ane_pod_euros((int) $g['importe']) ?></b>
+            <b><?= ane_pod_euros_c((int) $g['centimos']) ?></b>
             <span><?= (int) $g['pagado'] ? '✓ pagado' : 'por pagar' ?></span>
           </span>
           <?php if ($g['nota'] !== ''): ?><span class="marca-siguiente"><?= ane_h($g['nota']) ?></span><?php endif; ?>
@@ -391,7 +392,7 @@ ane_pod_cabecera('proyectos');
               <div class="campo" style="margin:0"><label>Concepto</label>
                 <input type="text" name="concepto" maxlength="120" list="conceptos" value="<?= ane_h($g['concepto']) ?>" required></div>
               <div class="campo" style="margin:0"><label>Importe (€)</label>
-                <input type="number" name="importe" min="0" step="any" inputmode="decimal" value="<?= (int) $g['importe'] ?>"></div>
+                <input type="number" name="importe" min="0" step="0.01" inputmode="decimal" value="<?= ane_pod_valor_c((int) $g['centimos']) ?>"></div>
             </div>
             <div class="campo" style="margin:12px 0 0"><label>Nota</label>
               <input type="text" name="nota" maxlength="500" value="<?= ane_h($g['nota']) ?>"
@@ -408,9 +409,9 @@ ane_pod_cabecera('proyectos');
 
     <?php if ($gastos): ?>
       <div class="gastos-total">
-        <span>Total</span><b><?= ane_pod_euros($suma['total']) ?></b>
+        <span>Total</span><b><?= ane_pod_euros_c($suma['total']) ?></b>
         <?php if ($suma['pagado'] && $suma['pendiente']): ?>
-          <span class="dom"><?= ane_pod_euros($suma['pagado']) ?> pagado · <?= ane_pod_euros($suma['pendiente']) ?> por pagar</span>
+          <span class="dom"><?= ane_pod_euros_c($suma['pagado']) ?> pagado · <?= ane_pod_euros_c($suma['pendiente']) ?> por pagar</span>
         <?php elseif ($suma['pagado']): ?>
           <span class="dom">todo pagado</span>
         <?php else: ?>
@@ -426,7 +427,7 @@ ane_pod_cabecera('proyectos');
       <div class="campo" style="margin:0"><label>Concepto</label>
         <input type="text" name="concepto" maxlength="120" list="conceptos" placeholder="Casa, vuelos…" required></div>
       <div class="campo" style="margin:0"><label>Importe (€)</label>
-        <input type="number" name="importe" min="0" step="any" inputmode="decimal" placeholder="0"></div>
+        <input type="number" name="importe" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div>
       <div class="campo" style="margin:0"><label>Nota</label>
         <input type="text" name="nota" maxlength="500" placeholder="Opcional"></div>
       <label class="cas pagado-cas"><input type="checkbox" name="pagado" value="1"> Pagado</label>
