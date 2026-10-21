@@ -72,6 +72,18 @@ avisa. Luego cada uno se puede retocar o borrar en su fila.
 El proyecto **«Podcast»** es fijo (`pod_proyectos.fijo = 1`): siempre existe,
 va el primero y no se borra. Ahí van las marcas que patrocinan episodios sueltos.
 
+### Gastos de un proyecto
+
+Cada proyecto lleva su lista de **gastos** (`pod_gastos`): concepto («Casa»,
+«Vuelos»…), importe en euros enteros, si ya está pagado y una nota opcional. El
+**coste del proyecto es la suma de sus gastos**: no se teclea en ningún sitio.
+`ane_pod_proyectos()` y `ane_pod_proyecto()` la traen en la columna `gastos`
+(`ANE_POD_SUMA_GASTOS`); la vieja `pod_proyectos.coste` ya no se usa. Arriba,
+en la ficha, salen los gastos y lo que falta para cubrirlos con lo confirmado
+(o lo que sobra). El concepto sugiere los habituales y los ya usados
+(`ANE_POD_CONCEPTOS`), pero se puede escribir cualquiera. Solo socios, como
+todo el proyecto.
+
 Reglas para que acuerdo y episodios no se descuadren (`ane_pod_sincroniza_acuerdo()`):
 
 - El acuerdo **manda** en el tipo y el texto de sus cuñas pendientes; en el
@@ -233,7 +245,8 @@ con prefijo `pod_`:
 
 `pod_usuarios` · `pod_episodios` · `pod_bloques` · `pod_enlaces` ·
 `pod_ficheros` · `pod_menciones` · `pod_marcas` · `pod_proyectos` ·
-`pod_proy_marcas` · `pod_accesos` · `pod_intentos`
+`pod_proy_marcas` · `pod_gastos` · `pod_contratos` · `pod_notas` ·
+`pod_accesos` · `pod_intentos`
 
 Las **imágenes y los archivos** no van en la base ni en el repo: viven en
 `~/datos/estudio/imagenes/` y solo salen por `estudio/fichero.php`, que mira

@@ -2,8 +2,9 @@
 /* ============================================================
    AQUÍ NADIE ENTRENA — Estudio · un proyecto
    ------------------------------------------------------------
-   Datos, presupuesto y los patrocinadores que se van sumando,
-   con su importe y lo que se les ha prometido. Solo socios.
+   Datos, presupuesto, los patrocinadores que se van sumando
+   (con su importe y lo que se les ha prometido) y los gastos,
+   cuya suma es el coste del proyecto. Solo socios.
    ============================================================ */
 
 declare(strict_types=1);
@@ -19,8 +20,8 @@ if (!$pr) {
 
 function ane_pod_vuelve_pr(int $id, string $query = ''): void
 {
-    /* Si vuelve a un acuerdo (…#a12), ese acuerdo se abre: ?abre=12 */
-    if (preg_match('/#a(\d+)$/', $query, $m)) {
+    /* Si vuelve a un acuerdo (…#a12) o a un gasto (…#g7), se abre: ?abre=a12 */
+    if (preg_match('/#([ag]\d+)$/', $query, $m)) {
         $query = substr($query, 0, -strlen($m[0])) . '&abre=' . $m[1] . $m[0];
     }
     header('Location: /estudio/proyecto.php?id=' . $id . ($query !== '' ? '&' . ltrim($query, '&') : ''), true, 303);
@@ -35,12 +36,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     switch ($accion) {
         case 'datos':
             $bd->prepare('UPDATE pod_proyectos SET nombre = ?, detalle = ?, estado = ?, descripcion = ?,
-                            objetivo = ?, coste = ?, notas = ?, actualizado = ? WHERE id = ?')
+                            objetivo = ?, notas = ?, actualizado = ? WHERE id = ?')
                ->execute([ane_recorta((string) ($_POST['nombre'] ?? ''), 160) ?: 'Proyecto sin nombre',
                           ane_recorta((string) ($_POST['detalle'] ?? ''), 160),
                           isset(ANE_POD_PROY_ESTADOS[(string) ($_POST['estado'] ?? '')]) ? (string) $_POST['estado'] : 'abierto',
                           ane_recorta((string) ($_POST['descripcion'] ?? ''), 6000),
-                          max(0, (int) ($_POST['objetivo'] ?? 0)), max(0, (int) ($_POST['coste'] ?? 0)),
+                          max(0, (int) ($_POST['objetivo'] ?? 0)),
                           ane_recorta((string) ($_POST['notas'] ?? ''), 6000), ane_ahora(), $id]);
             ane_pod_vuelve_pr($id, 'ok=guardado');
 
@@ -84,6 +85,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             }
             ane_pod_vuelve_pr($id);
 
+        /* Gastos: concepto, importe y si ya está pagado. Su suma es el coste */
+        case 'gasto_nuevo':
+            $g = ane_pod_datos_gasto($_POST);
+            if ($g['concepto'] === '') {
+                ane_pod_vuelve_pr($id, 'mal=gasto_falta#gastos');
+            }
+            $bd->prepare('INSERT INTO pod_gastos (proyecto_id, concepto, importe, pagado, nota, creado) VALUES (?, ?, ?, ?, ?, ?)')
+               ->execute([$id, $g['concepto'], $g['importe'], $g['pagado'], $g['nota'], ane_ahora()]);
+            ane_pod_vuelve_pr($id, 'ok=gasto#gastos');
+
+        case 'gasto_guardar':
+            $g = ane_pod_gasto($bd, $fila);
+            if ($g && (int) $g['proyecto_id'] === $id) {
+                $d = ane_pod_datos_gasto($_POST);
+                $bd->prepare('UPDATE pod_gastos SET concepto = ?, importe = ?, pagado = ?, nota = ? WHERE id = ?')
+                   ->execute([$d['concepto'] ?: $g['concepto'], $d['importe'], $d['pagado'], $d['nota'], $fila]);
+            }
+            ane_pod_vuelve_pr($id, 'ok=guardado#gastos');
+
+        case 'gasto_borrar':
+            $bd->prepare('DELETE FROM pod_gastos WHERE id = ? AND proyecto_id = ?')->execute([$fila, $id]);
+            ane_pod_vuelve_pr($id, 'ok=borrado#gastos');
+
         case 'marca_borrar':
             $a = ane_pod_acuerdo($bd, $fila);
             if ($a && (int) $a['proyecto_id'] === $id) {
@@ -101,6 +125,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $acuerdo) {
                 ane_pod_borra_acuerdo($bd, (int) $acuerdo);
             }
+            $bd->prepare('DELETE FROM pod_gastos WHERE proyecto_id = ?')->execute([$id]);
             $bd->prepare('DELETE FROM pod_proyectos WHERE id = ?')->execute([$id]);
             header('Location: /estudio/proyectos.php?ok=borrado', true, 303);
             exit;
@@ -112,7 +137,9 @@ $suyas = ane_pod_proyecto_marcas($bd, $id);
 $cuentas = ane_pod_cuentas($suyas);
 $marcas = ane_pod_marcas($bd);
 $objetivo = (int) $pr['objetivo'];
-$coste = (int) $pr['coste'];
+$gastos = ane_pod_gastos($bd, $id);
+$suma = ane_pod_suma_gastos($gastos);
+$coste = $suma['total'];
 
 ane_pod_cabeza('Proyecto · ' . $pr['nombre']);
 ane_pod_cabecera('proyectos');
@@ -123,6 +150,7 @@ ane_pod_cabecera('proyectos');
                        'marca' => 'Acuerdo apuntado. Si está firmado, sus episodios ya llevan la cuña.',
                        'borrado' => 'Borrado.', 'creado' => 'Proyecto creado.', 'marca_falta' => 'Falta la marca.',
                        'fijo' => '«Podcast» es fijo: no se puede borrar.',
+                       'gasto' => 'Gasto apuntado.', 'gasto_falta' => 'Falta el concepto: casa, vuelos…',
                        'contrato' => 'Contrato guardado.', 'contrato_borrado' => 'Contrato borrado.',
                        'contrato_formato' => 'Eso no entra como contrato: tiene que ser PDF, Word (docx, doc, odt) o una foto (jpg, png), y serlo de verdad.',
                        'contrato_grande' => 'El contrato pesa demasiado: hasta 32 MB.',
@@ -142,8 +170,13 @@ ane_pod_cabecera('proyectos');
     <div class="cifra"><b><?= ane_pod_euros($cuentas['confirmado']) ?></b><span>Confirmado</span></div>
     <div class="cifra"><b><?= ane_pod_euros($cuentas['negociando']) ?></b><span>En conversaciones</span></div>
     <div class="cifra"><b><?= $objetivo ? ane_pod_euros($objetivo) : '—' ?></b><span>Objetivo</span></div>
-    <div class="cifra"><b><?= $coste ? ane_pod_euros(max(0, $coste - $cuentas['confirmado'])) : '—' ?></b>
-      <span>Falta para el coste</span></div>
+    <div class="cifra"><b><?= $coste ? ane_pod_euros($coste) : '—' ?></b><span>Gastos</span></div>
+    <?php if ($coste && $cuentas['confirmado'] >= $coste): ?>
+      <div class="cifra"><b><?= ane_pod_euros($cuentas['confirmado'] - $coste) ?></b><span>Sobra tras los gastos</span></div>
+    <?php else: ?>
+      <div class="cifra"><b><?= $coste ? ane_pod_euros($coste - $cuentas['confirmado']) : '—' ?></b>
+        <span>Falta para cubrir gastos</span></div>
+    <?php endif; ?>
   </div>
 
   <!-- ---------------- Acuerdos ---------------- -->
@@ -160,7 +193,7 @@ ane_pod_cabecera('proyectos');
         $enGuion = ane_pod_episodios_de_acuerdo($bd, $mid);
         $contratos = ane_pod_contratos($bd, 'acuerdo', $mid);
         $tipos = ane_pod_tipos_texto((string) $m['tipo']); ?>
-      <details id="a<?= $mid ?>" class="marca acuerdo<?= $firmado ? ' firmado' : '' ?>"<?= (string) ($_GET['abre'] ?? '') === (string) $mid ? ' open' : '' ?>>
+      <details id="a<?= $mid ?>" class="marca acuerdo<?= $firmado ? ' firmado' : '' ?>"<?= (string) ($_GET['abre'] ?? '') === 'a' . $mid ? ' open' : '' ?>>
         <summary>
           <span class="marca-nombre"><?= ane_h(($m['marca_nombre'] ?? '') ?: $m['marca']) ?></span>
           <?= ane_pod_chip($m['estado'], ANE_POD_PATRO_ESTADOS) ?>
@@ -315,13 +348,93 @@ ane_pod_cabecera('proyectos');
     </form>
     </details>
 
-    <?php /* Al volver de guardar (…#a12), el acuerdo tocado se abre solo */ ?>
+    <?php /* Al volver de guardar (…#a12, …#g7), el acuerdo o el gasto tocado se abre
+             solo. Espera a la página entera: los gastos van más abajo que este script */ ?>
     <script>
-      (function () {
+      document.addEventListener('DOMContentLoaded', function () {
         var d = location.hash && document.getElementById(location.hash.slice(1));
         if (d && d.tagName === 'DETAILS') { d.open = true; d.scrollIntoView(); }
-      })();
+      });
     </script>
+  </section>
+
+  <!-- ---------------- Gastos ---------------- -->
+  <section id="gastos">
+    <h2>Gastos</h2>
+    <p class="nota">Lo que cuesta el proyecto, partida a partida: casa, vuelos, inscripción… La suma es el coste
+      del proyecto y se compara con lo confirmado arriba.</p>
+    <?php if (!$gastos): ?><p class="vacio">Ningún gasto todavía.</p><?php endif; ?>
+
+    <?php foreach ($gastos as $g): $gid = (int) $g['id']; ?>
+      <details id="g<?= $gid ?>" class="marca gasto<?= (int) $g['pagado'] ? ' pagado' : '' ?>"<?= (string) ($_GET['abre'] ?? '') === 'g' . $gid ? ' open' : '' ?>>
+        <summary>
+          <span class="marca-nombre"><?= ane_h($g['concepto']) ?></span>
+          <span class="marca-datos">
+            <b><?= ane_pod_euros((int) $g['importe']) ?></b>
+            <span><?= (int) $g['pagado'] ? '✓ pagado' : 'por pagar' ?></span>
+          </span>
+          <?php if ($g['nota'] !== ''): ?><span class="marca-siguiente"><?= ane_h($g['nota']) ?></span><?php endif; ?>
+        </summary>
+        <div class="marca-cuerpo">
+          <form method="post" id="gb<?= $gid ?>" class="escondida" onsubmit="return confirm('¿Quitar este gasto?')">
+            <?= ane_pod_csrf_campo() ?>
+            <input type="hidden" name="accion" value="gasto_borrar">
+            <input type="hidden" name="id" value="<?= $id ?>">
+            <input type="hidden" name="fila" value="<?= $gid ?>">
+          </form>
+          <form method="post">
+            <?= ane_pod_csrf_campo() ?>
+            <input type="hidden" name="accion" value="gasto_guardar">
+            <input type="hidden" name="id" value="<?= $id ?>">
+            <input type="hidden" name="fila" value="<?= $gid ?>">
+            <div class="campos" style="grid-template-columns:2fr 1fr">
+              <div class="campo" style="margin:0"><label>Concepto</label>
+                <input type="text" name="concepto" maxlength="120" list="conceptos" value="<?= ane_h($g['concepto']) ?>" required></div>
+              <div class="campo" style="margin:0"><label>Importe (€)</label>
+                <input type="number" name="importe" min="0" step="any" inputmode="decimal" value="<?= (int) $g['importe'] ?>"></div>
+            </div>
+            <div class="campo" style="margin:12px 0 0"><label>Nota</label>
+              <input type="text" name="nota" maxlength="500" value="<?= ane_h($g['nota']) ?>"
+                     placeholder="Opcional: qué es, dónde, cuántas noches…"></div>
+            <label class="cas pagado-cas"><input type="checkbox" name="pagado" value="1"<?= (int) $g['pagado'] ? ' checked' : '' ?>> Ya está pagado</label>
+            <div class="acciones" style="margin-top:10px">
+              <button class="btn pequeno" type="submit">Guardar</button>
+              <button class="btn peligro pequeno" type="submit" form="gb<?= $gid ?>">Quitar gasto</button>
+            </div>
+          </form>
+        </div>
+      </details>
+    <?php endforeach; ?>
+
+    <?php if ($gastos): ?>
+      <div class="gastos-total">
+        <span>Total</span><b><?= ane_pod_euros($suma['total']) ?></b>
+        <?php if ($suma['pagado'] && $suma['pendiente']): ?>
+          <span class="dom"><?= ane_pod_euros($suma['pagado']) ?> pagado · <?= ane_pod_euros($suma['pendiente']) ?> por pagar</span>
+        <?php elseif ($suma['pagado']): ?>
+          <span class="dom">todo pagado</span>
+        <?php else: ?>
+          <span class="dom">nada pagado aún</span>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
+    <form method="post" class="gasto-nuevo">
+      <?= ane_pod_csrf_campo() ?>
+      <input type="hidden" name="accion" value="gasto_nuevo">
+      <input type="hidden" name="id" value="<?= $id ?>">
+      <div class="campo" style="margin:0"><label>Concepto</label>
+        <input type="text" name="concepto" maxlength="120" list="conceptos" placeholder="Casa, vuelos…" required></div>
+      <div class="campo" style="margin:0"><label>Importe (€)</label>
+        <input type="number" name="importe" min="0" step="any" inputmode="decimal" placeholder="0"></div>
+      <div class="campo" style="margin:0"><label>Nota</label>
+        <input type="text" name="nota" maxlength="500" placeholder="Opcional"></div>
+      <label class="cas pagado-cas"><input type="checkbox" name="pagado" value="1"> Pagado</label>
+      <button class="btn azul" type="submit">+ Añadir gasto</button>
+    </form>
+    <datalist id="conceptos">
+      <?php foreach (ane_pod_conceptos_gasto($bd) as $c): ?><option value="<?= ane_h($c) ?>"><?php endforeach; ?>
+    </datalist>
   </section>
 
   <!-- ---------------- Datos ---------------- -->
@@ -344,8 +457,6 @@ ane_pod_cabecera('proyectos');
           </select></div>
         <div class="campo" style="margin:0"><label>Objetivo (€)</label>
           <input type="number" name="objetivo" min="0" step="100" value="<?= $objetivo ?>"></div>
-        <div class="campo" style="margin:0"><label>Coste previsto (€)</label>
-          <input type="number" name="coste" min="0" step="100" value="<?= $coste ?>"></div>
       </div>
       <div class="campo" style="margin:14px 0"><label>Qué es</label>
         <textarea name="descripcion" maxlength="6000" style="min-height:70px"><?= ane_h($pr['descripcion']) ?></textarea></div>
@@ -358,7 +469,7 @@ ane_pod_cabecera('proyectos');
   <?php if (!(int) $pr['fijo']): ?>
   <section>
     <h2>Borrar el proyecto</h2>
-    <p class="nota">Se va con sus acuerdos. Las cuñas pendientes salen de los episodios; las hechas se quedan.</p>
+    <p class="nota">Se va con sus acuerdos y sus gastos. Las cuñas pendientes salen de los episodios; las hechas se quedan.</p>
     <form method="post" onsubmit="return confirm('¿Borrar el proyecto?')">
       <?= ane_pod_csrf_campo() ?>
       <input type="hidden" name="accion" value="borrar">

@@ -16,13 +16,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if (($_POST['accion'] ?? '') === 'crear') {
         $ahora = ane_ahora();
         $orden = (int) $bd->query('SELECT COALESCE(MAX(orden), 0) + 10 FROM pod_proyectos')->fetchColumn();
-        $bd->prepare('INSERT INTO pod_proyectos (nombre, detalle, estado, objetivo, coste, orden, creado, actualizado)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        $bd->prepare('INSERT INTO pod_proyectos (nombre, detalle, estado, objetivo, orden, creado, actualizado)
+                      VALUES (?, ?, ?, ?, ?, ?, ?)')
            ->execute([ane_recorta((string) ($_POST['nombre'] ?? ''), 160) ?: 'Proyecto sin nombre',
                       ane_recorta((string) ($_POST['detalle'] ?? ''), 160), 'abierto',
-                      max(0, (int) ($_POST['objetivo'] ?? 0)), max(0, (int) ($_POST['coste'] ?? 0)),
+                      max(0, (int) ($_POST['objetivo'] ?? 0)),
                       $orden, $ahora, $ahora]);
-        header('Location: /estudio/proyecto.php?id=' . (int) $bd->lastInsertId() . '&ok=creado', true, 303);
+        header('Location: /estudio/proyecto.php?id=' . (int) $bd->lastInsertId() . '&ok=creado#gastos', true, 303);
         exit;
     }
     header('Location: /estudio/proyectos.php', true, 303);
@@ -37,14 +37,14 @@ foreach ($bd->query('SELECT proyecto_id, estado, importe FROM pod_proy_marcas') 
     $porProyecto[(int) $f['proyecto_id']][] = $f;
 }
 
-$totales = ['objetivo' => 0, 'coste' => 0, 'confirmado' => 0, 'negociando' => 0];
+$totales = ['objetivo' => 0, 'gastos' => 0, 'confirmado' => 0, 'negociando' => 0];
 foreach ($proyectos as $p) {
     if ($p['estado'] === 'cerrado') {
         continue;
     }
     $c = ane_pod_cuentas($porProyecto[(int) $p['id']] ?? []);
     $totales['objetivo'] += (int) $p['objetivo'];
-    $totales['coste'] += (int) $p['coste'];
+    $totales['gastos'] += (int) $p['gastos'];
     $totales['confirmado'] += $c['confirmado'];
     $totales['negociando'] += $c['negociando'];
 }
@@ -59,7 +59,7 @@ ane_pod_cabecera('proyectos');
     <div class="cifra"><b><?= ane_pod_euros($totales['confirmado']) ?></b><span>Confirmado (proyectos vivos)</span></div>
     <div class="cifra"><b><?= ane_pod_euros($totales['negociando']) ?></b><span>En conversaciones</span></div>
     <div class="cifra"><b><?= ane_pod_euros($totales['objetivo']) ?></b><span>Objetivo</span></div>
-    <div class="cifra"><b><?= ane_pod_euros($totales['coste']) ?></b><span>Coste previsto</span></div>
+    <div class="cifra"><b><?= ane_pod_euros($totales['gastos']) ?></b><span>Gastos</span></div>
   </div>
 
   <?php if (!$proyectos): ?>
@@ -87,13 +87,13 @@ ane_pod_cabecera('proyectos');
         <table>
           <tr>
             <th class="n">Confirmado</th><th class="n">Negociando</th><th class="n">Objetivo</th>
-            <th class="n">Coste</th><th class="n">Marcas</th>
+            <th class="n">Gastos</th><th class="n">Marcas</th>
           </tr>
           <tr>
             <td class="n"><b><?= ane_pod_euros($c['confirmado']) ?></b></td>
             <td class="n"><?= ane_pod_euros($c['negociando']) ?></td>
             <td class="n"><?= $objetivo ? ane_pod_euros($objetivo) : '—' ?></td>
-            <td class="n"><?= (int) $p['coste'] ? ane_pod_euros((int) $p['coste']) : '—' ?></td>
+            <td class="n"><?= (int) $p['gastos'] ? ane_pod_euros((int) $p['gastos']) : '—' ?></td>
             <td class="n"><?= count($porProyecto[(int) $p['id']] ?? []) ?></td>
           </tr>
         </table>
@@ -103,8 +103,8 @@ ane_pod_cabecera('proyectos');
             <div style="width:<?= $pct ?>%;height:100%;background:var(--azul)"></div>
           </div>
           <p class="nota" style="margin:6px 0 0"><?= $pct ?> % del objetivo cubierto.
-            <?php if ($c['confirmado'] < (int) $p['coste']): ?>
-              Faltan <?= ane_pod_euros((int) $p['coste'] - $c['confirmado']) ?> para cubrir el coste.
+            <?php if ($c['confirmado'] < (int) $p['gastos']): ?>
+              Faltan <?= ane_pod_euros((int) $p['gastos'] - $c['confirmado']) ?> para cubrir los gastos.
             <?php endif; ?></p>
         <?php endif; ?>
       </section>
@@ -123,9 +123,8 @@ ane_pod_cabecera('proyectos');
           <input type="text" name="detalle" maxlength="160" placeholder="Marzo 2027 · Sudáfrica"></div>
         <div class="campo" style="margin:0"><label>Objetivo (€)</label>
           <input type="number" name="objetivo" min="0" step="100" value="0"></div>
-        <div class="campo" style="margin:0"><label>Coste previsto (€)</label>
-          <input type="number" name="coste" min="0" step="100" value="0"></div>
       </div>
+      <p class="nota" style="margin:12px 0 0">Los gastos (casa, vuelos…) se apuntan dentro del proyecto: su suma es el coste.</p>
       <p><button class="btn azul" type="submit">Crear proyecto</button></p>
     </form>
   </section>

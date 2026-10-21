@@ -32,7 +32,7 @@ require dirname(__DIR__) . '/api/_estudio.php';
 
 $bd = ane_pod_bd();
 foreach (['pod_accesos', 'pod_menciones', 'pod_ficheros', 'pod_enlaces', 'pod_bloques', 'pod_episodios',
-          'pod_proy_marcas', 'pod_proyectos', 'pod_marcas', 'pod_usuarios'] as $t) {
+          'pod_proy_marcas', 'pod_gastos', 'pod_proyectos', 'pod_marcas', 'pod_usuarios'] as $t) {
     $bd->exec("DELETE FROM $t");
 }
 foreach (glob(ane_pod_carpeta_imagenes() . '/*') ?: [] as $f) {
@@ -72,19 +72,34 @@ $mid = $bd->query('SELECT nombre, id FROM pod_marcas')->fetchAll(PDO::FETCH_KEY_
 
 /* ---- Proyectos ---- */
 $proyectos = [
-    ['Cape Epic 2027', 'Marzo 2027 · Sudáfrica', 'abierto', 32000, 28000, 10,
+    ['Cape Epic 2027', 'Marzo 2027 · Sudáfrica', 'abierto', 32000, 10,
      'Ocho etapas con Eduardo y Cristóbal. Episodio diario post etapa y vlogs sueltos.'],
-    ['ANE House 2027', 'Julio 2027 · Tour de Francia', 'abierto', 24000, 19000, 20,
+    ['ANE House 2027', 'Julio 2027 · Tour de Francia', 'abierto', 24000, 20,
      'Casa en el Tour: episodio post etapa con invitados y vlogs.'],
-    ['Mediterranean Epic', 'Febrero 2027 · Castellón', 'abierto', 6000, 4500, 30, ''],
+    ['Mediterranean Epic', 'Febrero 2027 · Castellón', 'abierto', 6000, 30, ''],
 ];
-$st = $bd->prepare('INSERT INTO pod_proyectos (nombre, detalle, estado, objetivo, coste, orden, descripcion, creado, actualizado)
-                    VALUES (?,?,?,?,?,?,?,?,?)');
+$st = $bd->prepare('INSERT INTO pod_proyectos (nombre, detalle, estado, objetivo, orden, descripcion, creado, actualizado)
+                    VALUES (?,?,?,?,?,?,?,?)');
 foreach ($proyectos as $p) {
     $st->execute(array_merge($p, [$ahora, $ahora]));
 }
 $podcast = ane_pod_proyecto_podcast($bd);   /* el fijo: lo borró el DELETE de arriba y vuelve */
 $pid = $bd->query('SELECT nombre, id FROM pod_proyectos')->fetchAll(PDO::FETCH_KEY_PAIR);
+
+/* ---- Gastos: su suma es el coste de cada proyecto ---- */
+$gastos = [
+    ['Cape Epic 2027', 'Inscripción', 9800, 1, 'Pareja, categoría master'],
+    ['Cape Epic 2027', 'Vuelos', 2600, 0, 'Valencia–Ciudad del Cabo, ida y vuelta, dos personas y bicis'],
+    ['Cape Epic 2027', 'Alojamiento', 4200, 0, 'Casa en Stellenbosch, 10 noches'],
+    ['Cape Epic 2027', 'Producción', 7500, 0, 'Cámara y editor allí toda la semana'],
+    ['ANE House 2027', 'Alojamiento', 11000, 1, 'Casa en los Alpes, 12 noches'],
+    ['ANE House 2027', 'Transporte', 2400, 0, 'Furgoneta de alquiler'],
+    ['Mediterranean Epic', 'Inscripción', 1100, 0, ''],
+];
+$st = $bd->prepare('INSERT INTO pod_gastos (proyecto_id, concepto, importe, pagado, nota, creado) VALUES (?,?,?,?,?,?)');
+foreach ($gastos as $g) {
+    $st->execute([$pid[$g[0]], $g[1], $g[2], $g[3], $g[4], $ahora]);
+}
 /* Los acuerdos van más abajo, cuando ya existen los episodios: si no, crearían los suyos */
 
 /* ---- Episodios ---- */

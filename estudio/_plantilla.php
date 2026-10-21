@@ -145,7 +145,8 @@ function ane_pod_estilo(): void
   .barra { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
   .cifra { background: #fff; border: 2px solid var(--negro); padding: 14px 16px; }
-  .cifra b { display: block; font: 900 italic 34px/1 "Archivo", sans-serif; }
+  /* La cifra no se parte («13.551 €» en una línea): con cinco en fila, encoge */
+  .cifra b { display: block; font: 900 italic clamp(22px, 2.3vw, 34px)/1 "Archivo", sans-serif; white-space: nowrap; }
   .cifra span { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--gris); }
   .dos { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; align-items: start; }
   @media (max-width: 900px) { .dos { grid-template-columns: 1fr; } }
@@ -317,6 +318,22 @@ function ane_pod_estilo(): void
   details.acuerdo.firmado { border-left-color: var(--verde); }
   .marca-cuerpo { padding: 4px 16px 16px; border-top: 1px solid var(--linea); padding-top: 14px; }
 
+  /* ---- Gastos de un proyecto: misma ficha plegable que las marcas ---- */
+  details.gasto > summary { padding-top: 9px; padding-bottom: 9px; }
+  details.gasto .marca-nombre { font-size: 15px; }
+  details.gasto.pagado .marca-datos span { color: #1E7A46; }
+  label.pagado-cas { display: inline-flex; gap: 6px; align-items: center; margin: 12px 0 0; font-size: 14px;
+                     font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--negro); }
+  label.pagado-cas input { width: auto; margin: 0; }
+  .gastos-total { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: flex-end;
+                  border-top: 2px solid var(--negro); padding: 10px 16px 0; margin-top: 4px; }
+  .gastos-total > span:first-child { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .gastos-total b { font: 900 italic 24px/1 "Archivo", sans-serif; }
+  .gasto-nuevo { display: grid; grid-template-columns: 2fr 1fr 2fr auto auto; gap: 10px 12px; align-items: end;
+                 margin-top: 16px; border: 1px dashed var(--linea); padding: 14px 16px; }
+  .gasto-nuevo label.pagado-cas { margin: 0 0 10px; }
+  @media (max-width: 900px) { .gasto-nuevo { grid-template-columns: 1fr 1fr; } }
+
   /* ---- Notas de grabación ---- */
   .notas-grab { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
   .notas-grab:empty { display: none; }
@@ -449,6 +466,9 @@ function ane_pod_estilo(): void
     .contratos li { flex-direction: column; align-items: flex-start; }
     .marca-datos { margin-left: 22px; flex: 1 1 100%; }
     .marca-cuerpo { padding: 12px 12px 14px; }
+    .gasto-nuevo { grid-template-columns: 1fr; padding: 12px; }
+    .gasto-nuevo label.pagado-cas { margin: 0; }
+    .gastos-total { justify-content: space-between; padding: 10px 2px 0; }
     .archivos li input[type=text] { flex: 1 1 100%; }
     .archivos li form { flex: 1 1 100%; }
 

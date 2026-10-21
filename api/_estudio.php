@@ -224,6 +224,19 @@ function ane_pod_bd(): PDO
         );
         CREATE INDEX IF NOT EXISTS i_pod_proy_marcas ON pod_proy_marcas (proyecto_id);
 
+        -- Lo que cuesta un proyecto, partida a partida («Casa», «Vuelos»...).
+        -- La suma es el coste del proyecto. Euros enteros, como los acuerdos.
+        CREATE TABLE IF NOT EXISTS pod_gastos (
+            id          INTEGER PRIMARY KEY,
+            proyecto_id INTEGER NOT NULL,
+            concepto    TEXT    NOT NULL,
+            importe     INTEGER NOT NULL DEFAULT 0,
+            pagado      INTEGER NOT NULL DEFAULT 0,
+            nota        TEXT    NOT NULL DEFAULT \'\',
+            creado      TEXT    NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS i_pod_gastos ON pod_gastos (proyecto_id);
+
         -- Contratos firmados con las marcas. Van colgados de la marca y, si se
         -- sabe, del acuerdo. Fichero en ~/datos/estudio/contratos/ (fuera del
         -- repo y del docroot) y SOLO para socios: los sirve estudio/contrato.php.
@@ -324,6 +337,15 @@ function ane_pod_bd(): PDO
     if (!$bd->query("SELECT valor FROM ajustes WHERE clave = 'pod_notas_v2'")->fetchColumn()) {
         $bd->exec('UPDATE pod_notas SET editor = 1');
         $bd->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('pod_notas_v2', '1')")->execute();
+    }
+    /* 21/10/2026: el coste del proyecto sale de sus gastos (D27). El «coste
+       previsto» que se tecleaba a mano entra como primer gasto, sin desglosar */
+    if (!$bd->query("SELECT valor FROM ajustes WHERE clave = 'pod_gastos_v1'")->fetchColumn()) {
+        $bd->exec("INSERT INTO pod_gastos (proyecto_id, concepto, importe, pagado, nota, creado)
+                   SELECT id, 'Sin desglosar', coste, 0, 'El coste previsto que tenía el proyecto antes de llevar gastos', actualizado
+                   FROM pod_proyectos p
+                   WHERE coste > 0 AND NOT EXISTS (SELECT 1 FROM pod_gastos g WHERE g.proyecto_id = p.id)");
+        $bd->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('pod_gastos_v1', '1')")->execute();
     }
     /* Los que quedaran como «idea» pasan a en marcha */
     $bd->exec("UPDATE pod_proyectos SET estado = 'abierto' WHERE estado NOT IN ('abierto', 'cerrado')");
@@ -984,9 +1006,13 @@ function ane_pod_marca(PDO $bd, int $id): ?array
     return $st->fetch() ?: null;
 }
 
+/* El coste de un proyecto es la suma de sus gastos: va en la columna «gastos»
+   (la vieja «coste» ya no se usa, ver la migración pod_gastos_v1) */
+const ANE_POD_SUMA_GASTOS = '(SELECT COALESCE(SUM(importe), 0) FROM pod_gastos g WHERE g.proyecto_id = p.id) AS gastos';
+
 function ane_pod_proyectos(PDO $bd): array
 {
-    return $bd->query('SELECT * FROM pod_proyectos ORDER BY fijo DESC, orden, id')->fetchAll();
+    return $bd->query('SELECT p.*, ' . ANE_POD_SUMA_GASTOS . ' FROM pod_proyectos p ORDER BY fijo DESC, orden, id')->fetchAll();
 }
 
 /* El proyecto «Podcast» existe siempre: ahí van las marcas que patrocinan
@@ -1007,7 +1033,7 @@ function ane_pod_proyecto_podcast(PDO $bd): int
 
 function ane_pod_proyecto(PDO $bd, int $id): ?array
 {
-    $st = $bd->prepare('SELECT * FROM pod_proyectos WHERE id = ?');
+    $st = $bd->prepare('SELECT p.*, ' . ANE_POD_SUMA_GASTOS . ' FROM pod_proyectos p WHERE id = ?');
     $st->execute([$id]);
     return $st->fetch() ?: null;
 }
@@ -1019,6 +1045,57 @@ function ane_pod_proyecto_marcas(PDO $bd, int $proyecto): array
                         WHERE pm.proyecto_id = ? ORDER BY pm.id');
     $st->execute([$proyecto]);
     return $st->fetchAll();
+}
+
+/* ---------- Gastos de un proyecto ---------- */
+
+/* Ideas para el concepto: estas, más las que ya se hayan usado */
+const ANE_POD_CONCEPTOS = ['Alojamiento', 'Vuelos', 'Transporte', 'Inscripción', 'Comidas', 'Material',
+                           'Producción', 'Seguro'];
+
+function ane_pod_gastos(PDO $bd, int $proyecto): array
+{
+    $st = $bd->prepare('SELECT * FROM pod_gastos WHERE proyecto_id = ? ORDER BY id');
+    $st->execute([$proyecto]);
+    return $st->fetchAll();
+}
+
+function ane_pod_gasto(PDO $bd, int $id): ?array
+{
+    $st = $bd->prepare('SELECT * FROM pod_gastos WHERE id = ?');
+    $st->execute([$id]);
+    return $st->fetch() ?: null;
+}
+
+/* Total, pagado y lo que queda por pagar */
+function ane_pod_suma_gastos(array $gastos): array
+{
+    $s = ['total' => 0, 'pagado' => 0, 'pendiente' => 0];
+    foreach ($gastos as $g) {
+        $s['total'] += (int) $g['importe'];
+        $s[(int) $g['pagado'] ? 'pagado' : 'pendiente'] += (int) $g['importe'];
+    }
+    return $s;
+}
+
+function ane_pod_conceptos_gasto(PDO $bd): array
+{
+    $usados = $bd->query("SELECT DISTINCT concepto FROM pod_gastos WHERE concepto <> 'Sin desglosar'
+                          ORDER BY concepto")->fetchAll(PDO::FETCH_COLUMN);
+    return array_values(array_unique(array_merge(ANE_POD_CONCEPTOS, $usados)));
+}
+
+/* Lo que llega del formulario, ya limpio. El campo es numérico: llega con
+   punto decimal («312.5»). Se guardan euros enteros, redondeando */
+function ane_pod_datos_gasto(array $post): array
+{
+    $importe = str_replace(',', '.', (string) ($post['importe'] ?? '0'));
+    return [
+        'concepto' => ane_recorta((string) ($post['concepto'] ?? ''), 120),
+        'importe'  => max(0, min(10000000, (int) round((float) $importe))),
+        'pagado'   => empty($post['pagado']) ? 0 : 1,
+        'nota'     => ane_recorta((string) ($post['nota'] ?? ''), 500),
+    ];
 }
 
 /* Confirmado + facturado = dinero que se da por hecho */
