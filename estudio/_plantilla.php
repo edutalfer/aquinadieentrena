@@ -329,16 +329,19 @@ function ane_pod_estilo(): void
   .bloque.notas .min { color: #B08A00; }
   .bloque[hidden] { display: none; }   /* si no, el display:grid de .bloque gana al atributo */
 
-  /* El botón «+ Nota»: fijo abajo a la derecha, para apuntar sin moverse del sitio */
-  details.nota-rapida { position: fixed; right: 18px; bottom: 18px; z-index: 20; max-width: calc(100vw - 36px); }
-  details.nota-rapida > summary { list-style: none; cursor: pointer; margin-left: auto; width: max-content;
-                                  background: var(--negro); color: #fff; font-weight: 700; letter-spacing: .05em;
-                                  text-transform: uppercase; font-size: 13px; padding: 12px 18px;
-                                  box-shadow: 0 4px 14px rgba(0,0,0,.25); }
-  details.nota-rapida > summary::-webkit-details-marker { display: none; }
-  details.nota-rapida[open] > summary { background: var(--azul); }
-  details.nota-rapida form { background: #fff; border: 2px solid var(--negro); padding: 14px; margin-top: 8px;
-                             width: 360px; max-width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+  /* «+ Nota» junto al título de cada tema; el formulario se abre debajo del título */
+  .bloque > div { position: relative; }
+  .bloque h3.con-nota { padding-right: 84px; }
+  details.nota-tema { margin: 0 0 8px; }
+  details.nota-tema > summary { position: absolute; top: 0; right: 0; list-style: none; cursor: pointer;
+                                font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+                                padding: 6px 10px; background: #FFF8DB; border: 1px solid #E0B400; color: #6B5300; }
+  details.nota-tema > summary::-webkit-details-marker { display: none; }
+  details.nota-tema[open] > summary { background: #E0B400; color: #fff; }
+  details.nota-tema form { display: grid; gap: 8px; background: #FFFDF2; border: 1px solid #E0B400; padding: 10px; }
+  details.nota-tema textarea { min-height: 64px; }
+  details.nota-tema .cas { font-size: 13px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--negro); margin: 0; }
+  details.nota-tema .cas input { width: auto; }
   .nota-estado { font-size: 13px; color: var(--verde); font-weight: 700; }
 
   /* ---- Lista de episodios: el que toca, resaltado; los pasados, plegados ---- */
@@ -397,9 +400,8 @@ function ane_pod_estilo(): void
     .tarjeta { grid-template-columns: 1fr; }
     .tarjeta .der { justify-items: start; text-align: left; }
     .pareja { grid-template-columns: 1fr; }
-    .mover select { flex: 1 1 100%; width: 100%; }
-    details.nota-rapida { right: 12px; bottom: 12px; }
-    details.nota-rapida form { width: calc(100vw - 24px); }   /* el texto de la opción es largo: que no empuje */
+    .mover select { flex: 1 1 100%; width: 100%; }   /* el texto de la opción es largo: que no empuje */
+    .bloque h3.con-nota { padding-right: 78px; }
     .bloque.patro { margin-left: -8px; padding-left: 8px; }
     header h1 { font-size: 24px; }
     main.caja { padding: 20px 14px 60px; }

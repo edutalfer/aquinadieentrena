@@ -37,6 +37,38 @@ $notas = ane_pod_notas($bd, $id, !$es_socio);
 
 /* Las notas de un tema (o las generales, bloque 0). Al socio siempre se le
    pinta la lista, aunque esté vacía, para que «+ Nota» tenga dónde dejarlas. */
+/* El botón «+ Nota» de un tema (bloque 0 = notas generales). Va junto al
+   título: pulsas, escribes y la nota se queda en ese tema, sin elegir nada.
+   Solo socios. */
+function ane_pod_boton_nota(int $episodio, int $bloque): void
+{
+    global $es_socio;
+    if (!$es_socio) {
+        return;
+    }
+    ?>
+          <details class="nota-tema noimprime">
+            <summary aria-label="Apuntar una nota en este tema">+ Nota</summary>
+            <form method="post" action="/estudio/nota.php" class="form-nota">
+              <?= ane_pod_csrf_campo() ?>
+              <input type="hidden" name="accion" value="nueva">
+              <input type="hidden" name="id" value="<?= $episodio ?>">
+              <input type="hidden" name="bloque" value="<?= $bloque ?>">
+              <textarea name="texto" maxlength="2000" rows="3" aria-label="Qué hay que apuntar"
+                        placeholder="Qué hay que apuntar"></textarea>
+              <input type="url" name="url" maxlength="800" placeholder="Enlace (opcional)" inputmode="url" aria-label="Enlace">
+              <div class="barra" style="margin:0">
+                <label class="cas"><input type="checkbox" name="editor" value="1"> Que la vea el editor</label>
+                <div class="acciones">
+                  <span class="nota-estado" role="status"></span>
+                  <button class="btn azul pequeno" type="submit">Apuntar</button>
+                </div>
+              </div>
+            </form>
+          </details>
+    <?php
+}
+
 function ane_pod_pinta_notas(array $lista, int $bloque): void
 {
     global $es_socio;
@@ -176,9 +208,10 @@ ane_pod_cabecera('episodios');
       <div class="bloque<?= $esCierre ? ' cierre' : ((int) $b['interno'] ? ' esinterno' : '') ?>">
         <div class="min"><?= $esCierre ? '★' : $n ?></div>
         <div>
-          <h3><?= ane_h($esCierre ? ANE_POD_CIERRE_TITULO
+          <h3<?= $es_socio ? ' class="con-nota"' : '' ?>><?= ane_h($esCierre ? ANE_POD_CIERRE_TITULO
                                   : ($b['titulo'] !== '' ? $b['titulo'] : 'Tema ' . $n)) ?>
             <?php if ((int) $b['interno']): ?> <span class="chip interno">no compartido</span><?php endif; ?></h3>
+          <?php ane_pod_boton_nota($id, $bid); ?>
           <?php $fotos = ane_pod_solo($ficheros[$bid] ?? [], 'imagen');
                 $archivos = ane_pod_solo($ficheros[$bid] ?? [], 'archivo');
                 /* En «Bici o Cepo» cada foto va con su descripción: ahí no hay texto de bloque */
@@ -189,7 +222,7 @@ ane_pod_cabecera('episodios');
           <?php ane_pod_pinta_enlaces($enlaces[$bid] ?? []); ?>
           <?php if (!$esCierre) { ane_pod_pinta_fotos($fotos); } ?>
           <?php ane_pod_pinta_archivos($archivos); ?>
-          <?php if (!$esCierre) { ane_pod_pinta_notas($notas[$bid] ?? [], $bid); } ?>
+          <?php ane_pod_pinta_notas($notas[$bid] ?? [], $bid); ?>
         </div>
       </div>
     <?php endforeach; ?>
@@ -197,9 +230,12 @@ ane_pod_cabecera('episodios');
     <?php /* Notas generales de la grabación (las de un tema van con su tema) */
       $generales = $notas[0] ?? [];
       if ($generales || $es_socio): ?>
-      <div class="bloque notas" id="notas"<?= $generales ? '' : ' hidden' ?>>
+      <div class="bloque notas" id="notas">
         <div class="min">✎</div>
-        <div><h3>Notas de grabación</h3><?php ane_pod_pinta_notas($generales, 0); ?></div>
+        <div><h3<?= $es_socio ? ' class="con-nota"' : '' ?>>Notas de grabación</h3>
+          <?php ane_pod_boton_nota($id, 0); ?>
+          <?php if (!$generales && $es_socio): ?><p class="dom noimprime" style="margin:0">Lo que no va con ningún tema.</p><?php endif; ?>
+          <?php ane_pod_pinta_notas($generales, 0); ?></div>
       </div>
     <?php endif; ?>
 
@@ -213,59 +249,31 @@ ane_pod_cabecera('episodios');
   </article>
 
   <?php if ($es_socio): ?>
-    <!-- ---- «+ Nota»: apuntar algo mientras se graba, sin perder el sitio ---- -->
-    <details class="nota-rapida noimprime" id="nota-rapida">
-      <summary aria-label="Apuntar una nota">+ Nota</summary>
-      <form method="post" action="/estudio/nota.php" id="form-nota">
-        <?= ane_pod_csrf_campo() ?>
-        <input type="hidden" name="accion" value="nueva">
-        <input type="hidden" name="id" value="<?= $id ?>">
-        <div class="campo" style="margin:0 0 8px"><label for="nota-texto">Qué hay que apuntar</label>
-          <textarea id="nota-texto" name="texto" maxlength="2000" rows="3"
-                    placeholder="Lo que se ha dicho y hay que mirar, corregir o poner en pantalla"></textarea></div>
-        <div class="campo" style="margin:0 0 8px"><label for="nota-url">Enlace (opcional)</label>
-          <input type="url" id="nota-url" name="url" maxlength="800" placeholder="https://…" inputmode="url"></div>
-        <div class="campo" style="margin:0 0 8px"><label for="nota-tema">¿De qué tema?</label>
-          <select id="nota-tema" name="bloque">
-            <option value="0">General</option>
-            <?php $k = 0; foreach ($guion as $pz): if ($pz['clase'] !== 'tema') { continue; } $k++; ?>
-              <option value="<?= (int) $pz['fila']['id'] ?>"><?= $k ?>. <?= ane_h(mb_strimwidth($pz['fila']['titulo'] !== '' ? $pz['fila']['titulo'] : 'Tema ' . $k, 0, 40, '…')) ?></option>
-            <?php endforeach; ?>
-          </select></div>
-        <div class="cas" style="margin:0 0 10px"><input type="checkbox" id="nota-editor" name="editor" value="1">
-          <label for="nota-editor">Que la vea el editor</label></div>
-        <div class="acciones">
-          <button class="btn azul" type="submit">Apuntar</button>
-          <span class="nota-estado" id="nota-estado" role="status"></span>
-        </div>
-      </form>
-    </details>
     <script>
-      /* Apuntar sin recargar: la nota aparece en su sitio y sigues leyendo donde estabas.
-         Sin JavaScript, el formulario se envía normal y vuelve al guión. */
+      /* «+ Nota» de cada tema: se guarda sin recargar, la nota aparece en su tema
+         y sigues leyendo donde estabas. Sin JavaScript, el formulario se envía
+         normal y vuelve al guión. */
       (function () {
-        var form = document.getElementById('form-nota');
-        var estado = document.getElementById('nota-estado');
-        form.addEventListener('submit', function (ev) {
-          ev.preventDefault();
-          estado.textContent = 'Guardando…';
-          fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Estudio': 'fetch' },
-                               credentials: 'same-origin' })
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-              if (!d.ok) { estado.textContent = d.error || 'No se ha podido guardar.'; return; }
-              var lista = document.getElementById('nb' + d.bloque) || document.getElementById('nb0');
-              lista.insertAdjacentHTML('beforeend', d.html);
-              var seccion = document.getElementById('notas');
-              if (seccion && d.bloque === 0) { seccion.hidden = false; }
-              form.texto.value = ''; form.url.value = ''; form.editor.checked = false;
-              estado.textContent = '✓ Apuntada';
-              setTimeout(function () { estado.textContent = ''; document.getElementById('nota-rapida').open = false; }, 900);
-            })
-            .catch(function () { estado.textContent = 'Sin conexión: no se ha guardado.'; });
-        });
-        document.getElementById('nota-rapida').addEventListener('toggle', function () {
-          if (this.open) { document.getElementById('nota-texto').focus(); }
+        document.querySelectorAll('form.form-nota').forEach(function (form) {
+          var estado = form.querySelector('.nota-estado');
+          var caja = form.closest('details');
+          caja.addEventListener('toggle', function () { if (caja.open) { form.texto.focus(); } });
+          form.addEventListener('submit', function (ev) {
+            ev.preventDefault();
+            estado.textContent = 'Guardando…';
+            fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Estudio': 'fetch' },
+                                 credentials: 'same-origin' })
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                if (!d.ok) { estado.textContent = d.error || 'No se ha podido guardar.'; return; }
+                var lista = document.getElementById('nb' + d.bloque) || document.getElementById('nb0');
+                lista.insertAdjacentHTML('beforeend', d.html);
+                form.texto.value = ''; form.url.value = ''; form.editor.checked = false;
+                estado.textContent = '✓ Apuntada';
+                setTimeout(function () { estado.textContent = ''; caja.open = false; }, 900);
+              })
+              .catch(function () { estado.textContent = 'Sin conexión: no se ha guardado.'; });
+          });
         });
       })();
     </script>

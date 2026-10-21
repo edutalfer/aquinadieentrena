@@ -46,7 +46,7 @@ if ($accion === 'nueva') {
     /* El tema, si se elige, tiene que ser de este episodio; si no, va a las generales */
     $bloque = (int) ($_POST['bloque'] ?? 0);
     if ($bloque) {
-        $st = $bd->prepare("SELECT id FROM pod_bloques WHERE id = ? AND episodio_id = ? AND tipo = 'tema'");
+        $st = $bd->prepare("SELECT id FROM pod_bloques WHERE id = ? AND episodio_id = ? AND tipo IN ('tema', 'bicicepo')");
         $st->execute([$bloque, $id]);
         $bloque = (int) $st->fetchColumn();
     }

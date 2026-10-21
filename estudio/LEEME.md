@@ -110,10 +110,11 @@ dentro del proyecto. PDF, Word (docx, doc, odt) o foto (jpg, png), hasta 32 MB,
 
 ## Notas de grabación
 
-En el guión, los socios tienen un botón **«+ Nota»** fijo en la esquina para
-apuntar mientras se graba: qué hay que apuntar, un enlace si hace falta y a qué
-tema va (o «General»). Se guarda **sin recargar** la página, para no perder el
-sitio, y la nota aparece en su tema o en «Notas de grabación», al final.
+En el guión, cada tema (y *Bici o Cepo*) tiene un botón **«+ Nota»** junto a
+su título, solo para socios: estás en ese tema, lo pulsas, escribes (y pegas un
+enlace si hace falta) y la nota **se queda en ese tema**, sin elegir nada. Lo
+que no va con ningún tema, con el «+ Nota» de «Notas de grabación», al final.
+Se guarda **sin recargar** la página, para no perder el sitio.
 
 - Las escribe `estudio/nota.php`, **solo socios**: `guion.php` lo ve el editor y
   sigue sin atender POST. Sin JavaScript, el formulario funciona igual.
