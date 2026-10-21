@@ -240,6 +240,20 @@ function ane_pod_bd(): PDO
         );
         CREATE INDEX IF NOT EXISTS i_pod_contratos ON pod_contratos (marca_id, acuerdo_id);
 
+        -- Notas apuntadas mientras se graba: un texto, un enlace opcional, el
+        -- tema al que van (0 = general) y si las ve el editor (por defecto, no).
+        CREATE TABLE IF NOT EXISTS pod_notas (
+            id          INTEGER PRIMARY KEY,
+            episodio_id INTEGER NOT NULL,
+            bloque_id   INTEGER NOT NULL DEFAULT 0,
+            texto       TEXT    NOT NULL DEFAULT \'\',
+            url         TEXT    NOT NULL DEFAULT \'\',
+            editor      INTEGER NOT NULL DEFAULT 0,
+            autor       TEXT    NOT NULL DEFAULT \'\',
+            creado      TEXT    NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS i_pod_notas ON pod_notas (episodio_id, bloque_id);
+
         -- Qué guión puede ver el editor. Sin fila aquí, no ve nada.
         CREATE TABLE IF NOT EXISTS pod_accesos (
             usuario_id  INTEGER NOT NULL,
@@ -651,6 +665,29 @@ function ane_pod_enlaces(PDO $bd, int $episodio): array
 function ane_pod_enlace(PDO $bd, int $id): ?array
 {
     $st = $bd->prepare('SELECT * FROM pod_enlaces WHERE id = ?');
+    $st->execute([$id]);
+    return $st->fetch() ?: null;
+}
+
+/* ---------- Notas de grabación ---------- */
+
+/* Las notas de un episodio, agrupadas por tema (0 = generales). Con
+   $paraEditor, solo las marcadas para él: las demás ni se leen. */
+function ane_pod_notas(PDO $bd, int $episodio, bool $paraEditor = false): array
+{
+    $st = $bd->prepare('SELECT * FROM pod_notas WHERE episodio_id = ?' . ($paraEditor ? ' AND editor = 1' : '')
+                       . ' ORDER BY id');
+    $st->execute([$episodio]);
+    $fuera = [];
+    foreach ($st->fetchAll() as $n) {
+        $fuera[(int) $n['bloque_id']][] = $n;
+    }
+    return $fuera;
+}
+
+function ane_pod_nota(PDO $bd, int $id): ?array
+{
+    $st = $bd->prepare('SELECT * FROM pod_notas WHERE id = ?');
     $st->execute([$id]);
     return $st->fetch() ?: null;
 }

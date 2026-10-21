@@ -230,6 +230,10 @@ enseñarle nada más. Ver **D21** y `estudio/LEEME.md`.
   convirtieron solos (cuña leída y mención suelta → explícito; integrada →
   integrado; producto en pantalla → product placement), marcado en
   `ajustes.pod_tipos_v2`.
+- **Notas de grabación (21/10/2026, D26):** botón **«+ Nota»** fijo en el guión
+  (solo socios): texto, enlace opcional y tema; se guarda sin recargar. Casilla
+  «que la vea el editor», desmarcada por defecto. Las escribe
+  `estudio/nota.php`; `guion.php` sigue siendo solo lectura.
 - **Agenda de marcas recogida (20/10/2026):** cada marca es una línea (estado,
   dinero firmado, acuerdos, contratos, contacto y siguiente paso) que se
   despliega al pulsar; «+ Nueva marca», plegada arriba. Fuera la **fecha del

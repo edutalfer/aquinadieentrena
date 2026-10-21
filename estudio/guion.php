@@ -32,6 +32,23 @@ if (!$ep || !ane_pod_puede_ver($bd, $yo_pod, $id)) {
 $guion = ane_pod_guion($bd, $id, !$es_socio);
 $enlaces = ane_pod_enlaces($bd, $id);
 $ficheros = ane_pod_ficheros_de($bd, $id);
+/* Notas de grabación: el editor solo recibe las marcadas para él */
+$notas = ane_pod_notas($bd, $id, !$es_socio);
+
+/* Las notas de un tema (o las generales, bloque 0). Al socio siempre se le
+   pinta la lista, aunque esté vacía, para que «+ Nota» tenga dónde dejarlas. */
+function ane_pod_pinta_notas(array $lista, int $bloque): void
+{
+    global $es_socio;
+    if (!$lista && !$es_socio) {
+        return;
+    }
+    echo '<ul class="notas-grab" id="nb' . $bloque . '">';
+    foreach ($lista as $nota) {
+        echo ane_pod_html_nota($nota);
+    }
+    echo '</ul>';
+}
 
 $ocultos = 0;
 $patrocinios = 0;
@@ -106,6 +123,10 @@ ane_pod_cabeza('Guión · ' . ane_pod_etiqueta($ep));
 ane_pod_cabecera('episodios');
 ?>
 <main class="caja">
+  <?php ane_pod_aviso(['nota' => 'Nota apuntada.', 'nota_borrada' => 'Nota borrada.',
+                       'nota_editor' => 'Cambiado quién ve la nota.',
+                       'nota_url' => 'Ese enlace no parece una dirección válida.',
+                       'nota_vacia' => 'Escribe algo o pega un enlace.']); ?>
   <div class="barra noimprime">
     <p class="nota" style="margin:0"><a href="/estudio/">← <?= $es_socio ? 'Episodios' : 'Mis guiones' ?></a></p>
     <div class="acciones">
@@ -168,9 +189,19 @@ ane_pod_cabecera('episodios');
           <?php ane_pod_pinta_enlaces($enlaces[$bid] ?? []); ?>
           <?php if (!$esCierre) { ane_pod_pinta_fotos($fotos); } ?>
           <?php ane_pod_pinta_archivos($archivos); ?>
+          <?php if (!$esCierre) { ane_pod_pinta_notas($notas[$bid] ?? [], $bid); } ?>
         </div>
       </div>
     <?php endforeach; ?>
+
+    <?php /* Notas generales de la grabación (las de un tema van con su tema) */
+      $generales = $notas[0] ?? [];
+      if ($generales || $es_socio): ?>
+      <div class="bloque notas" id="notas"<?= $generales ? '' : ' hidden' ?>>
+        <div class="min">✎</div>
+        <div><h3>Notas de grabación</h3><?php ane_pod_pinta_notas($generales, 0); ?></div>
+      </div>
+    <?php endif; ?>
 
     <?php if ($es_socio && $ep['notas'] !== ''): ?>
       <div class="bloque esinterno">
@@ -180,6 +211,65 @@ ane_pod_cabecera('episodios');
       </div>
     <?php endif; ?>
   </article>
+
+  <?php if ($es_socio): ?>
+    <!-- ---- «+ Nota»: apuntar algo mientras se graba, sin perder el sitio ---- -->
+    <details class="nota-rapida noimprime" id="nota-rapida">
+      <summary aria-label="Apuntar una nota">+ Nota</summary>
+      <form method="post" action="/estudio/nota.php" id="form-nota">
+        <?= ane_pod_csrf_campo() ?>
+        <input type="hidden" name="accion" value="nueva">
+        <input type="hidden" name="id" value="<?= $id ?>">
+        <div class="campo" style="margin:0 0 8px"><label for="nota-texto">Qué hay que apuntar</label>
+          <textarea id="nota-texto" name="texto" maxlength="2000" rows="3"
+                    placeholder="Lo que se ha dicho y hay que mirar, corregir o poner en pantalla"></textarea></div>
+        <div class="campo" style="margin:0 0 8px"><label for="nota-url">Enlace (opcional)</label>
+          <input type="url" id="nota-url" name="url" maxlength="800" placeholder="https://…" inputmode="url"></div>
+        <div class="campo" style="margin:0 0 8px"><label for="nota-tema">¿De qué tema?</label>
+          <select id="nota-tema" name="bloque">
+            <option value="0">General</option>
+            <?php $k = 0; foreach ($guion as $pz): if ($pz['clase'] !== 'tema') { continue; } $k++; ?>
+              <option value="<?= (int) $pz['fila']['id'] ?>"><?= $k ?>. <?= ane_h(mb_strimwidth($pz['fila']['titulo'] !== '' ? $pz['fila']['titulo'] : 'Tema ' . $k, 0, 40, '…')) ?></option>
+            <?php endforeach; ?>
+          </select></div>
+        <div class="cas" style="margin:0 0 10px"><input type="checkbox" id="nota-editor" name="editor" value="1">
+          <label for="nota-editor">Que la vea el editor</label></div>
+        <div class="acciones">
+          <button class="btn azul" type="submit">Apuntar</button>
+          <span class="nota-estado" id="nota-estado" role="status"></span>
+        </div>
+      </form>
+    </details>
+    <script>
+      /* Apuntar sin recargar: la nota aparece en su sitio y sigues leyendo donde estabas.
+         Sin JavaScript, el formulario se envía normal y vuelve al guión. */
+      (function () {
+        var form = document.getElementById('form-nota');
+        var estado = document.getElementById('nota-estado');
+        form.addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          estado.textContent = 'Guardando…';
+          fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Estudio': 'fetch' },
+                               credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (!d.ok) { estado.textContent = d.error || 'No se ha podido guardar.'; return; }
+              var lista = document.getElementById('nb' + d.bloque) || document.getElementById('nb0');
+              lista.insertAdjacentHTML('beforeend', d.html);
+              var seccion = document.getElementById('notas');
+              if (seccion && d.bloque === 0) { seccion.hidden = false; }
+              form.texto.value = ''; form.url.value = ''; form.editor.checked = false;
+              estado.textContent = '✓ Apuntada';
+              setTimeout(function () { estado.textContent = ''; document.getElementById('nota-rapida').open = false; }, 900);
+            })
+            .catch(function () { estado.textContent = 'Sin conexión: no se ha guardado.'; });
+        });
+        document.getElementById('nota-rapida').addEventListener('toggle', function () {
+          if (this.open) { document.getElementById('nota-texto').focus(); }
+        });
+      })();
+    </script>
+  <?php endif; ?>
 
   <?php if ($es_socio): ?>
     <p class="nota noimprime" style="margin-top:14px">

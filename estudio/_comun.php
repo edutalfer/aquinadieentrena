@@ -85,3 +85,36 @@ function ane_pod_csrf_exige(): void
         exit('Petición rechazada. Recarga la página y vuelve a intentarlo.');
     }
 }
+
+/* ---------- Una nota de grabación, pintada ----------
+   La usan guion.php (al cargar) y nota.php (al apuntar una sin recargar).
+   Los botones solo salen a los socios: el editor solo lee. */
+function ane_pod_html_nota(array $n): string
+{
+    global $es_socio;
+    $nid = (int) $n['id'];
+    $url = ane_pod_url((string) $n['url']);
+    $html = '<li class="nota-grab' . ((int) $n['editor'] ? ' para-editor' : '') . '" id="n' . $nid . '">';
+    if ((string) $n['texto'] !== '') {
+        $html .= '<div class="nota-texto">' . ane_pod_texto((string) $n['texto']) . '</div>';
+    }
+    if ($url !== '') {
+        /* Sin «https://» y recortado: en el móvil, una dirección larga dejaba la flecha sola */
+        $corto = mb_strimwidth((string) preg_replace('~^https?://(www\.)?~i', '', $url), 0, 48, '…');
+        $html .= '<div class="nota-enlace">→ <a href="' . ane_h($url) . '" target="_blank" rel="noopener noreferrer">'
+               . ane_h($corto) . '</a></div>';
+    }
+    $html .= '<div class="nota-pie"><span class="dom">' . ane_h((string) $n['autor'])
+           . ' · ' . ane_h(ane_utc_a_local((string) $n['creado'], 'j/n H:i')) . '</span>';
+    if ($es_socio) {
+        $campos = ane_pod_csrf_campo() . '<input type="hidden" name="fila" value="' . $nid . '">';
+        $html .= '<form method="post" action="/estudio/nota.php" class="enlinea noimprime">' . $campos
+               . '<input type="hidden" name="accion" value="editor">'
+               . '<button class="chip-boton' . ((int) $n['editor'] ? ' si' : '') . '" type="submit" title="Cambiar si la ve el editor">'
+               . ((int) $n['editor'] ? '✓ la ve el editor' : 'solo socios') . '</button></form>'
+               . '<form method="post" action="/estudio/nota.php" class="enlinea noimprime" onsubmit="return confirm(\'¿Borrar la nota?\')">'
+               . $campos . '<input type="hidden" name="accion" value="borrar">'
+               . '<button class="chip-boton peligro" type="submit" aria-label="Borrar la nota">✕</button></form>';
+    }
+    return $html . '</div></li>';
+}

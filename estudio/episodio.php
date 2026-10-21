@@ -63,7 +63,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 ane_pod_quita_de_acuerdo($bd, (int) $acuerdo, (int) $ep['numero']);
             }
             ane_pod_borra_ficheros($bd, 'episodio_id', $id);
-            foreach (['pod_bloques', 'pod_enlaces', 'pod_menciones'] as $t) {
+            foreach (['pod_bloques', 'pod_enlaces', 'pod_menciones', 'pod_notas'] as $t) {
                 $bd->prepare("DELETE FROM $t WHERE episodio_id = ?")->execute([$id]);
             }
             $bd->prepare('DELETE FROM pod_accesos WHERE episodio_id = ?')->execute([$id]);
@@ -118,6 +118,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if ((string) $st->fetchColumn() === 'tema') {
                 ane_pod_borra_ficheros($bd, 'bloque_id', $fila);
                 $bd->prepare('DELETE FROM pod_enlaces WHERE bloque_id = ? AND episodio_id = ?')->execute([$fila, $id]);
+                /* Sus notas de grabación no se pierden: pasan a las generales */
+                $bd->prepare('UPDATE pod_notas SET bloque_id = 0 WHERE bloque_id = ? AND episodio_id = ?')->execute([$fila, $id]);
                 $bd->prepare('DELETE FROM pod_bloques WHERE id = ? AND episodio_id = ?')->execute([$fila, $id]);
             }
             ane_pod_vuelve($id, 'ok=borrado#guion');
@@ -369,6 +371,12 @@ ane_pod_cabecera('episodios');
   <!-- ---------------- Guión: temas y patrocinios en un solo orden ---------------- -->
   <section id="guion">
     <h2>Guión</h2>
+    <?php $st = $bd->prepare('SELECT COUNT(*) FROM pod_notas WHERE episodio_id = ?');
+      $st->execute([$id]);
+      if ($nn = (int) $st->fetchColumn()): ?>
+      <div class="aviso">Hay <b><?= $nn ?> nota<?= $nn === 1 ? '' : 's' ?> de grabación</b> apuntada<?= $nn === 1 ? '' : 's' ?> en este episodio.
+        <a href="/estudio/guion.php?id=<?= $id ?>#notas">Repasarlas en el guión →</a></div>
+    <?php endif; ?>
     <p class="nota">Temas y patrocinios en el orden en que se graban: una cuña puede ir entre dos temas.
       Los <b>patrocinios</b> van en rojo. El editor ve el guión entero, cuñas incluidas, salvo los temas
       <b>internos</b> y las notas. En el texto valen

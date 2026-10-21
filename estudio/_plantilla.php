@@ -314,6 +314,33 @@ function ane_pod_estilo(): void
   details.acuerdo.firmado { border-left-color: var(--verde); }
   .marca-cuerpo { padding: 4px 16px 16px; border-top: 1px solid var(--linea); padding-top: 14px; }
 
+  /* ---- Notas de grabación ---- */
+  .notas-grab { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+  .notas-grab:empty { display: none; }
+  .nota-grab { background: #FFF8DB; border-left: 3px solid #E0B400; padding: 6px 10px; font-size: 14px; }
+  .nota-grab.para-editor { border-left-color: var(--azul); }
+  .nota-grab .nota-texto p { margin: 0 0 4px; }
+  .nota-grab .nota-enlace { overflow-wrap: anywhere; margin-bottom: 2px; }
+  .nota-pie { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip-boton { font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+                border: 1px solid var(--linea); background: #fff; color: var(--gris); padding: 2px 7px; cursor: pointer; }
+  .chip-boton.si { border-color: var(--azul); color: var(--profundo); background: #EDF2FC; }
+  .chip-boton.peligro { color: var(--rojo); border-color: #E9B8B4; }
+  .bloque.notas .min { color: #B08A00; }
+  .bloque[hidden] { display: none; }   /* si no, el display:grid de .bloque gana al atributo */
+
+  /* El botón «+ Nota»: fijo abajo a la derecha, para apuntar sin moverse del sitio */
+  details.nota-rapida { position: fixed; right: 18px; bottom: 18px; z-index: 20; max-width: calc(100vw - 36px); }
+  details.nota-rapida > summary { list-style: none; cursor: pointer; margin-left: auto; width: max-content;
+                                  background: var(--negro); color: #fff; font-weight: 700; letter-spacing: .05em;
+                                  text-transform: uppercase; font-size: 13px; padding: 12px 18px;
+                                  box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  details.nota-rapida > summary::-webkit-details-marker { display: none; }
+  details.nota-rapida[open] > summary { background: var(--azul); }
+  details.nota-rapida form { background: #fff; border: 2px solid var(--negro); padding: 14px; margin-top: 8px;
+                             width: 360px; max-width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+  .nota-estado { font-size: 13px; color: var(--verde); font-weight: 700; }
+
   /* ---- Lista de episodios: el que toca, resaltado; los pasados, plegados ---- */
   .tarjeta.siguiente { border-left-width: 6px; border-color: var(--azul); background: #EDF2FC;
                        box-shadow: 0 0 0 2px var(--azul) inset; }
@@ -370,7 +397,9 @@ function ane_pod_estilo(): void
     .tarjeta { grid-template-columns: 1fr; }
     .tarjeta .der { justify-items: start; text-align: left; }
     .pareja { grid-template-columns: 1fr; }
-    .mover select { flex: 1 1 100%; width: 100%; }   /* el texto de la opción es largo: que no empuje */
+    .mover select { flex: 1 1 100%; width: 100%; }
+    details.nota-rapida { right: 12px; bottom: 12px; }
+    details.nota-rapida form { width: calc(100vw - 24px); }   /* el texto de la opción es largo: que no empuje */
     .bloque.patro { margin-left: -8px; padding-left: 8px; }
     header h1 { font-size: 24px; }
     main.caja { padding: 20px 14px 60px; }

@@ -108,6 +108,20 @@ dentro del proyecto. PDF, Word (docx, doc, odt) o foto (jpg, png), hasta 32 MB,
 - Backup: además de `~/datos/ane.db`, las carpetas `~/datos/estudio/imagenes/`
   y `~/datos/estudio/contratos/`.
 
+## Notas de grabación
+
+En el guión, los socios tienen un botón **«+ Nota»** fijo en la esquina para
+apuntar mientras se graba: qué hay que apuntar, un enlace si hace falta y a qué
+tema va (o «General»). Se guarda **sin recargar** la página, para no perder el
+sitio, y la nota aparece en su tema o en «Notas de grabación», al final.
+
+- Las escribe `estudio/nota.php`, **solo socios**: `guion.php` lo ve el editor y
+  sigue sin atender POST. Sin JavaScript, el formulario funciona igual.
+- Cada nota tiene la casilla **«que la vea el editor»**, desmarcada por
+  defecto. El editor solo recibe las marcadas, y nunca las de un tema interno.
+- Al borrar un tema, sus notas pasan a las generales. El editor del episodio
+  avisa de cuántas hay, para repasarlas después de grabar.
+
 ## Bici o Cepo
 
 Todo episodio acaba en una sección fija, **Bici o Cepo**, que no se borra ni se
