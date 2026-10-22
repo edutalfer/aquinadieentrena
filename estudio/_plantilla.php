@@ -377,10 +377,11 @@ function ane_pod_estilo(): void
   .bloque.descartado .titulo-descartado { text-decoration: line-through; }
   .bloque.descartado form { margin-left: 4px; }
   .bloque.movido .min { color: var(--azul); }
-  /* ↑ ↓ debajo del número del tema: subirlo o bajarlo sobre la marcha */
-  .flechas { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+  /* ↑ ↓ debajo del número del tema, una al lado de la otra: subirlo o bajarlo
+     sobre la marcha */
+  .flechas { display: flex; gap: 3px; margin-top: 8px; }
   .flechas form { margin: 0; }
-  .flecha { font: 700 16px/1 "Inter", system-ui, sans-serif; width: 36px; height: 32px; padding: 0; cursor: pointer;
+  .flecha { font: 700 15px/1 "Inter", system-ui, sans-serif; width: 28px; height: 28px; padding: 0; cursor: pointer;
             border: 1px solid var(--linea); background: #fff; color: var(--profundo); }
   .flecha:hover:not(:disabled) { border-color: var(--azul); background: #EDF2FC; }
   .flecha:disabled { opacity: .25; cursor: default; }
@@ -444,7 +445,9 @@ function ane_pod_estilo(): void
   @media (max-width: 600px) {
     .guion { padding: 18px 16px; }
     .guion .cab h1 { font-size: 24px; line-height: 1; }
-    .bloque { grid-template-columns: 44px 1fr; gap: 12px; }
+    /* 52 px: lo justo para las dos flechas una al lado de la otra */
+    .bloque { grid-template-columns: 52px 1fr; gap: 10px; }
+    .flecha { width: 24px; height: 30px; }
     .bloque .min { font-size: 16px; }
     .tarjeta { grid-template-columns: 1fr; }
     .tarjeta .der { justify-items: start; text-align: left; }
@@ -454,7 +457,7 @@ function ane_pod_estilo(): void
        y botones donde cabe el dedo */
     .tema-cab { flex-wrap: wrap; }
     .tema-botones { flex-basis: 100%; justify-content: flex-start; }
-    .tema-boton { padding: 8px 12px; }
+    .tema-boton { padding: 8px 10px; }
     .bloque.patro { margin-left: -8px; padding-left: 8px; }
     header h1 { font-size: 24px; }
     main.caja { padding: 20px 14px 60px; }
