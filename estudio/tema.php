@@ -9,6 +9,7 @@
      descartar   ya no interesa: sale del guión del editor y queda
                  tachado para los socios, con «Recuperar»
      recuperar   vuelve a su sitio
+     subir/bajar un puesto en el guión (flechas junto al número)
 
    Solo socios. Con la cabecera X-Estudio: fetch responde JSON con
    lo que hay que pintar en su lugar, para no recargar y no perder
@@ -40,7 +41,7 @@ function ane_pod_tema_responde(bool $json, bool $alEditor, int $episodio, string
         exit;
     }
     header('Location: /estudio/' . ($alEditor ? 'episodio.php' : 'guion.php') . '?id=' . $episodio
-         . ($query !== '' ? '&' . $query : ''), true, 303);
+         . ($query !== '' && $query[0] !== '#' ? '&' : '') . $query, true, 303);
     exit;
 }
 
@@ -70,6 +71,11 @@ if ($accion === 'pasar') {
           . ane_h(ane_pod_etiqueta($destino)) . '</a></div></div>';
     ane_pod_tema_responde($json, $alEditor, $episodio, 'ok=pasado&a=' . (int) $destino['numero'] . ($alEditor ? '#guion' : ''),
                           ['ok' => true, 'html' => $html]);
+}
+
+if ($accion === 'subir' || $accion === 'bajar') {
+    $movido = ane_pod_sube_baja_tema($bd, $episodio, $fila, $accion === 'subir' ? 'arriba' : 'abajo');
+    ane_pod_tema_responde($json, $alEditor, $episodio, $ancla, ['ok' => true, 'movido' => $movido]);
 }
 
 if ($accion === 'descartar' || $accion === 'recuperar') {

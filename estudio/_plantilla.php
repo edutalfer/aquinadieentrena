@@ -377,6 +377,16 @@ function ane_pod_estilo(): void
   .bloque.descartado .titulo-descartado { text-decoration: line-through; }
   .bloque.descartado form { margin-left: 4px; }
   .bloque.movido .min { color: var(--azul); }
+  /* ↑ ↓ debajo del número del tema: subirlo o bajarlo sobre la marcha */
+  .flechas { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+  .flechas form { margin: 0; }
+  .flecha { font: 700 16px/1 "Inter", system-ui, sans-serif; width: 36px; height: 32px; padding: 0; cursor: pointer;
+            border: 1px solid var(--linea); background: #fff; color: var(--profundo); }
+  .flecha:hover:not(:disabled) { border-color: var(--azul); background: #EDF2FC; }
+  .flecha:disabled { opacity: .25; cursor: default; }
+  /* El tema que se acaba de mover parpadea un momento: para ver adónde ha ido */
+  @keyframes recien { from { background: #EDF2FC; } to { background: transparent; } }
+  .bloque.recien { animation: recien 1.2s ease-out; }
   details.nota-tema form { display: grid; gap: 8px; background: #FFFDF2; border: 1px solid #E0B400; padding: 10px; }
   details.nota-tema textarea { min-height: 64px; }
   details.nota-tema .cas { font-size: 13px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--negro); margin: 0; }

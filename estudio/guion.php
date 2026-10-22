@@ -68,6 +68,25 @@ function ane_pod_botones_tema(array $ep, int $bloque, bool $esTema, string $titu
     return $html . '</div>';
 }
 
+/* Las flechas ↑ ↓ de un tema, debajo de su número: sube o baja un puesto
+   sobre la marcha (salta cuñas, no descartados). Solo socios. */
+function ane_pod_flechas_tema(int $bloque): string
+{
+    global $es_socio;
+    if (!$es_socio) {
+        return '';
+    }
+    $html = '<div class="flechas noimprime">';
+    foreach (['subir' => '↑', 'bajar' => '↓'] as $accion => $flecha) {
+        $html .= '<form method="post" action="/estudio/tema.php" class="form-mover">' . ane_pod_csrf_campo()
+               . '<input type="hidden" name="accion" value="' . $accion . '">'
+               . '<input type="hidden" name="fila" value="' . $bloque . '">'
+               . '<button class="flecha" type="submit" data-hacia="' . $accion . '" aria-label="'
+               . ($accion === 'subir' ? 'Subir' : 'Bajar') . ' el tema un puesto">' . $flecha . '</button></form>';
+    }
+    return $html . '</div>';
+}
+
 /* El formulario de «+ Nota»: se abre debajo del título al pulsar el botón.
    Pulsas, escribes y la nota se queda en ese tema, sin elegir nada. */
 function ane_pod_boton_nota(int $episodio, int $bloque): void
@@ -248,7 +267,7 @@ ane_pod_cabecera('episodios');
             $n++;
         } ?>
       <div class="bloque<?= $esCierre ? ' cierre' : ' es-tema' . ((int) $b['interno'] ? ' esinterno' : '') ?>" id="b<?= $bid ?>">
-        <div class="min"><?= $esCierre ? '★' : $n ?></div>
+        <div class="min"><?php if ($esCierre): ?>★<?php else: ?><span class="num"><?= $n ?></span><?= ane_pod_flechas_tema($bid) ?><?php endif; ?></div>
         <div>
           <div class="tema-cab">
           <h3><?= ane_h($esCierre ? ANE_POD_CIERRE_TITULO
@@ -310,8 +329,55 @@ ane_pod_cabecera('episodios');
            que dice adónde fue (o tachado, con «Recuperar») y los temas que
            quedan se vuelven a numerar */
         function renumera() {
-          document.querySelectorAll('.bloque.es-tema > .min').forEach(function (m, i) { m.textContent = i + 1; });
+          document.querySelectorAll('.bloque.es-tema > .min .num').forEach(function (m, i) { m.textContent = i + 1; });
+          actualizaFlechas();
         }
+
+        /* ↑ ↓: el vecino de un tema es la primera pieza visible a su lado (tema
+           o cuña); las líneas de descartado y de «pasa al…» no cuentan. Es la
+           misma regla que aplica el servidor (ane_pod_sube_baja_tema). */
+        function cuenta(el) {
+          return el && el.classList.contains('bloque') && !el.classList.contains('descartado') &&
+                 !el.classList.contains('movido') && (el.classList.contains('es-tema') || el.classList.contains('patro'));
+        }
+        function vecino(el, hacia) {
+          var v = hacia === 'subir' ? el.previousElementSibling : el.nextElementSibling;
+          while (v && v.classList.contains('bloque') && !cuenta(v)) {
+            if (v.classList.contains('cierre')) { return null; }   /* Bici o Cepo: de ahí no se pasa */
+            v = hacia === 'subir' ? v.previousElementSibling : v.nextElementSibling;
+          }
+          return cuenta(v) ? v : null;
+        }
+        function actualizaFlechas() {
+          document.querySelectorAll('.bloque.es-tema').forEach(function (b) {
+            b.querySelectorAll('.flecha').forEach(function (f) { f.disabled = !vecino(b, f.dataset.hacia); });
+          });
+        }
+        document.querySelectorAll('form.form-mover').forEach(function (form) {
+          form.addEventListener('submit', function (ev) {
+            ev.preventDefault();
+            var bloque = form.closest('.bloque');
+            var hacia = form.querySelector('.flecha').dataset.hacia;
+            var otro = vecino(bloque, hacia);
+            if (!otro) { return; }
+            var flechas = bloque.querySelectorAll('.flecha');
+            flechas.forEach(function (f) { f.disabled = true; });
+            fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Estudio': 'fetch' },
+                                 credentials: 'same-origin' })
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                if (!d.ok) { throw new Error(); }
+                if (d.movido) {
+                  if (hacia === 'subir') { otro.before(bloque); } else { otro.after(bloque); }
+                  bloque.classList.remove('recien'); void bloque.offsetWidth; bloque.classList.add('recien');
+                  bloque.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+                renumera();
+              })
+              .catch(function () { actualizaFlechas(); alert('Sin conexión: no se ha movido.'); });
+          });
+        });
+        actualizaFlechas();
         document.querySelectorAll('form.form-tema').forEach(function (form) {
           form.addEventListener('submit', function (ev) {
             ev.preventDefault();

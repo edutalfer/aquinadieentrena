@@ -157,6 +157,14 @@ Junto a «+ Nota», cada tema lleva dos botones más (solo socios, solo temas: n
   edición sale en gris con su «Recuperar»; para quitarlo del todo, «Borrar
   tema» como siempre. `ane_pod_descarta_tema()`.
 
+Y debajo del número de cada tema, **flechas ↑ ↓** para subirlo o bajarlo un
+puesto sobre la marcha, también sin recargar. Saltan las cuñas como un puesto
+más (igual que en la página de edición) pero **no los temas descartados**: el
+tema se coloca junto a la primera pieza visible que tenga al lado
+(`ane_pod_sube_baja_tema()`; el JavaScript del guión aplica la misma regla
+para moverlo en pantalla). La ↑ del primero y la ↓ del último salen apagadas,
+y de *Bici o Cepo* no se pasa.
+
 Los escribe `estudio/tema.php`, **solo socios**, como `nota.php`.
 
 ## Bici o Cepo
@@ -181,7 +189,7 @@ archivos salen como lista de descargas.
 | `estudio/episodio.php` | Edición (solo socios): datos, temas con enlaces e imágenes, cuñas y quién lo ve |
 | `estudio/guion.php` | El guión. Lo que ve el editor de vídeo, y la hoja de grabación del socio (imprimible) |
 | `estudio/nota.php` | Notas de grabación: apuntar, borrar, quién la ve (solo socios) |
-| `estudio/tema.php` | Pasar un tema al siguiente episodio, descartarlo o recuperarlo (solo socios) |
+| `estudio/tema.php` | Desde el guión: pasar un tema al siguiente, descartarlo, recuperarlo o moverlo ↑ ↓ (solo socios) |
 | `estudio/fichero.php` | Enseña o descarga un fichero tras comprobar quién pregunta |
 | `estudio/proyectos.php` · `proyecto.php` | Proyectos, patrocinadores y presupuesto |
 | `estudio/marcas.php` | Agenda de patrocinadores: estado, siguiente paso y dónde aparece cada marca |

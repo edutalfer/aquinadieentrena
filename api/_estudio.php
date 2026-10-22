@@ -645,6 +645,38 @@ function ane_pod_pasa_tema(PDO $bd, int $bloque): ?array
     return ane_pod_episodio($bd, $destino);
 }
 
+/* Subir o bajar un tema un puesto desde el guión, en plena grabación. Como
+   ane_pod_mueve(), pero los temas descartados no cuentan: en el guión son
+   una línea tachada y saltar por encima de ella sería un toque perdido. El
+   tema se coloca justo antes (o después) de la primera pieza visible que
+   tenga al lado, sea tema o cuña. Devuelve si se ha movido. */
+function ane_pod_sube_baja_tema(PDO $bd, int $episodio, int $bloque, string $hacia): bool
+{
+    $lista = ane_pod_piezas($bd, $episodio);
+    $pos = array_search(['pod_bloques', $bloque], $lista, true);
+    if ($pos === false) {
+        return false;
+    }
+    $st = $bd->prepare('SELECT id FROM pod_bloques WHERE episodio_id = ? AND descartado = 1');
+    $st->execute([$episodio]);
+    $fuera = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    $paso = $hacia === 'arriba' ? -1 : 1;
+    for ($j = $pos + $paso; $j >= 0 && $j < count($lista); $j += $paso) {
+        if (!($lista[$j][0] === 'pod_bloques' && in_array($lista[$j][1], $fuera, true))) {
+            break;
+        }
+    }
+    if ($j < 0 || $j >= count($lista)) {
+        return false;   /* ya es el primero (o el último) */
+    }
+    $pieza = $lista[$pos];
+    array_splice($lista, $pos, 1);
+    $donde = $j > $pos ? $j - 1 : $j;   /* lo que había detrás se ha corrido un puesto */
+    array_splice($lista, $hacia === 'arriba' ? $donde : $donde + 1, 0, [$pieza]);
+    ane_pod_renumera($bd, $lista);
+    return true;
+}
+
 /* Descartar (o recuperar) un tema. No se borra nada: sale del guión del
    editor y, para los socios, queda tachado con «Recuperar». Devuelve el tema. */
 function ane_pod_descarta_tema(PDO $bd, int $bloque, bool $descartar): ?array
