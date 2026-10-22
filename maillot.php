@@ -178,7 +178,7 @@ $datosJs = [
 <link rel="apple-touch-icon" href="/assets/img/icono-180.png">
 <link rel="preload" href="/assets/fonts/archivo-black-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/estilo.css?v=20260818d">
+<link rel="stylesheet" href="/assets/css/estilo.css?v=20261022">
 <style>
   .portada--mono { padding-bottom: 46px; }
   .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--gris-carbon);
@@ -300,9 +300,7 @@ $datosJs = [
       <a href="/#episodios">Episodios</a>
       <a href="/proyectos">Proyectos</a>
       <a href="/#hosts">Quiénes somos</a>
-      <a href="/#newsletter">Newsletter</a>
-      <a href="/#cepo">Bici o cepo</a>
-      <a href="/#marcas">Marcas</a>
+      <a href="/#contacto">Contacto</a>
     </nav>
   </div>
 </header>

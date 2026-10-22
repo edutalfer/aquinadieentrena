@@ -156,7 +156,7 @@ $titulo = $form ? $form['titulo'] : 'Formulario no encontrado';
 <link rel="apple-touch-icon" href="/assets/img/icono-180.png">
 <link rel="preload" href="/assets/fonts/archivo-black-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/estilo.css?v=20260818d">
+<link rel="stylesheet" href="/assets/css/estilo.css?v=20261022">
 <style>
   body { background: var(--gris-humo); }
   .hoja { max-width: 700px; margin: 0 auto; padding: 28px 16px 70px; }

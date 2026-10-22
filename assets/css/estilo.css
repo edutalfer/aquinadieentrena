@@ -282,6 +282,8 @@ mark { background: var(--azul-destello); color: var(--negro); padding: 0 2px; }
 /* ---------- Secciones ---------- */
 
 .seccion { padding: 76px 0; }
+/* La cabecera es pegajosa: que el ancla del menu no se coma el titular */
+section[id] { scroll-margin-top: 120px; }
 .seccion--humo { background: var(--gris-humo); }
 .seccion--oscura { background: var(--negro); color: var(--blanco); }
 
@@ -424,6 +426,12 @@ mark { background: var(--azul-destello); color: var(--negro); padding: 0 2px; }
 .boletin iframe { width: 100%; border: 0; background: transparent; }
 
 @media (max-width: 860px) { .boletin { grid-template-columns: 1fr; gap: 26px; } }
+
+/* Panel de la newsletter dentro de la seccion de contacto */
+.boletin--panel { background: var(--negro); color: var(--blanco); padding: 40px 36px; margin: 28px 0 0; }
+.boletin--panel h2 { font-size: clamp(30px, 4vw, 44px); }
+
+@media (max-width: 720px) { .boletin--panel { padding: 28px 22px; } }
 
 /* ---------- Bici o cepo · código de color del manual ----------
    BICI  = fondo Azul ANE, tipografía blanca

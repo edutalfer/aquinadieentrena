@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="assets/img/icono-180.png">
 <link rel="preload" href="assets/fonts/archivo-black-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/estilo.css?v=20260818d">
+<link rel="stylesheet" href="assets/css/estilo.css?v=20261022">
 </head>
 <body>
 
@@ -26,9 +26,7 @@
       <a href="#episodios">Episodios</a>
       <a href="/proyectos">Proyectos</a>
       <a href="#hosts">Quiénes somos</a>
-      <a href="#newsletter">Newsletter</a>
-      <a href="#cepo">Bici o cepo</a>
-      <a href="#marcas">Marcas</a>
+      <a href="#contacto">Contacto</a>
     </nav>
   </div>
 </header>
@@ -123,38 +121,15 @@
     </div>
   </section>
 
-  <!-- ══════════ NEWSLETTER ══════════ -->
-  <section class="seccion seccion--oscura" id="newsletter">
-    <div class="envoltorio boletin">
-      <div>
-        <h2 class="display">La <em>newsletter</em> del podcast</h2>
-        <p>Cada semana: los enlaces del episodio, las ofertas que encontramos y lo que no
-           nos ha cabido en el vídeo.</p>
-        <p>Sin spam. Un correo por episodio.</p>
-      </div>
-      <div>
-        <!-- Formulario de beehiiv. Dos cosas importantes, ver 02_DECISIONES.md:
-             1) NO usar el loader v3 (script): inyecta la iframe en un contenedor
-                con height:0 y nunca llega su postMessage de altura, asi que no se ve nada.
-             2) La URL tiene que ser la del endpoint /v3/forms/: la URL corta antigua
-                sirve una version cacheada con el texto de consentimiento en ingles. -->
-        <iframe src="https://subscribe-forms.beehiiv.com/v3/forms/2c6b1dc0-a3fc-4f18-961f-430e010e6b6a?referrer=https%3A%2F%2Faquinadieentrena.cc%2F"
-                title="Suscríbete a la newsletter de Aquí Nadie Entrena"
-                loading="lazy" frameborder="0" scrolling="no"
-                style="width:100%;height:280px;margin:0;border:0;border-radius:0;background:transparent"></iframe>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ BICI O CEPO + MARCAS ══════════ -->
-  <section class="seccion" id="cepo">
+  <!-- ══════════ CONTACTO: los dos buzones y la newsletter ══════════ -->
+  <section class="seccion" id="contacto">
     <div class="envoltorio">
       <div class="rotulo">
-        <h2 class="display">Manda algo</h2>
-        <span class="rotulo__num">Dos buzones, dos motivos distintos</span>
+        <h2 class="display">Contacto</h2>
+        <span class="rotulo__num">Dos buzones y una newsletter</span>
       </div>
       <div class="acciones">
-        <div class="accion accion--bici">
+        <div class="accion accion--bici" id="cepo">
           <p class="accion__etiqueta">Sección fija</p>
           <h3 class="display">¿Bici o cepo?</h3>
           <p>Mándanos una foto de tu montaje y lo juzgamos en directo. Sin piedad y sin
@@ -169,6 +144,26 @@
              y qué no.</p>
           <p><a href="/proyectos" style="color:var(--azul-enlace);font-weight:600">Mira nuestros proyectos y sus cifras →</a></p>
           <a class="boton" href="mailto:hola@aquinadieentrena.cc?subject=Propuesta%20de%20colaboraci%C3%B3n">Enviar propuesta</a>
+        </div>
+      </div>
+
+      <div class="boletin boletin--panel" id="newsletter">
+        <div>
+          <h2 class="display">La <em>newsletter</em> del podcast</h2>
+          <p>Cada semana: los enlaces del episodio, las ofertas que encontramos y lo que no
+             nos ha cabido en el vídeo.</p>
+          <p>Sin spam. Un correo por episodio.</p>
+        </div>
+        <div>
+          <!-- Formulario de beehiiv. Dos cosas importantes, ver 02_DECISIONES.md:
+               1) NO usar el loader v3 (script): inyecta la iframe en un contenedor
+                  con height:0 y nunca llega su postMessage de altura, asi que no se ve nada.
+               2) La URL tiene que ser la del endpoint /v3/forms/: la URL corta antigua
+                  sirve una version cacheada con el texto de consentimiento en ingles. -->
+          <iframe src="https://subscribe-forms.beehiiv.com/v3/forms/2c6b1dc0-a3fc-4f18-961f-430e010e6b6a?referrer=https%3A%2F%2Faquinadieentrena.cc%2F"
+                  title="Suscríbete a la newsletter de Aquí Nadie Entrena"
+                  loading="lazy" frameborder="0" scrolling="no"
+                  style="width:100%;height:280px;margin:0;border:0;border-radius:0;background:transparent"></iframe>
         </div>
       </div>
     </div>
