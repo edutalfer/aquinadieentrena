@@ -128,6 +128,17 @@ function ane_pod_html_nota(array $n): string
                . '<input type="hidden" name="accion" value="editor">'
                . '<button class="chip-boton' . ((int) $n['editor'] ? ' si' : ' privada') . '" type="submit" title="Cambiar si la ve el editor">'
                . ((int) $n['editor'] ? '✓ la ve el editor' : '🔒 solo nosotros') . '</button></form>'
+               /* Editarla ahí mismo: texto y enlace. Se abre debajo, en su propia línea */
+               . '<details class="editar-nota noimprime"><summary class="chip-boton">✎ Editar</summary>'
+               . '<form method="post" action="/estudio/nota.php" class="form-editar-nota">' . $campos
+               . '<input type="hidden" name="accion" value="editar">'
+               . '<textarea name="texto" maxlength="2000" rows="3" aria-label="Texto de la nota">' . ane_h((string) $n['texto']) . '</textarea>'
+               . '<input type="url" name="url" maxlength="800" value="' . ane_h((string) $n['url']) . '"'
+               . ' placeholder="Enlace (opcional)" inputmode="url" aria-label="Enlace">'
+               . '<div class="acciones"><span class="nota-estado" role="status"></span>'
+               . '<button class="btn claro pequeno cancelar" type="button">Cancelar</button>'
+               . '<button class="btn azul pequeno" type="submit">Guardar</button></div>'
+               . '</form></details>'
                . '<form method="post" action="/estudio/nota.php" class="enlinea noimprime" onsubmit="return confirm(\'¿Borrar la nota?\')">'
                . $campos . '<input type="hidden" name="accion" value="borrar">'
                . '<button class="chip-boton peligro" type="submit" aria-label="Borrar la nota">✕</button></form>';

@@ -138,6 +138,9 @@ Se guarda **sin recargar** la página, para no perder el sitio.
 - **Por defecto, las notas las ve el editor.** La casilla es **«que no la vea
   el editor»**, para lo que es solo vuestro (sale en gris, con 🔒). El editor
   nunca ve las privadas ni las de un tema interno.
+- **«✎ Editar»** en cada nota: cambia el texto o el enlace ahí mismo, sin
+  recargar (también en una recién apuntada). Mismas reglas que al apuntarla:
+  el enlace tiene que ser válido y vacía no se queda (para eso, la ✕).
 - Al borrar un tema, sus notas pasan a las generales. El editor del episodio
   avisa de cuántas hay, para repasarlas después de grabar.
 
@@ -188,7 +191,7 @@ archivos salen como lista de descargas.
 | `estudio/index.php` | Episodios (socio) · Mis guiones (invitado) |
 | `estudio/episodio.php` | Edición (solo socios): datos, temas con enlaces e imágenes, cuñas y quién lo ve |
 | `estudio/guion.php` | El guión. Lo que ve el editor de vídeo, y la hoja de grabación del socio (imprimible) |
-| `estudio/nota.php` | Notas de grabación: apuntar, borrar, quién la ve (solo socios) |
+| `estudio/nota.php` | Notas de grabación: apuntar, editar, borrar, quién la ve (solo socios) |
 | `estudio/tema.php` | Desde el guión: pasar un tema al siguiente, descartarlo, recuperarlo o moverlo ↑ ↓ (solo socios) |
 | `estudio/fichero.php` | Enseña o descarga un fichero tras comprobar quién pregunta |
 | `estudio/proyectos.php` · `proyecto.php` | Proyectos, patrocinadores y presupuesto |

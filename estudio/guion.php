@@ -208,7 +208,7 @@ ane_pod_cabeza('Guión · ' . ane_pod_etiqueta($ep));
 ane_pod_cabecera('episodios');
 ?>
 <main class="caja">
-  <?php ane_pod_aviso(['nota' => 'Nota apuntada.', 'nota_borrada' => 'Nota borrada.',
+  <?php ane_pod_aviso(['nota' => 'Nota apuntada.', 'nota_borrada' => 'Nota borrada.', 'nota_editada' => 'Nota cambiada.',
                        'nota_editor' => 'Cambiado quién ve la nota.',
                        'nota_url' => 'Ese enlace no parece una dirección válida.',
                        'nota_vacia' => 'Escribe algo o pega un enlace.',
@@ -394,6 +394,37 @@ ane_pod_cabecera('episodios');
               })
               .catch(function () { boton.disabled = false; alert('Sin conexión: no se ha hecho.'); });
           });
+        });
+
+        /* «✎ Editar» en cada nota, también en las que se acaban de apuntar (por
+           eso se escucha en el documento): se guarda sin recargar y la nota se
+           cambia por la nueva. «Cancelar» la deja como estaba. */
+        document.addEventListener('toggle', function (ev) {
+          var caja = ev.target;
+          if (!caja.matches || !caja.matches('details.editar-nota') || !caja.open) { return; }
+          var t = caja.querySelector('textarea');
+          t.focus(); t.setSelectionRange(t.value.length, t.value.length);
+        }, true);
+        document.addEventListener('click', function (ev) {
+          if (!ev.target.matches('.form-editar-nota .cancelar')) { return; }
+          var form = ev.target.closest('form');
+          form.reset(); form.querySelector('.nota-estado').textContent = '';
+          form.closest('details').open = false;
+        });
+        document.addEventListener('submit', function (ev) {
+          var form = ev.target;
+          if (!form.matches('form.form-editar-nota')) { return; }
+          ev.preventDefault();
+          var estado = form.querySelector('.nota-estado');
+          estado.textContent = 'Guardando…';
+          fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Estudio': 'fetch' },
+                               credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (!d.ok) { estado.textContent = d.error || 'No se ha podido guardar.'; return; }
+              form.closest('li.nota-grab').outerHTML = d.html;
+            })
+            .catch(function () { estado.textContent = 'Sin conexión: no se ha guardado.'; });
         });
 
         document.querySelectorAll('form.form-nota').forEach(function (form) {

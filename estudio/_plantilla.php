@@ -346,6 +346,17 @@ function ane_pod_estilo(): void
   .nota-grab .nota-texto p { margin: 0 0 4px; }
   .nota-grab .nota-enlace { overflow-wrap: anywhere; margin-bottom: 2px; }
   .nota-pie { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  /* «✎ Editar» de una nota: el formulario ocupa su propia línea, al final, y
+     mientras está abierto no se repite el texto viejo encima */
+  details.editar-nota > summary { list-style: none; display: inline-block; }
+  details.editar-nota > summary::-webkit-details-marker { display: none; }
+  details.editar-nota[open] { order: 99; flex-basis: 100%; }
+  details.editar-nota[open] > summary { border-color: var(--negro); color: var(--negro); }
+  .form-editar-nota { display: grid; gap: 6px; margin-top: 6px; }
+  .form-editar-nota textarea { min-height: 60px; }
+  .form-editar-nota .acciones { justify-content: flex-end; align-items: center; }
+  .nota-grab:has(details.editar-nota[open]) > .nota-texto,
+  .nota-grab:has(details.editar-nota[open]) > .nota-enlace { display: none; }
   .chip-boton { font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
                 border: 1px solid var(--linea); background: #fff; color: var(--gris); padding: 2px 7px; cursor: pointer; }
   .chip-boton.si { border-color: var(--azul); color: var(--profundo); background: #EDF2FC; }

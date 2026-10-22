@@ -2,7 +2,7 @@
 /* ============================================================
    AQUÍ NADIE ENTRENA — Estudio · notas de grabación
    ------------------------------------------------------------
-   Apuntar, borrar o enseñar al editor una nota mientras se graba.
+   Apuntar, editar, borrar o enseñar al editor una nota mientras se graba.
    Solo socios: el guión (guion.php) sigue siendo de solo lectura,
    también para el editor, y las escrituras pasan por aquí.
 
@@ -78,6 +78,23 @@ if ($accion === 'borrar') {
     $bd->prepare('DELETE FROM pod_notas WHERE id = ?')->execute([(int) $nota['id']]);
     ane_pod_responde($json, $episodio, 'ok=nota_borrada#' . ((int) $nota['bloque_id'] ? 'nb' . (int) $nota['bloque_id'] : 'notas'),
                      ['ok' => true]);
+}
+
+/* Cambiar el texto o el enlace. Mismas reglas que al apuntarla */
+if ($accion === 'editar') {
+    $nid = (int) $nota['id'];
+    $texto = ane_recorta((string) ($_POST['texto'] ?? ''), 2000);
+    $crudo = trim((string) ($_POST['url'] ?? ''));
+    $url = ane_pod_url($crudo);
+    if ($crudo !== '' && $url === '') {
+        ane_pod_responde($json, $episodio, 'mal=nota_url#n' . $nid, ['ok' => false, 'error' => 'Ese enlace no parece una dirección válida.'], 400);
+    }
+    if ($texto === '' && $url === '') {
+        ane_pod_responde($json, $episodio, 'mal=nota_vacia#n' . $nid,
+                         ['ok' => false, 'error' => 'Vacía no se queda: escribe algo o bórrala con la ✕.'], 400);
+    }
+    $bd->prepare('UPDATE pod_notas SET texto = ?, url = ? WHERE id = ?')->execute([$texto, $url, $nid]);
+    ane_pod_responde($json, $episodio, 'ok=nota_editada#n' . $nid, ['ok' => true, 'html' => ane_pod_html_nota(ane_pod_nota($bd, $nid))]);
 }
 
 if ($accion === 'editor') {
