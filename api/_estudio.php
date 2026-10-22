@@ -645,6 +645,33 @@ function ane_pod_pasa_tema(PDO $bd, int $bloque): ?array
     return ane_pod_episodio($bd, $destino);
 }
 
+/* «Bici o Cepo» no se pasa entero: se pasa POR PARTES. Una foto con su
+   descripción se va al «Bici o Cepo» del episodio siguiente (número + 1),
+   al final de sus fotos; si ese episodio no existe, se crea. Devuelve el
+   episodio de destino, o null si no se puede. */
+function ane_pod_pasa_foto(PDO $bd, int $fichero): ?array
+{
+    $st = $bd->prepare('SELECT f.id, e.numero FROM pod_ficheros f
+                        JOIN pod_bloques b ON b.id = f.bloque_id AND b.tipo = ?
+                        JOIN pod_episodios e ON e.id = f.episodio_id
+                        WHERE f.id = ? AND f.tipo = \'imagen\'');
+    $st->execute([ANE_POD_CIERRE, $fichero]);
+    $f = $st->fetch();
+    if (!$f || (int) $f['numero'] <= 0) {
+        return null;
+    }
+    $bd->beginTransaction();
+    $destino = (int) ane_pod_episodio_numero($bd, (int) $f['numero'] + 1, true);
+    $cierre = ane_pod_asegura_cierre($bd, $destino);
+    $st = $bd->prepare('SELECT COALESCE(MAX(orden), 0) + 10 FROM pod_ficheros WHERE bloque_id = ?');
+    $st->execute([$cierre]);
+    $bd->prepare('UPDATE pod_ficheros SET episodio_id = ?, bloque_id = ?, orden = ? WHERE id = ?')
+       ->execute([$destino, $cierre, (int) $st->fetchColumn(), $fichero]);
+    $bd->prepare('UPDATE pod_episodios SET actualizado = ? WHERE id = ?')->execute([ane_ahora(), $destino]);
+    $bd->commit();
+    return ane_pod_episodio($bd, $destino);
+}
+
 /* Subir o bajar un tema un puesto desde el guión, en plena grabación. Como
    ane_pod_mueve(), pero los temas descartados no cuentan: en el guión son
    una línea tachada y saltar por encima de ella sería un toque perdido. El

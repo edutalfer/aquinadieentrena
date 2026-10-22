@@ -10,6 +10,8 @@
                  tachado para los socios, con «Recuperar»
      recuperar   vuelve a su sitio
      subir/bajar un puesto en el guión (flechas junto al número)
+     pasar_foto  una foto de «Bici o Cepo» (con su descripción) al
+                 «Bici o Cepo» del siguiente: ese se pasa por partes
 
    Solo socios. Con la cabecera X-Estudio: fetch responde JSON con
    lo que hay que pintar en su lugar, para no recargar y no perder
@@ -43,6 +45,26 @@ function ane_pod_tema_responde(bool $json, bool $alEditor, int $episodio, string
     header('Location: /estudio/' . ($alEditor ? 'episodio.php' : 'guion.php') . '?id=' . $episodio
          . ($query !== '' && $query[0] !== '#' ? '&' : '') . $query, true, 303);
     exit;
+}
+
+/* Una foto de «Bici o Cepo»: aquí «fila» es el fichero, no el tema */
+if ($accion === 'pasar_foto') {
+    $f = ane_pod_fichero($bd, $fila);
+    if (!$f) {
+        ane_pod_tema_responde($json, false, 0, '', ['ok' => false, 'error' => 'Esa foto ya no está.'], 404);
+    }
+    $episodio = (int) $f['episodio_id'];
+    $ancla = '#b' . (int) $f['bloque_id'];
+    $destino = ane_pod_pasa_foto($bd, $fila);
+    if (!$destino) {
+        ane_pod_tema_responde($json, false, $episodio, 'mal=sin_siguiente' . $ancla,
+                              ['ok' => false, 'error' => 'Solo se pasan fotos de «Bici o Cepo», y de un episodio con número.'], 400);
+    }
+    $html = '<div class="pareja lectura movida noimprime"><span class="dom">→ Esta foto pasa al</span> '
+          . '<a href="/estudio/guion.php?id=' . (int) $destino['id'] . '#b' . (int) $f['bloque_id'] . '">'
+          . 'Bici o Cepo del ' . ane_h(ane_pod_etiqueta($destino)) . '</a></div>';
+    ane_pod_tema_responde($json, false, $episodio, 'ok=foto_pasada&a=' . (int) $destino['numero'] . $ancla,
+                          ['ok' => true, 'html' => $html]);
 }
 
 $st = $bd->prepare("SELECT * FROM pod_bloques WHERE id = ? AND tipo = 'tema'");

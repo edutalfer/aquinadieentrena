@@ -167,8 +167,10 @@ function ane_pod_pinta_enlaces(array $lista): void
     echo '</ul>';
 }
 
-/* Cada foto va con su descripción al lado. De todas se puede tirar el original. */
-function ane_pod_pinta_fotos(array $fotos): void
+/* Cada foto va con su descripción al lado. De todas se puede tirar el original.
+   Con $siguiente (solo en «Bici o Cepo» y solo socios), cada pareja lleva su
+   «Pasar al #57»: ese bloque se pasa por partes, no entero. */
+function ane_pod_pinta_fotos(array $fotos, int $siguiente = 0): void
 {
     if (!$fotos) {
         return;
@@ -182,7 +184,14 @@ function ane_pod_pinta_fotos(array $fotos): void
            . '" loading="lazy"></a>'
            . '<figcaption><a class="descarga" href="' . ane_pod_url_fichero($f, true) . '">Descargar</a></figcaption>'
            . '</figure>'
-           . '<div class="cuerpo">' . ($f['pie'] !== '' ? ane_pod_texto((string) $f['pie']) : '') . '</div>'
+           . '<div class="cuerpo">' . ($f['pie'] !== '' ? ane_pod_texto((string) $f['pie']) : '')
+           . ($siguiente ? '<form method="post" action="/estudio/tema.php" class="form-pasar-foto noimprime"'
+                         . ' data-confirma="¿Pasar esta foto (con su descripción) al Bici o Cepo del episodio ' . $siguiente . '?">'
+                         . ane_pod_csrf_campo() . '<input type="hidden" name="accion" value="pasar_foto">'
+                         . '<input type="hidden" name="fila" value="' . $i . '">'
+                         . '<button class="tema-boton pasar" type="submit" title="Pasar esta foto al episodio ' . $siguiente . '">'
+                         . 'Pasar al #' . $siguiente . '</button></form>' : '')
+           . '</div>'
            . '</div>';
     }
     echo '</div>';
@@ -213,6 +222,7 @@ ane_pod_cabecera('episodios');
                        'nota_url' => 'Ese enlace no parece una dirección válida.',
                        'nota_vacia' => 'Escribe algo o pega un enlace.',
                        'pasado' => 'Tema pasado al episodio ' . (int) ($_GET['a'] ?? 0) . '.',
+                       'foto_pasada' => 'Foto pasada al Bici o Cepo del episodio ' . (int) ($_GET['a'] ?? 0) . '.',
                        'descartado' => 'Tema descartado.', 'recuperado' => 'Tema recuperado.',
                        'sin_siguiente' => 'Este episodio no tiene número: no hay «siguiente» al que pasarlo.']); ?>
   <div class="barra noimprime">
@@ -280,7 +290,7 @@ ane_pod_cabecera('episodios');
                 $archivos = ane_pod_solo($ficheros[$bid] ?? [], 'archivo');
                 /* En «Bici o Cepo» cada foto va con su descripción: ahí no hay texto de bloque */
                 if ($esCierre) {
-                    ane_pod_pinta_fotos($fotos);
+                    ane_pod_pinta_fotos($fotos, $es_socio && (int) $ep['numero'] > 0 ? (int) $ep['numero'] + 1 : 0);
                 } ?>
           <div class="cuerpo"><?= ane_pod_texto($b['texto']) ?></div>
           <?php ane_pod_pinta_enlaces($enlaces[$bid] ?? []); ?>
@@ -378,6 +388,24 @@ ane_pod_cabecera('episodios');
           });
         });
         actualizaFlechas();
+        /* «Pasar al #57» de una foto de Bici o Cepo: solo esa pareja se va */
+        document.querySelectorAll('form.form-pasar-foto').forEach(function (form) {
+          form.addEventListener('submit', function (ev) {
+            ev.preventDefault();
+            if (!confirm(form.dataset.confirma)) { return; }
+            var boton = form.querySelector('button');
+            boton.disabled = true;
+            fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Estudio': 'fetch' },
+                                 credentials: 'same-origin' })
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                if (!d.ok) { boton.disabled = false; alert(d.error || 'No se ha podido.'); return; }
+                form.closest('.pareja').outerHTML = d.html;
+              })
+              .catch(function () { boton.disabled = false; alert('Sin conexión: no se ha hecho.'); });
+          });
+        });
+
         document.querySelectorAll('form.form-tema').forEach(function (form) {
           form.addEventListener('submit', function (ev) {
             ev.preventDefault();

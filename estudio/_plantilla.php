@@ -291,6 +291,9 @@ function ane_pod_estilo(): void
   /* Entre una foto con su texto y la siguiente, una raya fina: que no se lean
      seguidas dos descripciones, sobre todo en el móvil, donde van apiladas */
   .pareja.lectura + .pareja.lectura { border-top: 1px dashed var(--linea); padding-top: 18px; }
+  /* «Pasar al #57» de cada foto de Bici o Cepo, debajo de su descripción */
+  .form-pasar-foto { margin-top: 10px; }
+  .pareja.movida { display: block; font-size: 14px; }
   .pareja .descarga, .pareja.lectura .descarga { font-size: 12px; font-weight: 700; letter-spacing: .04em;
             text-transform: uppercase; }
 
